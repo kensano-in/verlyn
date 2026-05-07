@@ -24,8 +24,14 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
   // Reset state when modal opens
   useEffect(() => {
     let timer: NodeJS.Timeout;
+    let scrollY = 0;
+    
     if (open) {
-      document.body.style.overflow = 'hidden';
+      scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      
       setChecked(false);
       setScrolledToEnd(false);
       setReadTime(0);
@@ -42,11 +48,20 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
         }
       }, 100);
     } else {
-      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(document.body.style.top || '0') * -1); // This is just a fallback, the effect cleanup handles the actual restoration
     }
+    
     return () => {
-      clearInterval(timer);
-      document.body.style.overflow = '';
+      if (open) {
+        clearInterval(timer);
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      }
     };
   }, [open]);
 

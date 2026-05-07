@@ -58,9 +58,18 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       if (stored) setTickets(JSON.parse(stored));
     } catch (e) {}
 
-    // Prevent background scrolling while modal is active
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    // Robust scroll lock
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
+    return () => { 
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    };
   }, []);
 
   // Poll for admin reply every 5s when in chat view

@@ -37,8 +37,11 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
   useEffect(() => {
     if (!mounted) return;
 
-    // Prevent scrolling while intro is active
-    document.body.style.overflow = 'hidden';
+    // Robust scroll lock for intro
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
 
     const t = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms) as unknown as number;
@@ -62,7 +65,10 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
 
     return () => {
       timers.current.forEach(clearTimeout);
-      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
