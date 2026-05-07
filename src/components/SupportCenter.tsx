@@ -313,7 +313,6 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '16px',
-      overflowY: 'auto',
     }}>
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -330,7 +329,6 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 40px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
           position: 'relative',
-          flexShrink: 0,
         }}
       >
         {/* Header */}

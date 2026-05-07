@@ -83,7 +83,6 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
             backdropFilter: 'blur(16px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '16px',
-            overflowY: 'auto',
           }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
@@ -100,7 +99,6 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
               overflow: 'hidden',
               display: 'flex', flexDirection: 'column',
               height: 'calc(100dvh - 32px)', maxHeight: '840px',
-              flexShrink: 0,
             }}
           >
             {/* Header */}
