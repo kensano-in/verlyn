@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verlyn | Icon Design Studio</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #040404; color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; padding: 80px 40px; }
+    h1 { text-align: center; font-weight: 100; font-size: 12px; letter-spacing: 0.6em; color: #333; margin-bottom: 80px; text-transform: uppercase; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; max-width: 900px; margin: 0 auto; }
+    .card { background: #000; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; cursor: pointer; transition: background 0.3s; position: relative; }
+    .card:hover { background: #060606; }
+    .name { font-size: 9px; letter-spacing: 0.25em; color: #222; text-transform: uppercase; font-weight: 400; transition: color 0.3s; }
+    .card:hover .name { color: #555; }
+    .tag { position: absolute; top: 18px; left: 18px; font-size: 8px; color: #111; letter-spacing: 0.1em; }
+  </style>
+</head>
+<body>
+  <h1>VERLYN — ICON CONCEPTS</h1>
+  <div class="grid">
+
+    <!-- A: Two Arcs (Privacy + Openness) -->
+    <div class="card">
+      <span class="tag">A</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <filter id="glow-a">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M16 48 L32 16 L48 48" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-a)"/>
+        <path d="M22 36 L42 36" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.25"/>
+      </svg>
+      <span class="name">Apex</span>
+    </div>
+
+    <!-- B: Shield with carved V -->
+    <div class="card">
+      <span class="tag">B</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <filter id="glow-b">
+            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M32 6 L54 14 L54 34 C54 48 32 58 32 58 C32 58 10 48 10 34 L10 14 Z" fill="none" stroke="white" stroke-width="1" opacity="0.12"/>
+        <path d="M32 6 L54 14 L54 34 C54 48 32 58 32 58 C32 58 10 48 10 34 L10 14 Z" fill="white" opacity="0.03"/>
+        <path d="M22 26 L32 42 L42 26" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-b)"/>
+      </svg>
+      <span class="name">Guardian</span>
+    </div>
+
+    <!-- C: Diamond with inner V -->
+    <div class="card">
+      <span class="tag">C</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <linearGradient id="grad-c" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="white" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.2"/>
+          </linearGradient>
+          <filter id="glow-c">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <path d="M32 4 L60 32 L32 60 L4 32 Z" stroke="url(#grad-c)" stroke-width="0.75" fill="none"/>
+        <path d="M20 28 L32 44 L44 28" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-c)"/>
+      </svg>
+      <span class="name">Axiom</span>
+    </div>
+
+    <!-- D: Spiral / vortex V -->
+    <div class="card">
+      <span class="tag">D</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <filter id="glow-d">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Outer fading arcs suggesting orbit -->
+        <circle cx="32" cy="32" r="28" stroke="white" stroke-width="0.5" stroke-dasharray="2 8" opacity="0.12" stroke-linecap="round"/>
+        <circle cx="32" cy="32" r="19" stroke="white" stroke-width="0.5" stroke-dasharray="2 8" opacity="0.08" stroke-linecap="round"/>
+        <!-- Bold centered V -->
+        <path d="M18 20 L32 46 L46 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-d)"/>
+      </svg>
+      <span class="name">Orbital</span>
+    </div>
+
+    <!-- E: Split V - two separate bars -->
+    <div class="card">
+      <span class="tag">E</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <linearGradient id="grad-e1" x1="17" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="white" stop-opacity="1"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="grad-e2" x1="47" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="white" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.05"/>
+          </linearGradient>
+        </defs>
+        <path d="M17 14 L32 52" stroke="url(#grad-e1)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M47 14 L32 52" stroke="url(#grad-e2)" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+      <span class="name">Duality</span>
+    </div>
+
+    <!-- F: The Arc -->
+    <div class="card">
+      <span class="tag">F</span>
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <defs>
+          <filter id="glow-f">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="grad-f" x1="10" y1="14" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="white" stop-opacity="1"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0.2"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer border arc -->
+        <path d="M12 16 Q32 72 52 16" stroke="white" stroke-width="0.75" fill="none" opacity="0.1"/>
+        <!-- Inner solid V using bezier, not straight lines -->
+        <path d="M16 18 Q32 64 48 18" stroke="url(#grad-f)" stroke-width="3" fill="none" stroke-linecap="round" filter="url(#glow-f)"/>
+        <circle cx="32" cy="52" r="2" fill="white" opacity="0.4"/>
+      </svg>
+      <span class="name">Arc</span>
+    </div>
+
+  </div>
+</body>
+</html>
