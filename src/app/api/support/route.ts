@@ -115,3 +115,53 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { case_id, message } = await req.json();
+
+    if (!case_id || !message?.trim()) {
+      return NextResponse.json({ error: 'Missing case_id or message' }, { status: 400 });
+    }
+
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Fetch existing ticket
+    const { data: ticket, error: fetchErr } = await supabaseAdmin
+      .from('support_tickets')
+      .select('description, status')
+      .eq('case_id', case_id)
+      .single();
+
+    if (fetchErr || !ticket) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
+    }
+    
+    if (ticket.status === 'Completed') {
+      return NextResponse.json({ error: 'Cannot reply to a completed ticket' }, { status: 400 });
+    }
+
+    const newDescription = `${ticket.description}\n\n[USER_REPLY]\n${message.trim()}`;
+
+    // Update the ticket
+    const { error: updateErr } = await supabaseAdmin
+      .from('support_tickets')
+      .update({
+        description: newDescription,
+        status: 'In progress',
+        admin_reply: null
+      })
+      .eq('case_id', case_id);
+
+    if (updateErr) throw updateErr;
+
+    return NextResponse.json({ success: true }, { status: 200 });
+
+  } catch (err: any) {
+    console.error('[Support API PATCH] Error:', err.message);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
