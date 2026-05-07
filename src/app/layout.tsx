@@ -6,15 +6,18 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bebas = Bebas_Neue({ weight: '400', subsets: ['latin'], variable: '--font-bebas' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://verlyn.in'),
   title: 'Verlyn | Zero-Knowledge Social Architecture',
   description:
     'Experience the next generation of private communication. Built on zero-knowledge architecture and end-to-end encryption. Join the elite network.',
+  keywords: ['privacy', 'zero-knowledge', 'secure messaging', 'encrypted social network', 'verlyn'],
   openGraph: {
     title: 'Verlyn | The Future of Privacy',
     description:
       'Pre-register for early access to Verlyn. Secure. Private. Sovereign.',
     type: 'website',
     url: 'https://verlyn.in',
+    siteName: 'Verlyn',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Verlyn Security' }],
   },
   twitter: {
@@ -22,6 +25,7 @@ export const metadata: Metadata = {
     title: 'Verlyn | Private Digital Sovereign',
     description: 'The zero-knowledge social network.',
   },
+  alternates: { canonical: 'https://verlyn.in' },
   robots: { index: true, follow: true },
 };
 
