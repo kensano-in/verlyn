@@ -106,18 +106,20 @@ function StepRow({ step, i, total }: { step: { title: string; desc: string }; i:
 
 export default function HomePage() {
   const [transparencyMode, setTransparencyMode] = React.useState(false);
-  // Check sessionStorage so intro only plays once per browser session
-  // (not on every navigation back from /terms, /privacy etc)
-  const [introComplete, setIntroComplete] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('vrl_intro_done') === '1';
-    }
-    return false;
-  });
+  // Always start false (avoids SSR/client hydration mismatch)
+  // useEffect reads sessionStorage after mount - safe from hydration errors
+  const [introComplete, setIntroComplete] = React.useState(false);
   const [showSupport, setShowSupport]           = React.useState(false);
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
   const adminClickTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+  // After mount, check if intro was already seen this session
+  React.useEffect(() => {
+    if (sessionStorage.getItem('vrl_intro_done') === '1') {
+      setIntroComplete(true);
+    }
+  }, []);
 
   const handleAdminClick = () => {
     setAdminClicks(prev => {
@@ -168,7 +170,7 @@ export default function HomePage() {
 
       {/* ── MAIN CONTENT ── */}
       <motion.div
-        initial={{ opacity: introComplete ? 1 : 0 }}
+        initial={{ opacity: 0 }}
         animate={{ opacity: introComplete ? 1 : 0 }}
         transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
         style={{ pointerEvents: introComplete ? 'auto' : 'none' }}
