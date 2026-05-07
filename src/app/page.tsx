@@ -153,7 +153,6 @@ export default function HomePage() {
     <main style={{
       background: '#000',
       minHeight: '100dvh',
-      overflow: 'hidden',
       fontFamily: 'var(--font-sans)',
     }}>
       {/* ── CINEMATIC INTRO ── */}

@@ -24,14 +24,10 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
   // Reset state when modal opens
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    let scrollY = 0;
     
     if (open) {
-      scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      
+      // Simple, correct scroll lock — restored on close or unmount
+      document.body.style.overflow = 'hidden';
       setChecked(false);
       setScrolledToEnd(false);
       setReadTime(0);
@@ -40,28 +36,19 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
         setReadTime(prev => prev + 1);
       }, 1000);
 
-      // Small delay to let DOM render before checking scroll
       setTimeout(() => {
         const el = scrollRef.current;
         if (el && el.scrollHeight <= el.clientHeight) {
-          setScrolledToEnd(true); // content fits without scroll
+          setScrolledToEnd(true);
         }
       }, 100);
     } else {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(document.body.style.top || '0') * -1); // This is just a fallback, the effect cleanup handles the actual restoration
+      document.body.style.overflow = '';
     }
     
     return () => {
-      if (open) {
-        clearInterval(timer);
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
-      }
+      clearInterval(timer);
+      document.body.style.overflow = '';
     };
   }, [open]);
 

@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-const KEY = 'vrl_intro_v3';
-
 const PILLARS = [
   'A new kind of social space.',
   'Your data.\u00a0 Only yours.',
@@ -13,10 +11,8 @@ const PILLARS = [
 
 export default function IntroScreen({ onComplete }: { onComplete: () => void }) {
   const [mounted,  setMounted]  = useState(false);
-  const [skip,     setSkip]     = useState(false);
   const [pillar,   setPillar]   = useState(0);
   const [phase,    setPhase]    = useState<'hidden'|'orb'|'word'|'divider'|'pillars'|'bar'|'exit'>('hidden');
-
   const barRef   = useRef<HTMLDivElement>(null);
   const timers   = useRef<number[]>([]);
   const isDone   = useRef(false);
@@ -25,17 +21,19 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
     if (isDone.current) return;
     isDone.current = true;
     timers.current.forEach(clearTimeout);
+    // Restore scroll BEFORE setting exit phase
+    document.body.style.overflow = '';
     setPhase('exit');
-    window.setTimeout(() => {
-      localStorage.setItem(KEY, '1');
-      onComplete();
-    }, 850);
+    window.setTimeout(() => onComplete(), 850);
   };
 
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted) return;
+
+    // Lock scroll only while intro is active — simplest reliable method
+    document.body.style.overflow = 'hidden';
 
     const t = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms) as unknown as number;
@@ -57,31 +55,13 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
     }, 5400);
     t(() => done(), 6900);
 
+    // Cleanup: if component somehow unmounts before done(), restore scroll
     return () => {
       timers.current.forEach(clearTimeout);
+      document.body.style.overflow = '';
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
-
-  // Robust scroll lock tied to the active visibility of the intro
-  useEffect(() => {
-    if (!mounted) return;
-    const isExitingNow = phase === 'exit' || skip;
-    
-    if (!isExitingNow) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      
-      return () => {
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [mounted, phase, skip]);
 
   const [pillarVisible, setPillarVisible] = useState(true);
   const prevPillar = useRef(pillar);
@@ -103,13 +83,13 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
       ? phaseOrder.indexOf(p) <= phaseOrder.indexOf(phase as typeof phaseOrder[number])
       : false;
 
-  const fade = (visible: boolean, delay = '0s'): React.CSSProperties => ({
+  const fade = (visible: boolean): React.CSSProperties => ({
     opacity: visible ? 1 : 0,
     transform: visible ? 'translateY(0)' : 'translateY(12px)',
-    transition: `opacity 0.65s var(--ease-spring) ${delay}, transform 0.65s var(--ease-spring) ${delay}`,
+    transition: `opacity 0.65s cubic-bezier(0.22,1,0.36,1), transform 0.65s cubic-bezier(0.22,1,0.36,1)`,
   });
 
-  const isExiting = phase === 'exit' || skip;
+  const isExiting = phase === 'exit';
 
   return (
     <div style={{
@@ -131,7 +111,7 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
         animation: 'breathe 6s ease-in-out infinite',
       }} />
 
-      {/* 3D V Logo Intro */}
+      {/* 3D V Logo */}
       <div style={{ ...fade(show('orb')), position: 'relative', width: '120px', height: '120px', marginBottom: '40px', perspective: '1000px' }}>
         <div style={{
           width: '100%', height: '100%',
@@ -139,13 +119,11 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
           transformStyle: 'preserve-3d',
           animation: 'vRotate 8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
         }}>
-          {/* V Shape */}
           <svg viewBox="0 0 64 64" fill="none" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.4))' }}>
             <path d="M17 14 L32 52" stroke="white" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.5s' }}/>
             <path d="M47 14 L32 52" stroke="rgba(255,255,255,0.3)" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}/>
           </svg>
         </div>
-        {/* Core glow */}
         <div style={{
           position: 'absolute', inset: '20px', borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
@@ -205,7 +183,7 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
             <div key={i} style={{
               width: i === pillar ? '20px' : '4px', height: '2px', borderRadius: '1px',
               background: i === pillar ? '#818cf8' : 'rgba(255,255,255,0.12)',
-              transition: 'all 0.4s var(--ease-spring)',
+              transition: 'all 0.4s cubic-bezier(0.22,1,0.36,1)',
             }} />
           ))}
         </div>
@@ -233,8 +211,9 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
         </span>
       </div>
 
+      {/* Skip */}
       <button
-        onClick={() => { setSkip(true); done(); }}
+        onClick={done}
         style={{
           position: 'absolute', bottom: '28px', right: '28px',
           background: 'none', border: '1px solid rgba(255,255,255,0.1)',

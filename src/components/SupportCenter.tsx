@@ -58,18 +58,9 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       if (stored) setTickets(JSON.parse(stored));
     } catch (e) {}
 
-    // Robust scroll lock
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-
-    return () => { 
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, scrollY);
-    };
+    // Simple, correct scroll lock: block body scroll while modal is open
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
   }, []);
 
   // Poll for admin reply every 5s when in chat view
