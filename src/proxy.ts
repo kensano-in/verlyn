@@ -6,18 +6,7 @@ export function proxy(request: NextRequest) {
   const response = NextResponse.next();
   const userAgent = request.headers.get('user-agent')?.toLowerCase() || '';
 
-  // 1. Block Headless Browsers & Scripted Bots
-  const blockedAgents = [
-    'curl', 'postman', 'python', 'wget', 'urllib', 'httpclient', 'nikto', 
-    'nmap', 'sqlmap', 'headlesschrome', 'puppeteer', 'playwright', 'selenium'
-  ];
-
-  if (blockedAgents.some(bot => userAgent.includes(bot))) {
-    // Return a generic 403 Forbidden
-    return new NextResponse(null, { status: 403, statusText: 'Forbidden' });
-  }
-
-  // 2. Strict Content Security Policy (CSP)
+  // 1. Strict Content Security Policy (CSP)
   // This prevents ANY external script, iframe, or malicious payload from running.
   // It only allows self-hosted scripts, styles, and data.
   const cspHeader = `
@@ -29,7 +18,6 @@ export function proxy(request: NextRequest) {
     object-src 'none';
     base-uri 'self';
     form-action 'self';
-    frame-ancestors 'none';
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim();
 
