@@ -121,7 +121,6 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       localStorage.setItem('vrl_support_last', Date.now().toString());
 
       setChatTicket(newTicket);
-      setAdminReply(null);
       setActiveTicket(newTicket);
       setView('chat');
 
@@ -478,7 +477,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
 
-                <button onClick={() => { setChatTicket(activeTicket); setAdminReply(activeTicket.admin_reply || null); setView('chat'); }}
+                <button onClick={() => { setChatTicket(activeTicket); setView('chat'); }}
                   style={{ width:'100%', padding:'16px', borderRadius:'10px', border:'none', cursor:'pointer',
                     background:'#fff', color:'#000', fontSize:'13px', fontWeight:600, textTransform: 'uppercase', letterSpacing: '0.05em',
                     display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', transition: 'background 0.2s' }}>
