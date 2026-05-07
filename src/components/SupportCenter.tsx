@@ -409,10 +409,10 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 <label style={lblStyles}>Inquiry Category</label>
                 <div style={{ position: 'relative', marginBottom: '16px' }}>
                   <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{ ...inpStyles, appearance: 'none', cursor: 'pointer', paddingRight: '40px', marginBottom: 0 }}>
-                    <option value="question">General Inquiry</option>
-                    <option value="account">Account & Security</option>
-                    <option value="bug">Technical Issue</option>
-                    <option value="suggestion">Platform Suggestion</option>
+                    <option value="question" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
+                    <option value="account" style={{ background: '#0a0a0a', color: '#fff' }}>Account & Security</option>
+                    <option value="bug" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Issue</option>
+                    <option value="suggestion" style={{ background: '#0a0a0a', color: '#fff' }}>Platform Suggestion</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6"/></svg>
                 </div>
