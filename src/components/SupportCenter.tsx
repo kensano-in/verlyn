@@ -191,16 +191,18 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         ))}
         {/* Waiting for admin */}
         {!hasAgentMsg && (
-          <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
-            <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid rgba(255,255,255,0.08)' }}>
-              <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.3)' }}>?</span>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.05)', marginTop: '20px' }}>
+            <div style={{ position: 'relative', marginBottom: '16px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(255,255,255,0.1)' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/><path d="M12 16v-4m0-4h.01"/></svg>
+              </div>
+              <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ position: 'absolute', bottom: '-4px', right: '-4px', background: '#0a0a0a', borderRadius: '50%', padding: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </motion.div>
             </div>
-            <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:'4px 16px 16px 16px', padding:'14px 18px', border:'1px solid rgba(255,255,255,0.06)', display:'flex', gap:'5px', alignItems:'center' }}>
-              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s ease-in-out infinite' }} />
-              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s 0.2s ease-in-out infinite' }} />
-              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s 0.4s ease-in-out infinite' }} />
-            </div>
-          </div>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>Session Secured</p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, maxWidth: '240px' }}>An admin will be assigned shortly and join the chat. The channel will unlock when they arrive.</p>
+          </motion.div>
         )}
       </>
     );
@@ -509,17 +511,20 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                        <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.5)' }}>This case has been marked as resolved. If you need further assistance, please open a new request.</span>
                      </div>
                   ) : (
-                    <form onSubmit={handleUserReply} style={{ background:'rgba(255,255,255,0.03)', borderRadius:'14px', border:'1px solid rgba(255,255,255,0.1)', display:'flex', alignItems:'center', padding: '8px', gap: '8px' }}>
+                    <form onSubmit={handleUserReply} style={{ background:'rgba(255,255,255,0.03)', borderRadius:'14px', border:'1px solid rgba(255,255,255,0.1)', display:'flex', alignItems:'center', padding: '8px', gap: '8px', opacity: messages.some(m => m.sender_type === 'agent') ? 1 : 0.5 }}>
+                      <button type="button" disabled={!messages.some(m => m.sender_type === 'agent')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: messages.some(m => m.sender_type === 'agent') ? 'pointer' : 'not-allowed', padding: '6px', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                      </button>
                       <input 
                         type="text" 
                         value={userReplyText} 
                         onChange={(e) => setUserReplyText(e.target.value)} 
-                        disabled={sendingReply}
-                        placeholder="Type your reply here..."
-                        style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:'13px', outline:'none', padding: '8px 12px' }} 
+                        disabled={sendingReply || !messages.some(m => m.sender_type === 'agent')}
+                        placeholder={messages.some(m => m.sender_type === 'agent') ? "Type your reply here..." : "Waiting for admin to join..."}
+                        style={{ flex:1, background:'none', border:'none', color:'#fff', fontSize:'13px', outline:'none', padding: '8px 4px' }} 
                       />
-                      <button type="submit" disabled={sendingReply || !userReplyText.trim()} style={{ width:'36px', height:'36px', borderRadius:'10px', background: userReplyText.trim() ? '#fff' : 'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', border: 'none', cursor: userReplyText.trim() ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={userReplyText.trim() ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                      <button type="submit" disabled={sendingReply || !userReplyText.trim() || !messages.some(m => m.sender_type === 'agent')} style={{ width:'36px', height:'36px', borderRadius:'10px', background: userReplyText.trim() && messages.some(m => m.sender_type === 'agent') ? '#fff' : 'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center', border: 'none', cursor: userReplyText.trim() && messages.some(m => m.sender_type === 'agent') ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={userReplyText.trim() && messages.some(m => m.sender_type === 'agent') ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                       </button>
                     </form>
                   )}

@@ -586,7 +586,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.6)' }} />
                             <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>Live · {adminName} → {selectedTicket.full_name}</span>
                           </div>
-                          <button onClick={() => { setJoinStep('idle'); setChatMessages([]); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '11px' }}>Leave</button>
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <button onClick={async () => { await updateStatus(selectedTicket.id, 'Completed'); setJoinStep('idle'); setChatMessages([]); }} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: '6px', padding: '4px 10px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>Close Session</button>
+                            <button onClick={() => { setJoinStep('idle'); setChatMessages([]); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '11px' }}>Leave</button>
+                          </div>
                         </div>
                         {/* Messages */}
                         <div ref={chatScrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="scrollbar-hide">
