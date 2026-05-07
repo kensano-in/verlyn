@@ -105,6 +105,7 @@ function StepRow({ step, i, total }: { step: { title: string; desc: string }; i:
 }
 
 export default function HomePage() {
+  const [transparencyMode, setTransparencyMode] = React.useState(false);
   // Check sessionStorage so intro only plays once per browser session
   // (not on every navigation back from /terms, /privacy etc)
   const [introComplete, setIntroComplete] = React.useState(() => {
