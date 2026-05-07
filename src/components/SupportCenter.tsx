@@ -468,7 +468,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                   <div style={{ display:'flex', justifyContent:'flex-end' }}>
                     <div style={{ maxWidth:'80%' }}>
                       <div style={{ background:'linear-gradient(135deg,#7c3aed,#a855f7)', borderRadius:'18px 18px 4px 18px', padding:'12px 16px' }}>
-                        <p style={{ fontSize:'13px', fontWeight:600, color:'rgba(255,255,255,0.7)', marginBottom:'4px', fontSize:'11px' }}>{chatTicket.subject}</p>
+                        <p style={{ fontSize:'11px', fontWeight:600, color:'rgba(255,255,255,0.7)', marginBottom:'4px' }}>{chatTicket.subject}</p>
                         <p style={{ fontSize:'13px', color:'#fff', lineHeight:1.6 }}>{chatTicket.description || 'Your report has been submitted successfully. Our support team is reviewing your case.'}</p>
                       </div>
                       <p style={{ fontSize:'10px', color:'rgba(255,255,255,0.25)', textAlign:'right', marginTop:'4px' }}>You · {new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric'}).format(new Date(chatTicket.date_filed))}</p>

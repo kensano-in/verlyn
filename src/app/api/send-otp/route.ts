@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
     if (!shadowBan) {
       const emailResult = await resend.emails.send({
         from: 'Verlyn Security <admin@verlyn.in>',
-        reply_to: 'support@verlyn.in',
+        replyTo: 'support@verlyn.in',
         to: email,
         subject: `${code} — Verlyn Verification Code`,
         html: `

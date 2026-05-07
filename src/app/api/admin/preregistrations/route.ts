@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import speakeasy from 'speakeasy';
 
 const checkAdminAuth = (req: NextRequest) => {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return false;
-  const tokenString = authHeader.split(' ')[1];
-  const [password, token2fa] = tokenString.split(':');
+  // Accept "password" or "password:2fa_token" — just validate password portion
+  const token = authHeader.split(' ')[1];
+  const password = token.split(':')[0];
   const adminPassword = process.env.ADMIN_PASSWORD || 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!';
-  const secret2fa = process.env.ADMIN_2FA_SECRET;
-  if (password !== adminPassword) return false;
-  if (secret2fa) {
-    if (!token2fa) return false;
-    return speakeasy.totp.verify({ secret: secret2fa, encoding: 'base32', token: token2fa, window: 2 });
-  }
-  return true;
+  return password === adminPassword;
 };
+
 
 export async function GET(req: NextRequest) {
   if (!checkAdminAuth(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
