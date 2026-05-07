@@ -37,12 +37,6 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
   useEffect(() => {
     if (!mounted) return;
 
-    // Robust scroll lock for intro
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-
     const t = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms) as unknown as number;
       timers.current.push(id);
@@ -65,13 +59,29 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
 
     return () => {
       timers.current.forEach(clearTimeout);
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, scrollY);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
+
+  // Robust scroll lock tied to the active visibility of the intro
+  useEffect(() => {
+    if (!mounted) return;
+    const isExitingNow = phase === 'exit' || skip;
+    
+    if (!isExitingNow) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [mounted, phase, skip]);
 
   const [pillarVisible, setPillarVisible] = useState(true);
   const prevPillar = useRef(pillar);
