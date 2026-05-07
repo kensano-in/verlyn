@@ -5,7 +5,8 @@ import { validateEmail } from '@/lib/whitelist';
 import { generateChallenge, verifyWork } from '@/lib/pow';
 import { createHash } from 'crypto';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend client is instantiated inside the handler (not at module level)
+// to prevent build-time errors when RESEND_API_KEY is only available at runtime.
 
 /* ══════════════════════════════════════════════════════════════════════
    LAYER 1 — In-Memory Rate Stores (replaced by Redis in multi-instance prod)
@@ -215,6 +216,7 @@ export async function POST(req: NextRequest) {
 
     /* ── 11. Send verification email ─────────────────────────────────── */
     if (!shadowBan) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
       const emailResult = await resend.emails.send({
         from: 'Verlyn Security <admin@verlyn.in>',
         replyTo: 'support@verlyn.in',
