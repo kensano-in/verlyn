@@ -309,8 +309,8 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0,0,0,0.7)',
-      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      background: 'rgba(0,0,0,0.75)',
+      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '16px',
     }}>
@@ -318,16 +318,16 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         style={{
           width: '100%', maxWidth: '440px',
-          height: 'calc(100dvh - 32px)', maxHeight: '720px',
+          height: 'min(90vh, 720px)',
           background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '20px',
           overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
           position: 'relative',
         }}
       >

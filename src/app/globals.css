@@ -154,9 +154,6 @@ body {
   min-height: 100dvh;
   font-family: var(--font-sans);
   line-height: 1.6;
-  /* GPU-accelerate the whole page */
-  transform: translateZ(0);
-  will-change: auto;
 }
 
 /* ─── Typography — editorial precision ──────────────────────────── */

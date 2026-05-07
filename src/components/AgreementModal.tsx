@@ -79,8 +79,8 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
           transition={{ duration: 0.25 }}
           style={{
             position: 'fixed', inset: 0, zIndex: 1000,
-            background: 'rgba(0,0,0,0.92)',
-            backdropFilter: 'blur(16px)',
+            background: 'rgba(0,0,0,0.88)',
+            backdropFilter: 'blur(12px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '16px',
           }}
@@ -98,7 +98,7 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
               borderRadius: '20px',
               overflow: 'hidden',
               display: 'flex', flexDirection: 'column',
-              height: 'calc(100dvh - 32px)', maxHeight: '840px',
+              height: 'min(90vh, 840px)',
             }}
           >
             {/* Header */}
