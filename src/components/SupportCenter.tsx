@@ -38,10 +38,9 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
 
   // Chat State
   const [chatTicket, setChatTicket] = useState<Ticket | null>(null);
-  const [adminReply, setAdminReply] = useState<string | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [userReplyText, setUserReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
-  const [polling, setPolling] = useState(false);
   
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
@@ -57,44 +56,28 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       const stored = localStorage.getItem('vrl_support_tickets');
       if (stored) setTickets(JSON.parse(stored));
     } catch (e) {}
-
-    // Simple, correct scroll lock: block body scroll while modal is open
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  // Poll for admin reply every 5s when in chat view
+  // Poll real messages from support_messages table every 4s
   useEffect(() => {
     if (view !== 'chat' || !chatTicket) return;
-    setPolling(true);
-    const interval = setInterval(async () => {
+    const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/support/status?case_id=${chatTicket.case_id}`);
+        const res = await fetch(`/api/support/messages?case_id=${chatTicket.case_id}`);
         if (!res.ok) return;
         const data = await res.json();
-        
-        // Only update if something changed
-        if (data.admin_reply !== adminReply || data.status !== chatTicket.status || data.description !== chatTicket.description) {
-           setAdminReply(data.admin_reply);
-           
-           // Update local ticket cache
-           const updatedTicket = { ...chatTicket, status: data.status, admin_reply: data.admin_reply, description: data.description };
-           setChatTicket(updatedTicket);
-           
-           const newTickets = tickets.map(t => t.case_id === chatTicket.case_id ? updatedTicket : t);
-           setTickets(newTickets);
-           localStorage.setItem('vrl_support_tickets', JSON.stringify(newTickets));
-           
-           if (chatScrollRef.current) {
-             setTimeout(() => {
-               chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
-             }, 100);
-           }
-        }
+        setMessages(data.messages || []);
+        setTimeout(() => {
+          chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
+        }, 80);
       } catch {}
-    }, 5000);
-    return () => { clearInterval(interval); setPolling(false); };
-  }, [view, chatTicket, adminReply, tickets]);
+    };
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 4000);
+    return () => clearInterval(interval);
+  }, [view, chatTicket]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,35 +136,19 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
   const handleUserReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userReplyText.trim() || !chatTicket || sendingReply) return;
-
+    const text = userReplyText;
+    setUserReplyText('');
     setSendingReply(true);
+    // Optimistic local message
+    setMessages(prev => [...prev, { id: Date.now(), sender_type: 'user', content: text, created_at: new Date().toISOString() }]);
+    setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
     try {
-      const res = await fetch('/api/support', {
-        method: 'PATCH',
+      const res = await fetch('/api/support/messages', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ case_id: chatTicket.case_id, message: userReplyText })
+        body: JSON.stringify({ case_id: chatTicket.case_id, content: text, sender_type: 'user' })
       });
-      
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to send message');
-      }
-
-      // Optimistic update
-      const newDesc = `${chatTicket.description}\n\n[USER_REPLY]\n${userReplyText}`;
-      const updatedTicket = { ...chatTicket, description: newDesc, status: 'In progress', admin_reply: undefined };
-      setChatTicket(updatedTicket);
-      setAdminReply(null);
-      setUserReplyText('');
-      
-      const newTickets = tickets.map(t => t.case_id === chatTicket.case_id ? updatedTicket : t);
-      setTickets(newTickets);
-      localStorage.setItem('vrl_support_tickets', JSON.stringify(newTickets));
-
-      setTimeout(() => {
-        if (chatScrollRef.current) chatScrollRef.current.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
-      }, 100);
-      
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -189,104 +156,52 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
     }
   };
 
-  // Chat message parser
+  // Render real messages from support_messages table
   const renderChatMessages = () => {
-    if (!chatTicket) return null;
-    const blocks = (chatTicket.description || '').split('[USER_REPLY]');
-    const initialMessage = blocks[0].trim();
-    const userReplies = blocks.slice(1).map(r => r.trim());
-
+    const hasAgentMsg = messages.some(m => m.sender_type === 'agent');
     return (
       <>
-        {/* System / E2E Header */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            <span style={{ fontSize: '10px', color: '#818cf8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>End-to-End Encrypted Session</span>
-          </div>
-        </div>
-
-        {/* Initial message */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-          <div style={{ maxWidth: '85%' }}>
-            <div style={{ background: '#4f46e5', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(79,70,229,0.2)' }}>
-              <p style={{ fontSize: '11.5px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: '6px', letterSpacing: '0.02em' }}>{chatTicket.subject}</p>
-              <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6 }}>{initialMessage}</p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
-              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'right' }}>You · {new Intl.DateTimeFormat('en-US',{month:'short', day:'numeric', hour:'numeric',minute:'numeric'}).format(new Date(chatTicket.date_filed))}</p>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-5.5 5.5"></path></svg>
-            </div>
-          </div>
-        </div>
-
-        {/* User Replies */}
-        {userReplies.map((reply, idx) => (
-          <div key={`ur-${idx}`} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-            <div style={{ maxWidth: '85%' }}>
-              <div style={{ background: '#4f46e5', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(79,70,229,0.2)' }}>
-                <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6 }}>{reply}</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>You · Sent</p>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-5.5 5.5"></path></svg>
+        {messages.map((msg) => (
+          msg.sender_type === 'user' ? (
+            <div key={msg.id} style={{ display:'flex', justifyContent:'flex-end', marginBottom:'12px' }}>
+              <div style={{ maxWidth:'85%' }}>
+                <div style={{ background:'#4f46e5', borderRadius:'16px 16px 4px 16px', padding:'12px 16px' }}>
+                  <p style={{ fontSize:'13px', color:'#fff', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{msg.content}</p>
+                </div>
+                <p style={{ fontSize:'10px', color:'rgba(255,255,255,0.3)', textAlign:'right', marginTop:'4px' }}>
+                  You · {new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric'}).format(new Date(msg.created_at))}
+                </p>
               </div>
             </div>
-          </div>
+          ) : msg.sender_type === 'agent' ? (
+            <motion.div key={msg.id} initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
+              <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,255,255,0.08)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ fontSize:'12px', fontWeight:700, color:'#fff' }}>{(msg.agent_name||'A')[0].toUpperCase()}</span>
+              </div>
+              <div style={{ maxWidth:'85%' }}>
+                <p style={{ fontSize:'10px', fontWeight:600, color:'rgba(255,255,255,0.5)', marginBottom:'4px' }}>{msg.agent_name || 'Support Agent'} · Verlyn Support</p>
+                <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:'4px 16px 16px 16px', padding:'12px 16px' }}>
+                  <p style={{ fontSize:'13px', color:'#fff', lineHeight:1.6, whiteSpace:'pre-wrap' }}>{msg.content}</p>
+                </div>
+                <p style={{ fontSize:'10px', color:'rgba(255,255,255,0.3)', marginTop:'4px' }}>
+                  {new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric'}).format(new Date(msg.created_at))}
+                </p>
+              </div>
+            </motion.div>
+          ) : null
         ))}
-
-        {/* Agent Assignment Intro */}
-        {chatTicket.status !== 'Completed' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} style={{ marginBottom: '24px', marginTop: '16px' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
-                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>Elena Voss</h4>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                  <span style={{ fontSize: '10px', color: '#6366f1', background: 'rgba(99,102,241,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Security Operations</span>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', backdropFilter: 'blur(10px)', marginTop: '4px' }}>
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                    Hello, I'm Elena.<br/><br/>
-                    I've reviewed your request and opened a secure realtime channel. I will be personally handling Case <span style={{ fontFamily: 'monospace', color: '#fff' }}>{chatTicket.case_id}</span> today. How can I assist you further?
-                  </p>
-                </div>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>Elena Voss · {new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric'}).format(new Date())}</p>
-              </div>
+        {/* Waiting for admin */}
+        {!hasAgentMsg && (
+          <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
+            <div style={{ width:'32px', height:'32px', borderRadius:'8px', background:'rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, border:'1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.3)' }}>?</span>
             </div>
-          </motion.div>
-        )}
-
-        {/* Waiting indicator */}
-        {!adminReply && chatTicket.status !== 'Completed' && (
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '6px', alignItems: 'center' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s ease-in-out infinite' }} />
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s 0.2s ease-in-out infinite' }} />
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s 0.4s ease-in-out infinite' }} />
+            <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:'4px 16px 16px 16px', padding:'14px 18px', border:'1px solid rgba(255,255,255,0.06)', display:'flex', gap:'5px', alignItems:'center' }}>
+              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s ease-in-out infinite' }} />
+              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s 0.2s ease-in-out infinite' }} />
+              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'rgba(255,255,255,0.4)', animation:'vrlBlink 1.4s 0.4s ease-in-out infinite' }} />
             </div>
           </div>
-        )}
-
-        {/* Admin Reply */}
-        {adminReply && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <div style={{ maxWidth: '85%' }}>
-              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', backdropFilter: 'blur(10px)' }}>
-                <p style={{ fontSize: '13.5px', color: '#fff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{adminReply}</p>
-              </div>
-              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>Elena Voss · Security Operations</p>
-            </div>
-          </motion.div>
         )}
       </>
     );

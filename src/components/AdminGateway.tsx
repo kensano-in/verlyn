@@ -33,10 +33,13 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<'overwatch' | 'triage' | 'prereg' | 'security'>('overwatch');
   const [preRegs, setPreRegs] = useState<any[]>([]);
-  const [replyText, setReplyText] = useState('');
-  const [replySending, setReplySending] = useState(false);
-  const [replyDone, setReplyDone] = useState(false);
-
+  // Live chat state
+  const [adminName, setAdminName] = useState('');
+  const [adminNameInput, setAdminNameInput] = useState('');
+  const [joinStep, setJoinStep] = useState<'idle' | 'enter_name' | 'chat'>('idle');
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatSending, setChatSending] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // 1. Check PIN
@@ -130,46 +133,61 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     }
   };
 
-  // 4. Update Ticket Status Action
+  // 4. Update Ticket Status
   const updateStatus = async (id: string, status: string) => {
     try {
       const res = await fetch('/api/admin/tickets', {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${authKey}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status })
       });
-
-      if (!res.ok) throw new Error('Failed to update status');
-
+      if (!res.ok) throw new Error('Failed');
       setTickets(tickets.map(t => t.id === id ? { ...t, status } : t));
-      if (selectedTicket && selectedTicket.id === id) {
-        setSelectedTicket({ ...selectedTicket, status });
-      }
-    } catch (err: any) {
-      alert(err.message);
-    }
+      if (selectedTicket?.id === id) setSelectedTicket((p: any) => ({ ...p, status }));
+    } catch (err: any) { alert(err.message); }
   };
 
-  // 5. Send Reply
-  const sendReply = async () => {
-    if (!replyText.trim() || !selectedTicket) return;
-    setReplySending(true);
+  // 5. Fetch live chat messages for selected ticket
+  useEffect(() => {
+    if (joinStep !== 'chat' || !selectedTicket) return;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/support/messages?ticket_id=${selectedTicket.id}`, {
+          headers: { 'Authorization': `Bearer ${authKey}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setChatMessages(data.messages || []);
+        setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
+      } catch {}
+    };
+    load();
+    const iv = setInterval(load, 3000);
+    return () => clearInterval(iv);
+  }, [joinStep, selectedTicket, authKey]);
+
+  // 6. Admin send message
+  const sendAdminMsg = async () => {
+    if (!chatInput.trim() || !selectedTicket || chatSending) return;
+    const text = chatInput;
+    setChatInput('');
+    setChatSending(true);
+    setChatMessages(prev => [...prev, { id: Date.now(), sender_type: 'agent', agent_name: adminName, content: text, created_at: new Date().toISOString() }]);
+    setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
     try {
+      await fetch('/api/support/messages', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: selectedTicket.id, content: text, sender_type: 'agent', agent_name: adminName })
+      });
+      // Update ticket status to Active Session
       await fetch('/api/admin/tickets', {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedTicket.id, admin_reply: replyText.trim(), status: 'Completed' })
+        body: JSON.stringify({ id: selectedTicket.id, status: 'Active Session' })
       });
-      const updatedT = { ...selectedTicket, admin_reply: replyText.trim(), status: 'Completed' };
-      setSelectedTicket(updatedT);
-      setTickets(tickets.map(t => t.id === selectedTicket.id ? updatedT : t));
-      setReplyDone(true);
-      setTimeout(() => setReplyDone(false), 3000);
-      setReplyText('');
-    } catch { } finally { setReplySending(false); }
+      setTickets(ts => ts.map(t => t.id === selectedTicket.id ? { ...t, status: 'Active Session' } : t));
+    } catch { } finally { setChatSending(false); }
   };
 
   const getStatusColor = (status: string) => {
@@ -402,7 +420,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {activeTab === 'triage' && tickets.map(t => (
-                  <div key={t.id} onClick={() => { setSelectedTicket(t); setReplyText(''); setReplyDone(false); }}
+                  <div key={t.id} onClick={() => { setSelectedTicket(t); setJoinStep('idle'); setChatMessages([]); setAdminNameInput(''); setChatInput(''); }}
                     style={{
                       padding: '20px 24px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s',
                       background: selectedTicket?.id === t.id ? 'rgba(255,255,255,0.04)' : 'transparent',
@@ -528,40 +546,94 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                       </div>
                     </div>
 
-                    <div style={{ marginBottom: '32px' }}>
+                  <div style={{ marginBottom: '24px' }}>
+                      {/* Simple chat log (ticket description) */}
                       {renderChatLog(selectedTicket.description)}
                     </div>
 
-                    {/* ── Reply Box ── */}
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Official Response</p>
-                      </div>
-
-                      {selectedTicket.admin_reply && (
-                        <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', marginBottom: '20px', fontSize: '13px', color: '#fff', lineHeight: 1.6 }}>
-                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Last transmission</span>
-                          {selectedTicket.admin_reply}
-                        </div>
-                      )}
-
-                      <textarea
-                        value={replyText}
-                        onChange={e => setReplyText(e.target.value)}
-                        placeholder={`Draft response to ${selectedTicket.full_name}...`}
-                        style={{ width: '100%', minHeight: '120px', padding: '16px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '13.5px', outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.6, transition: 'border-color 0.2s' }}
-                        onFocus={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.3)'}
-                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Sending a reply will mark this case as completed.</span>
-                        <button onClick={sendReply} disabled={replySending || !replyText.trim()}
-                          style={{ padding: '12px 28px', background: replyDone ? '#10b981' : '#fff', border: 'none', borderRadius: '10px', color: replyDone ? '#fff' : '#000', fontSize: '12px', fontWeight: 700, cursor: replySending || !replyText.trim() ? 'not-allowed' : 'pointer', opacity: !replyText.trim() ? 0.5 : 1, transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          {replyDone ? 'Transmitted' : replySending ? 'Transmitting...' : 'Send Transmission'}
+                    {/* ── LIVE CHAT PANEL ── */}
+                    {joinStep === 'idle' && (
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: 600 }}>Join Live Chat</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>Enter the chat to reply directly to {selectedTicket.full_name} in real-time.</p>
+                        <button onClick={() => setJoinStep('enter_name')}
+                          style={{ padding: '12px 32px', background: '#fff', color: '#000', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Join Session
                         </button>
                       </div>
-                    </div>
+                    )}
+
+                    {joinStep === 'enter_name' && (
+                      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px' }}>
+                        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>Enter your name to join the session</p>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <input autoFocus value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && adminNameInput.trim()) { setAdminName(adminNameInput.trim()); setJoinStep('chat'); setChatMessages([]); } }}
+                            placeholder="Your name..." style={{ flex: 1, padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none' }} />
+                          <button onClick={() => { if (adminNameInput.trim()) { setAdminName(adminNameInput.trim()); setJoinStep('chat'); setChatMessages([]); } }}
+                            style={{ padding: '12px 24px', background: '#fff', color: '#000', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                            Enter
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {joinStep === 'chat' && (
+                      <div style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '360px' }}>
+                        {/* Chat header */}
+                        <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.6)' }} />
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>Live · {adminName} → {selectedTicket.full_name}</span>
+                          </div>
+                          <button onClick={() => { setJoinStep('idle'); setChatMessages([]); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '11px' }}>Leave</button>
+                        </div>
+                        {/* Messages */}
+                        <div ref={chatScrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }} className="scrollbar-hide">
+                          {chatMessages.length === 0 && (
+                            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '12px', marginTop: '40px' }}>No messages yet. Say hello to {selectedTicket.full_name}.</p>
+                          )}
+                          {chatMessages.map(msg => (
+                            msg.sender_type === 'user' ? (
+                              <div key={msg.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(79,70,229,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#818cf8' }}>{(selectedTicket.full_name||'U')[0]}</span>
+                                </div>
+                                <div>
+                                  <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>{selectedTicket.full_name}</p>
+                                  <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '4px 12px 12px 12px', padding: '10px 14px', border: '1px solid rgba(255,255,255,0.07)' }}>
+                                    <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div key={msg.id} style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', alignItems: 'flex-start' }}>
+                                <div style={{ textAlign: 'right' }}>
+                                  <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>{msg.agent_name || adminName}</p>
+                                  <div style={{ background: '#4f46e5', borderRadius: '12px 4px 12px 12px', padding: '10px 14px' }}>
+                                    <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                                  </div>
+                                </div>
+                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff' }}>{(adminName||'A')[0]}</span>
+                                </div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                        {/* Input */}
+                        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px' }}>
+                          <input value={chatInput} onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAdminMsg(); } }}
+                            placeholder={`Reply as ${adminName}...`}
+                            style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', padding: '10px 14px', outline: 'none' }} />
+                          <button onClick={sendAdminMsg} disabled={chatSending || !chatInput.trim()}
+                            style={{ padding: '10px 20px', background: chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.1)', color: chatInput.trim() ? '#000' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : selectedTicket && activeTab === 'prereg' ? (
                   <div style={{ maxWidth: '600px', margin: '0 auto' }}>
