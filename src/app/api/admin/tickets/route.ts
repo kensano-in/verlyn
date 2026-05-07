@@ -1,97 +1,159 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import speakeasy from 'speakeasy';
+import { adminApiLimiter } from '@/lib/rateLimit';
+import { getClientIp, hashIp, securityHeaders } from '@/lib/secureComm';
+import { resolveRoleFromHeader, hasPermission } from '@/lib/roles';
+import { auditAdminLogin, auditTicketUpdate, auditUnauthorized } from '@/lib/audit';
 
-// Advanced admin auth check: Requires Password + 2FA Token
-const checkAdminAuth = (req: NextRequest) => {
+// ── Admin authentication ───────────────────────────────────────────────────────
+function checkAdminAuth(req: NextRequest): { ok: boolean; role?: ReturnType<typeof resolveRoleFromHeader> } {
   const authHeader = req.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
-  
-  // Format expected: "Bearer <password>:<2fa_token>"
-  const tokenString = authHeader.split(' ')[1];
+  if (!authHeader?.startsWith('Bearer ')) return { ok: false };
+
+  const tokenString = authHeader.slice(7);
   const [password, token2fa] = tokenString.split(':');
 
-  const adminPassword = process.env.ADMIN_PASSWORD || 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!';
-  const secret2fa = process.env.ADMIN_2FA_SECRET;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const secret2fa     = process.env.ADMIN_2FA_SECRET;
 
-  if (password !== adminPassword) return false;
+  if (!adminPassword || password !== adminPassword) return { ok: false };
 
-  // If 2FA is configured in .env, strictly enforce it
   if (secret2fa) {
-    if (!token2fa) return false;
-    const isValid2FA = speakeasy.totp.verify({
-      secret: secret2fa,
+    if (!token2fa) return { ok: false };
+    const valid = speakeasy.totp.verify({
+      secret:   secret2fa,
       encoding: 'base32',
-      token: token2fa,
-      window: 2 // Allow 60 seconds clock skew
+      token:    token2fa,
+      window:   2,
     });
-    return isValid2FA;
+    if (!valid) return { ok: false };
   }
 
-  // Fallback to password only if 2FA secret is not yet set up (for initial setup phase)
-  return true;
-};
+  const role = resolveRoleFromHeader(authHeader);
+  return { ok: true, role };
+}
 
+// ── GET: Fetch all tickets ─────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const headers = securityHeaders();
+  const ip = getClientIp(req);
+  const ipHash = hashIp(ip);
+
+  // Rate limit admin API
+  const rl = adminApiLimiter(ipHash);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429, headers });
   }
+
+  const auth = checkAdminAuth(req);
+  if (!auth.ok) {
+    await auditUnauthorized(ipHash, '/api/admin/tickets GET');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
+  }
+
+  await auditAdminLogin(ipHash, true, { endpoint: 'GET /api/admin/tickets', role: auth.role });
 
   try {
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     );
 
-    const { data, error } = await supabaseAdmin
-      .from('support_tickets')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Support role-based field filtering
+    const fields = auth.role === 'viewer'
+      ? 'id,case_id,subject,status,report_type,created_at,updated_at'
+      : '*';
 
+    const url = new URL(req.url);
+    const statusFilter  = url.searchParams.get('status');
+    const priorityFilter = url.searchParams.get('priority');
+    const limitParam    = parseInt(url.searchParams.get('limit') ?? '100');
+    const limit         = Math.min(Math.max(1, limitParam), 500);
+
+    let query = supabaseAdmin
+      .from('support_tickets')
+      .select(fields)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (statusFilter)   query = query.eq('status', statusFilter);
+    if (priorityFilter) query = query.eq('priority', priorityFilter);
+
+    const { data, error } = await query;
     if (error) {
-      if (error.code === '42P01') {
-        return NextResponse.json({ tickets: [] }, { status: 200 }); // Table not created yet
-      }
+      if (error.code === '42P01') return NextResponse.json({ tickets: [] }, { status: 200, headers });
       throw error;
     }
 
-    return NextResponse.json({ tickets: data }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ tickets: data, role: auth.role }, { status: 200, headers });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: msg }, { status: 500, headers });
   }
 }
 
+// ── PATCH: Update ticket ──────────────────────────────────────────────────────
 export async function PATCH(req: NextRequest) {
-  if (!checkAdminAuth(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const headers = securityHeaders();
+  const ip = getClientIp(req);
+  const ipHash = hashIp(ip);
+
+  const rl = adminApiLimiter(ipHash);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429, headers });
+  }
+
+  const auth = checkAdminAuth(req);
+  if (!auth.ok) {
+    await auditUnauthorized(ipHash, '/api/admin/tickets PATCH');
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
+  }
+
+  // Viewers cannot write
+  if (!hasPermission(auth.role ?? 'viewer', 'tickets:write')) {
+    return NextResponse.json({ error: 'Insufficient permissions.' }, { status: 403, headers });
   }
 
   try {
-    const body = await req.json();
-    const { id, status, admin_reply } = body;
-    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    const body = await req.json() as Record<string, unknown>;
+    const { id, status, admin_reply, priority, assigned_to, internal_notes } = body;
 
-    const updatePayload: Record<string, string> = {};
-    if (status) updatePayload.status = status;
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400, headers });
+
+    const updatePayload: Record<string, unknown> = {};
+    if (status)         updatePayload.status         = status;
     if (admin_reply !== undefined) updatePayload.admin_reply = admin_reply;
+    if (priority)       updatePayload.priority       = priority;
+    if (assigned_to !== undefined) updatePayload.assigned_to = assigned_to;
+    if (internal_notes !== undefined) updatePayload.internal_notes = internal_notes;
+    if (status === 'Resolved' || status === 'Completed') {
+      updatePayload.resolved_at = new Date().toISOString();
+    }
 
-    if (Object.keys(updatePayload).length === 0)
-      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+    if (Object.keys(updatePayload).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update.' }, { status: 400, headers });
+    }
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     );
 
     const { error } = await supabaseAdmin
       .from('support_tickets')
       .update(updatePayload)
-      .eq('id', id);
+      .eq('id', String(id));
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    await auditTicketUpdate(ipHash, String(id), updatePayload);
+
+    return NextResponse.json({ success: true }, { status: 200, headers });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: msg }, { status: 500, headers });
   }
 }

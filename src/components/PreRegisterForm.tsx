@@ -343,11 +343,22 @@ export default function PreRegisterForm() {
   );
 
   if (isBlocked) return (
-    <div style={{ padding: '32px', textAlign: 'center' }}>
-      <div style={{ fontSize: '36px', marginBottom: '16px' }}>🚫</div>
-      <h3 style={{ color: '#ef4444', fontSize: '18px', fontWeight: 700, marginBottom: '10px' }}>Access Blocked</h3>
-      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', lineHeight: 1.65 }}>
-        Blocked for 1 hour due to repeated invalid attempts.
+    <div style={{ padding: '36px 24px', textAlign: 'center' }}>
+      <div style={{
+        width: '48px', height: '48px', borderRadius: '50%',
+        border: '1px solid rgba(239,68,68,0.2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        margin: '0 auto 20px',
+        background: 'rgba(239,68,68,0.06)',
+      }}>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="8" stroke="rgba(239,68,68,0.6)" strokeWidth="1.5"/>
+          <path d="M7 7l6 6M13 7l-6 6" stroke="rgba(239,68,68,0.6)" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </div>
+      <h3 style={{ color: 'rgba(239,68,68,0.85)', fontSize: '16px', fontWeight: 600, marginBottom: '10px', letterSpacing: '-0.01em' }}>Access Restricted</h3>
+      <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: '13px', lineHeight: 1.65 }}>
+        Blocked for 1 hour due to repeated invalid attempts. If this is an error, contact <span style={{color:'rgba(129,140,248,0.7)'}}>support@verlyn.in</span>
       </p>
     </div>
   );
@@ -355,26 +366,22 @@ export default function PreRegisterForm() {
   /* ── Shared styles ───────────────────────────────────────────────── */
   const inp: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    padding: '15px 16px',
-    background: 'rgba(0,0,0,0.35)',
+    padding: '13px 15px',
+    background: 'rgba(0,0,0,0.4)',
     border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: '12px', color: '#fff', fontSize: '15px',
-    outline: 'none', transition: 'border-color 0.2s ease',
-    marginBottom: '16px',
+    borderRadius: '10px', color: '#f2f2f2', fontSize: '14px',
+    fontFamily: 'var(--font-sans, Inter, sans-serif)',
+    outline: 'none',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    marginBottom: '14px',
   };
   const lbl: React.CSSProperties = {
-    display: 'block', fontSize: '12px', fontWeight: 600,
-    color: 'rgba(255,255,255,0.5)', marginBottom: '8px',
-    letterSpacing: '0.06em', textTransform: 'uppercase',
+    display: 'block', fontSize: '10px', fontWeight: 600,
+    color: 'rgba(255,255,255,0.38)', marginBottom: '7px',
+    letterSpacing: '0.1em', textTransform: 'uppercase',
   };
   const glassForm: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(8,8,8,0.5)',
-    backdropFilter: 'blur(32px) saturate(160%)',
-    WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: '20px', padding: '32px',
-    boxShadow: '0 32px 64px -16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 60px rgba(168,85,247,0.06)',
     position: 'relative', overflow: 'hidden',
   };
 

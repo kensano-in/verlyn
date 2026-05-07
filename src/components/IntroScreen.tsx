@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-/* ─── Key stored in localStorage (persists across sessions, clears on new deploy) ─── */
 const KEY = 'vrl_intro_v3';
 
-/* ─── Platform pillars that cycle during the intro ─── */
 const PILLARS = [
   'A new kind of social space.',
   'Your data.\u00a0 Only yours.',
@@ -14,16 +12,14 @@ const PILLARS = [
 ];
 
 export default function IntroScreen({ onComplete }: { onComplete: () => void }) {
-  const [mounted,   setMounted]   = useState(false);
-  const [skip,      setSkip]      = useState(false);
-  const [pillar,    setPillar]    = useState(0);
-  const [phase,     setPhase]     = useState<
-    'hidden' | 'orb' | 'word' | 'divider' | 'pillars' | 'bar' | 'exit'
-  >('hidden');
+  const [mounted,  setMounted]  = useState(false);
+  const [skip,     setSkip]     = useState(false);
+  const [pillar,   setPillar]   = useState(0);
+  const [phase,    setPhase]    = useState<'hidden'|'orb'|'word'|'divider'|'pillars'|'bar'|'exit'>('hidden');
 
-  const barRef  = useRef<HTMLDivElement>(null);
-  const timers  = useRef<number[]>([]);
-  const isDone  = useRef(false);
+  const barRef   = useRef<HTMLDivElement>(null);
+  const timers   = useRef<number[]>([]);
+  const isDone   = useRef(false);
 
   const done = () => {
     if (isDone.current) return;
@@ -33,54 +29,38 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
     window.setTimeout(() => {
       localStorage.setItem(KEY, '1');
       onComplete();
-    }, 900);
+    }, 850);
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted) return;
-
-    /* Already seen → skip immediately */
-    if (localStorage.getItem(KEY)) {
-      onComplete();
-      return;
-    }
 
     const t = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms) as unknown as number;
       timers.current.push(id);
     };
 
-    /* Sequence */
-    t(() => setPhase('orb'),     100);
-    t(() => setPhase('word'),    900);
-    t(() => setPhase('divider'), 1600);
-    t(() => setPhase('pillars'), 2300);
-
-    /* Cycle pillars */
-    t(() => setPillar(1), 3100);
-    t(() => setPillar(2), 4000);
-    t(() => setPillar(3), 4900);
-
-    /* Progress bar */
+    t(() => setPhase('orb'),      80);
+    t(() => setPhase('word'),    800);
+    t(() => setPhase('divider'), 1500);
+    t(() => setPhase('pillars'), 2100);
+    t(() => setPillar(1),        2900);
+    t(() => setPillar(2),        3800);
+    t(() => setPillar(3),        4700);
     t(() => {
       setPhase('bar');
       requestAnimationFrame(() => {
         if (barRef.current) barRef.current.style.width = '100%';
       });
-    }, 5600);
-
-    /* Exit */
-    t(() => done(), 7200);
+    }, 5400);
+    t(() => done(), 6900);
 
     return () => timers.current.forEach(clearTimeout);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
-  /* Pillar cross-fade */
   const [pillarVisible, setPillarVisible] = useState(true);
   const prevPillar = useRef(pillar);
   useEffect(() => {
@@ -89,27 +69,25 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
     const id = window.setTimeout(() => {
       prevPillar.current = pillar;
       setPillarVisible(true);
-    }, 280);
+    }, 250);
     return () => clearTimeout(id);
   }, [pillar]);
 
-  /* Don't render until client-side (avoids SSR mismatch) */
   if (!mounted) return null;
 
-  /* Already seen — renders nothing, onComplete was called above */
-  if (localStorage.getItem(KEY)) return null;
-
-  const show = (p: typeof phase) =>
-    !['hidden'].includes(phase) && phase !== 'exit'
-      ? p === phase || ['orb','word','divider','pillars','bar'].indexOf(p) <= ['orb','word','divider','pillars','bar'].indexOf(phase)
+  const phaseOrder = ['hidden','orb','word','divider','pillars','bar'] as const;
+  const show = (p: typeof phaseOrder[number]) =>
+    phase !== 'hidden' && phase !== 'exit'
+      ? phaseOrder.indexOf(p) <= phaseOrder.indexOf(phase as typeof phaseOrder[number])
       : false;
 
-  /* ─── Transition helpers ─── */
   const fade = (visible: boolean, delay = '0s'): React.CSSProperties => ({
     opacity: visible ? 1 : 0,
-    transform: visible ? 'translateY(0)' : 'translateY(10px)',
-    transition: `opacity 0.7s ease ${delay}, transform 0.7s ease ${delay}`,
+    transform: visible ? 'translateY(0)' : 'translateY(12px)',
+    transition: `opacity 0.65s var(--ease-spring) ${delay}, transform 0.65s var(--ease-spring) ${delay}`,
   });
+
+  const isExiting = phase === 'exit' || skip;
 
   return (
     <div style={{
@@ -118,196 +96,144 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden',
-      opacity: phase === 'exit' || skip ? 0 : 1,
-      transition: 'opacity 0.85s cubic-bezier(0.22,1,0.36,1)',
-      pointerEvents: phase === 'exit' || skip ? 'none' : 'auto',
+      opacity: isExiting ? 0 : 1,
+      transition: 'opacity 0.8s cubic-bezier(0.22,1,0.36,1)',
+      pointerEvents: isExiting ? 'none' : 'auto',
     }}>
 
-      {/* ─── Ambient bloom ─── */}
+      {/* Ambient bloom */}
       <div style={{
-        position: 'absolute',
-        width: '700px', height: '700px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(88,28,220,0.16) 0%, rgba(124,58,237,0.07) 45%, transparent 70%)',
-        filter: 'blur(90px)', pointerEvents: 'none',
-        animation: 'vrlBreath 5s ease-in-out infinite',
+        position: 'absolute', width: '800px', height: '800px', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(79,70,229,0.14) 0%, rgba(99,102,241,0.06) 45%, transparent 70%)',
+        filter: 'blur(100px)', pointerEvents: 'none',
+        animation: 'breathe 6s ease-in-out infinite',
       }} />
 
-      {/* ─── Orbital system ─── */}
-      <div style={{
-        ...fade(show('orb')),
-        position: 'relative', width: '100px', height: '100px',
-        marginBottom: '48px',
-      }}>
-        {/* Outer ring */}
+      {/* 3D V Logo Intro */}
+      <div style={{ ...fade(show('orb')), position: 'relative', width: '120px', height: '120px', marginBottom: '40px', perspective: '1000px' }}>
         <div style={{
-          position: 'absolute', inset: 0, borderRadius: '50%',
-          border: '1px solid rgba(168,85,247,0.3)',
-          animation: 'vrlSpin 12s linear infinite',
+          width: '100%', height: '100%',
+          position: 'relative',
+          transformStyle: 'preserve-3d',
+          animation: 'vRotate 8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
         }}>
-          <div style={{
-            position: 'absolute', top: '-5px', left: '50%', transform: 'translateX(-50%)',
-            width: '10px', height: '10px', borderRadius: '50%',
-            background: '#a855f7',
-            boxShadow: '0 0 14px #a855f7, 0 0 28px rgba(168,85,247,0.5)',
-          }} />
+          {/* V Shape */}
+          <svg viewBox="0 0 64 64" fill="none" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.4))' }}>
+            <path d="M17 14 L32 52" stroke="white" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.5s' }}/>
+            <path d="M47 14 L32 52" stroke="rgba(255,255,255,0.3)" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}/>
+          </svg>
         </div>
-        {/* Mid ring */}
-        <div style={{
-          position: 'absolute', inset: '18px', borderRadius: '50%',
-          border: '1px solid rgba(168,85,247,0.18)',
-          animation: 'vrlSpin 7s linear infinite reverse',
-        }}>
-          <div style={{
-            position: 'absolute', bottom: '-3px', left: '50%', transform: 'translateX(-50%)',
-            width: '6px', height: '6px', borderRadius: '50%',
-            background: 'rgba(168,85,247,0.7)',
-          }} />
-        </div>
-        {/* Inner ring */}
-        <div style={{
-          position: 'absolute', inset: '36px', borderRadius: '50%',
-          border: '1px solid rgba(168,85,247,0.1)',
-          animation: 'vrlSpin 4s linear infinite',
-        }} />
         {/* Core glow */}
         <div style={{
-          position: 'absolute', inset: '38px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(168,85,247,0.55) 0%, transparent 70%)',
-          animation: 'vrlCore 2.5s ease-in-out infinite',
+          position: 'absolute', inset: '20px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
+          animation: 'corePulse 2.8s ease-in-out infinite',
         }} />
       </div>
 
-      {/* ─── Wordmark ─── */}
+      <style>{`
+        @keyframes vRotate {
+          0% { transform: rotateY(-180deg) scale(0.8); opacity: 0; }
+          20% { transform: rotateY(0deg) scale(1.1); opacity: 1; }
+          100% { transform: rotateY(15deg) scale(1); opacity: 1; }
+        }
+        @keyframes vDrawLine {
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
+
+      {/* Wordmark */}
       <h1 style={{
         ...fade(show('word')),
-        fontSize: 'clamp(42px,7vw,88px)',
-        fontWeight: 700, color: '#fff', margin: '0 0 18px',
-        letterSpacing: '0.4em',
-        fontFamily: '"Bebas Neue","Inter",sans-serif',
-        textShadow: '0 0 80px rgba(168,85,247,0.18)',
+        fontSize: 'clamp(44px, 7vw, 90px)',
+        fontWeight: 400, color: '#fff', margin: '0 0 20px',
+        letterSpacing: '0.38em',
+        fontFamily: 'var(--font-bebas), "Bebas Neue", sans-serif',
+        textShadow: '0 0 60px rgba(99,102,241,0.14)',
         lineHeight: 1,
       }}>
         VERLYN
       </h1>
 
-      {/* ─── Hairline ─── */}
+      {/* Hairline */}
       <div style={{
-        width: show('divider') ? '240px' : '0px',
-        height: '1px',
-        background: 'rgba(255,255,255,0.08)',
+        width: show('divider') ? '220px' : '0px', height: '1px',
+        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.09), transparent)',
         transition: 'width 0.9s cubic-bezier(0.22,1,0.36,1)',
-        marginBottom: '32px',
+        marginBottom: '36px',
       }} />
 
-      {/* ─── Cycling pillars ─── */}
+      {/* Cycling pillars */}
       <div style={{
-        height: '60px', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: '56px',
-        opacity: show('pillars') ? 1 : 0,
-        transition: 'opacity 0.6s ease',
+        height: '56px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', marginBottom: '60px',
+        opacity: show('pillars') ? 1 : 0, transition: 'opacity 0.6s ease',
       }}>
         <p style={{
-          fontSize: 'clamp(16px,2.2vw,24px)',
-          fontWeight: 600, color: '#fff', margin: '0 0 8px',
-          letterSpacing: '-0.02em', textAlign: 'center',
+          fontSize: 'clamp(15px, 2.2vw, 22px)', fontWeight: 500, color: '#fff',
+          margin: '0 0 10px', letterSpacing: '-0.015em', textAlign: 'center',
           opacity: pillarVisible ? 1 : 0,
-          transform: pillarVisible ? 'translateY(0)' : 'translateY(6px)',
-          transition: 'opacity 0.28s ease, transform 0.28s ease',
+          transform: pillarVisible ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'opacity 0.25s ease, transform 0.25s ease',
         }}>
           {PILLARS[pillar]}
         </p>
-        {/* Pillar dots */}
         <div style={{ display: 'flex', gap: '6px' }}>
           {PILLARS.map((_, i) => (
             <div key={i} style={{
-              width: i === pillar ? '18px' : '4px',
-              height: '2px', borderRadius: '1px',
-              background: i === pillar ? '#a855f7' : 'rgba(255,255,255,0.15)',
-              transition: 'all 0.4s ease',
+              width: i === pillar ? '20px' : '4px', height: '2px', borderRadius: '1px',
+              background: i === pillar ? '#818cf8' : 'rgba(255,255,255,0.12)',
+              transition: 'all 0.4s var(--ease-spring)',
             }} />
           ))}
         </div>
       </div>
 
-      {/* ─── Progress bar ─── */}
-      <div style={{
-        width: '220px', marginBottom: '18px',
-        opacity: show('bar') ? 1 : 0,
-        transition: 'opacity 0.4s ease',
-      }}>
-        <div style={{
-          height: '1px', background: 'rgba(255,255,255,0.07)',
-          borderRadius: '1px', overflow: 'hidden',
-        }}>
+      {/* Progress bar */}
+      <div style={{ width: '200px', marginBottom: '20px', opacity: show('bar') ? 1 : 0, transition: 'opacity 0.4s ease' }}>
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', borderRadius: '1px', overflow: 'hidden' }}>
           <div ref={barRef} style={{
             height: '100%', width: '0%',
-            background: 'linear-gradient(90deg, rgba(168,85,247,0.4), #a855f7)',
-            transition: 'width 1.5s cubic-bezier(0.22,1,0.36,1)',
+            background: 'linear-gradient(90deg, rgba(99,102,241,0.4), #818cf8)',
+            transition: 'width 1.4s cubic-bezier(0.22,1,0.36,1)',
           }} />
         </div>
       </div>
 
-      {/* ─── Status line ─── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '8px',
-        opacity: show('bar') ? 1 : 0,
-        transition: 'opacity 0.5s ease',
-      }}>
+      {/* Status */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: show('bar') ? 1 : 0, transition: 'opacity 0.5s ease' }}>
         <span style={{
-          width: '5px', height: '5px', borderRadius: '50%',
-          background: '#a855f7', display: 'inline-block',
-          animation: 'vrlBlink 1.3s ease-in-out infinite',
+          width: '5px', height: '5px', borderRadius: '50%', background: '#818cf8',
+          display: 'inline-block', animation: 'blink 1.4s ease-in-out infinite',
         }} />
-        <span style={{
-          fontSize: '10px', letterSpacing: '0.2em',
-          color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase',
-        }}>
+        <span style={{ fontSize: '10px', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
           Initializing secure environment
         </span>
       </div>
 
-      {/* ─── Skip / Enter button ─── */}
+      {/* Skip button */}
       <button
         onClick={() => { setSkip(true); done(); }}
         style={{
           position: 'absolute', bottom: '28px', right: '28px',
-          background: 'none',
-          border: '1px solid rgba(255,255,255,0.12)',
-          color: 'rgba(255,255,255,0.3)', fontSize: '11px',
-          letterSpacing: '0.12em', padding: '9px 18px',
-          cursor: 'pointer', borderRadius: '3px',
-          textTransform: 'uppercase',
-          transition: 'all 0.2s',
+          background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+          color: 'rgba(255,255,255,0.28)', fontSize: '10px',
+          letterSpacing: '0.14em', padding: '9px 18px', cursor: 'pointer',
+          borderRadius: '4px', textTransform: 'uppercase',
+          transition: 'all 0.2s ease',
           opacity: show('word') ? 1 : 0,
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(168,85,247,0.5)';
-          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)';
+          e.currentTarget.style.borderColor = 'rgba(99,102,241,0.45)';
+          e.currentTarget.style.color = 'rgba(255,255,255,0.65)';
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)';
-          (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)';
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+          e.currentTarget.style.color = 'rgba(255,255,255,0.28)';
         }}
       >
         Enter →
       </button>
-
-      <style>{`
-        @keyframes vrlBreath {
-          0%,100% { transform:scale(1);    opacity:.85; }
-          50%      { transform:scale(1.07); opacity:1;   }
-        }
-        @keyframes vrlSpin { to { transform: rotate(360deg); } }
-        @keyframes vrlCore {
-          0%,100% { opacity:.5; transform:scale(.9);  }
-          50%      { opacity:1;  transform:scale(1.12); }
-        }
-        @keyframes vrlBlink {
-          0%,100% { opacity:1; }
-          50%      { opacity:.25; }
-        }
-      `}</style>
     </div>
   );
 }

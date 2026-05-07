@@ -1,135 +1,209 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { supportTicketLimiter } from '@/lib/rateLimit';
+import { analyzeSpam } from '@/lib/spam';
+import { getClientIp, hashIp, securityHeaders, deepSanitize, buildSessionFingerprint } from '@/lib/secureComm';
+import { auditTicketCreate, auditRateLimit, auditSpamDetect } from '@/lib/audit';
 
-// 6-hour rate limit: max 1 report per IP per 6 hours
-const rateLimitMap = new Map<string, number>(); // ip -> last_submitted_timestamp
-const WINDOW_MS = 6 * 60 * 60 * 1000;
-
+// ── Validation constants ───────────────────────────────────────────────────────
 const SUBJECT_MIN_WORDS = 5;
 const SUBJECT_MAX_CHARS = 120;
 const DESC_MIN_WORDS    = 30;
 const DESC_MAX_CHARS    = 1500;
+const NAME_MAX_CHARS    = 80;
 
 const wordCount = (str: string) => str.trim().split(/\s+/).filter(Boolean).length;
 
-// Simple spam pattern detector
-const SPAM_PATTERNS = [/(.)\1{6,}/, /https?:\/\//i, /[A-Z]{15,}/];
-const isSpam = (text: string) => SPAM_PATTERNS.some(p => p.test(text));
+const VALID_REPORT_TYPES = ['question', 'account', 'bug', 'suggestion', 'security', 'other'];
 
+// ── POST: Submit new ticket ────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  try {
-    const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      req.headers.get('x-real-ip') ??
-      'unknown';
+  const headers = securityHeaders();
 
-    // 6-hour IP rate limit
-    const lastSent = rateLimitMap.get(ip);
-    if (lastSent && Date.now() - lastSent < WINDOW_MS) {
-      const hoursLeft = Math.ceil((WINDOW_MS - (Date.now() - lastSent)) / 3600000);
+  try {
+    const ip = getClientIp(req);
+    const ipHash = hashIp(ip);
+    const sessionFp = buildSessionFingerprint(req);
+
+    // ── Rate limit ─────────────────────────────────────────────────────────────
+    const rl = supportTicketLimiter(ipHash);
+    if (!rl.allowed) {
+      await auditRateLimit(ipHash, '/api/support');
       return NextResponse.json(
-        { error: `You already submitted a report recently. Please wait ${hoursLeft} hour(s) before submitting again.` },
-        { status: 429 }
+        { error: `Rate limit exceeded. You may submit again in ${rl.retryAfter} seconds.` },
+        { status: 429, headers: { ...headers, 'Retry-After': String(rl.retryAfter) } }
       );
     }
 
-    const body = await req.json();
-    const { fullName, email, subject, reportType, description, agreed } = body;
-
-    if (!fullName?.trim() || !email?.trim() || !subject?.trim() || !reportType || !description?.trim() || !agreed) {
-      return NextResponse.json({ error: 'All fields are required and terms must be accepted.' }, { status: 400 });
+    // ── Parse & sanitize body ─────────────────────────────────────────────────
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400, headers });
     }
 
-    // Server-side word count validation
-    const subjectWords = wordCount(subject);
-    const descWords    = wordCount(description);
+    if (typeof body !== 'object' || body === null) {
+      return NextResponse.json({ error: 'Invalid request.' }, { status: 400, headers });
+    }
 
-    if (subjectWords < SUBJECT_MIN_WORDS)
-      return NextResponse.json({ error: `Subject needs at least ${SUBJECT_MIN_WORDS} words (you wrote ${subjectWords}).` }, { status: 400 });
+    const raw = body as Record<string, unknown>;
+    const fullName   = deepSanitize(raw.fullName, NAME_MAX_CHARS);
+    const email      = deepSanitize(raw.email, 254).toLowerCase();
+    const subject    = deepSanitize(raw.subject, SUBJECT_MAX_CHARS);
+    const reportType = deepSanitize(raw.reportType, 20);
+    const description = deepSanitize(raw.description, DESC_MAX_CHARS);
+    const agreed     = Boolean(raw.agreed);
 
-    if (subject.length > SUBJECT_MAX_CHARS)
-      return NextResponse.json({ error: `Subject is too long. Max ${SUBJECT_MAX_CHARS} characters.` }, { status: 400 });
+    // ── Field validation ──────────────────────────────────────────────────────
+    if (!fullName || !email || !subject || !reportType || !description || !agreed) {
+      return NextResponse.json(
+        { error: 'All fields are required and terms must be accepted.' },
+        { status: 400, headers }
+      );
+    }
 
-    if (descWords < DESC_MIN_WORDS)
-      return NextResponse.json({ error: `Description needs at least ${DESC_MIN_WORDS} words (you wrote ${descWords}). Please give us more detail so we can help you.` }, { status: 400 });
+    if (fullName.length > NAME_MAX_CHARS) {
+      return NextResponse.json({ error: 'Name is too long.' }, { status: 400, headers });
+    }
 
-    if (description.length > DESC_MAX_CHARS)
-      return NextResponse.json({ error: `Description is too long. Max ${DESC_MAX_CHARS} characters.` }, { status: 400 });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400, headers });
+    }
 
-    // Spam pattern check
-    if (isSpam(subject) || isSpam(description))
-      return NextResponse.json({ error: 'Your report looks like spam. Please write a genuine description of your issue.' }, { status: 400 });
+    if (wordCount(subject) < SUBJECT_MIN_WORDS) {
+      return NextResponse.json(
+        { error: `Subject needs at least ${SUBJECT_MIN_WORDS} words (you wrote ${wordCount(subject)}).` },
+        { status: 400, headers }
+      );
+    }
 
-    // Email format check
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    if (wordCount(description) < DESC_MIN_WORDS) {
+      return NextResponse.json(
+        { error: `Description needs at least ${DESC_MIN_WORDS} words. Please provide more detail so we can help you.` },
+        { status: 400, headers }
+      );
+    }
 
-    // Valid report type
-    const VALID_TYPES = ['question', 'account', 'bug', 'suggestion', 'security'];
-    if (!VALID_TYPES.includes(reportType))
-      return NextResponse.json({ error: 'Invalid report type.' }, { status: 400 });
+    if (!VALID_REPORT_TYPES.includes(reportType)) {
+      return NextResponse.json({ error: 'Invalid report type.' }, { status: 400, headers });
+    }
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    // ── Spam analysis ─────────────────────────────────────────────────────────
+    const subjectSpam     = analyzeSpam(subject, 'subject');
+    const descriptionSpam = analyzeSpam(description, 'description');
+    const nameSpam        = analyzeSpam(fullName, 'name');
+
+    const allSignals = [
+      ...subjectSpam.signals.map(s => `subject:${s}`),
+      ...descriptionSpam.signals.map(s => `desc:${s}`),
+      ...nameSpam.signals.map(s => `name:${s}`),
+    ];
+
+    const riskScore = Math.min(
+      100,
+      Math.round((subjectSpam.score * 0.35) + (descriptionSpam.score * 0.55) + (nameSpam.score * 0.1))
     );
 
-    const caseId = `CASE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
+    // Hard-reject obvious spam (score >= 60)
+    if (riskScore >= 60) {
+      await auditSpamDetect(ipHash, 'all');
+      return NextResponse.json(
+        { error: 'Your submission was flagged as spam. Please write a genuine, detailed description of your issue.' },
+        { status: 400, headers }
+      );
+    }
+
+    // ── Persist to database ───────────────────────────────────────────────────
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+
+    const caseId = `CASE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const priority = reportType === 'security' ? 'high' : riskScore > 30 ? 'normal' : 'normal';
     const userAgent = req.headers.get('user-agent') ?? 'unknown';
 
-    const { error } = await supabaseAdmin
+    const { error: dbError } = await supabaseAdmin
       .from('support_tickets')
       .insert({
-        case_id: caseId,
-        full_name: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        subject: subject.trim(),
-        report_type: reportType,
-        description: description.trim(),
-        ip_address: ip,
-        user_agent: userAgent,
-        status: 'Received'
+        case_id:      caseId,
+        full_name:    fullName,
+        email,
+        subject,
+        report_type:  reportType,
+        description,
+        status:       'Received',
+        priority,
+        ip_address:   ip,
+        ip_hash:      ipHash,
+        user_agent:   userAgent,
+        session_fp:   sessionFp,
+        risk_score:   riskScore,
+        spam_signals: allSignals.length > 0 ? allSignals : null,
       });
 
-    if (error) {
-      if (error.code === '42P01') {
-        console.warn('support_tickets table missing. Please run the SQL migration.');
+    if (dbError) {
+      if (dbError.code === '42P01') {
+        console.warn('[Support API] support_tickets table missing. Run the SQL migration.');
       } else {
-        console.error('[Support API] DB error:', error.message);
-        return NextResponse.json({ error: 'Failed to submit ticket. Please try again.' }, { status: 500 });
+        console.error('[Support API] DB error:', dbError.message);
+        return NextResponse.json({ error: 'Failed to submit ticket. Please try again.' }, { status: 500, headers });
       }
     }
 
-    // Mark IP as having submitted (only after successful insert)
-    rateLimitMap.set(ip, Date.now());
+    // ── Audit trail ───────────────────────────────────────────────────────────
+    await auditTicketCreate(ipHash, caseId);
 
     return NextResponse.json({
-      success: true,
-      case_id: caseId,
-      status: 'Received',
-      date_filed: new Date().toISOString()
-    }, { status: 200 });
+      success:    true,
+      case_id:    caseId,
+      status:     'Received',
+      date_filed: new Date().toISOString(),
+    }, { status: 200, headers });
 
-  } catch (err: any) {
-    console.error('[Support API] Error:', err.message);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[Support API] Unhandled error:', msg);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers });
   }
 }
 
+// ── PATCH: User reply to existing ticket ─────────────────────────────────────
 export async function PATCH(req: NextRequest) {
-  try {
-    const { case_id, message } = await req.json();
+  const headers = securityHeaders();
 
-    if (!case_id || !message?.trim()) {
-      return NextResponse.json({ error: 'Missing case_id or message' }, { status: 400 });
+  try {
+    const ip = getClientIp(req);
+    const ipHash = hashIp(ip);
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body.' }, { status: 400, headers });
+    }
+
+    const raw = body as Record<string, unknown>;
+    const case_id = deepSanitize(raw.case_id, 32);
+    const message = deepSanitize(raw.message, 1000);
+
+    if (!case_id || !message) {
+      return NextResponse.json({ error: 'Missing case_id or message.' }, { status: 400, headers });
+    }
+
+    const spamCheck = analyzeSpam(message, 'description');
+    if (spamCheck.isSpam) {
+      return NextResponse.json({ error: 'Reply rejected by spam filter.' }, { status: 400, headers });
     }
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     );
 
-    // Fetch existing ticket
     const { data: ticket, error: fetchErr } = await supabaseAdmin
       .from('support_tickets')
       .select('description, status')
@@ -137,31 +211,27 @@ export async function PATCH(req: NextRequest) {
       .single();
 
     if (fetchErr || !ticket) {
-      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
-    }
-    
-    if (ticket.status === 'Completed') {
-      return NextResponse.json({ error: 'Cannot reply to a completed ticket' }, { status: 400 });
+      return NextResponse.json({ error: 'Ticket not found.' }, { status: 404, headers });
     }
 
-    const newDescription = `${ticket.description}\n\n[USER_REPLY]\n${message.trim()}`;
+    if (['Completed', 'Closed'].includes(ticket.status)) {
+      return NextResponse.json({ error: 'Cannot reply to a closed ticket.' }, { status: 400, headers });
+    }
 
-    // Update the ticket
+    const newDescription = `${ticket.description}\n\n[USER_REPLY — ${new Date().toISOString()}]\n${message}`;
+
     const { error: updateErr } = await supabaseAdmin
       .from('support_tickets')
-      .update({
-        description: newDescription,
-        status: 'In progress',
-        admin_reply: null
-      })
+      .update({ description: newDescription, status: 'In progress', admin_reply: null })
       .eq('case_id', case_id);
 
     if (updateErr) throw updateErr;
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true }, { status: 200, headers });
 
-  } catch (err: any) {
-    console.error('[Support API PATCH] Error:', err.message);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[Support API PATCH]', msg);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500, headers });
   }
 }

@@ -194,14 +194,25 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
 
     return (
       <>
+        {/* System / E2E Header */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '20px' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span style={{ fontSize: '10px', color: '#818cf8', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>End-to-End Encrypted Session</span>
+          </div>
+        </div>
+
         {/* Initial message */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
           <div style={{ maxWidth: '85%' }}>
-            <div style={{ background: 'linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%)', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-              <p style={{ fontSize: '11.5px', fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: '6px', letterSpacing: '0.02em' }}>{chatTicket.subject}</p>
-              <p style={{ fontSize: '13px', color: '#eaeaea', lineHeight: 1.6 }}>{initialMessage}</p>
+            <div style={{ background: '#4f46e5', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(79,70,229,0.2)' }}>
+              <p style={{ fontSize: '11.5px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginBottom: '6px', letterSpacing: '0.02em' }}>{chatTicket.subject}</p>
+              <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6 }}>{initialMessage}</p>
             </div>
-            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: '6px' }}>You · {new Intl.DateTimeFormat('en-US',{month:'short', day:'numeric', hour:'numeric',minute:'numeric'}).format(new Date(chatTicket.date_filed))}</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'right' }}>You · {new Intl.DateTimeFormat('en-US',{month:'short', day:'numeric', hour:'numeric',minute:'numeric'}).format(new Date(chatTicket.date_filed))}</p>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-5.5 5.5"></path></svg>
+            </div>
           </div>
         </div>
 
@@ -209,21 +220,49 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         {userReplies.map((reply, idx) => (
           <div key={`ur-${idx}`} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
             <div style={{ maxWidth: '85%' }}>
-              <div style={{ background: 'linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%)', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-                <p style={{ fontSize: '13px', color: '#eaeaea', lineHeight: 1.6 }}>{reply}</p>
+              <div style={{ background: '#4f46e5', borderRadius: '16px 16px 4px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 12px rgba(79,70,229,0.2)' }}>
+                <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6 }}>{reply}</p>
               </div>
-              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: '6px' }}>You · Sent</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
+                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>You · Sent</p>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M18 6L7 17l-5-5"></path><path d="M22 10l-5.5 5.5"></path></svg>
+              </div>
             </div>
           </div>
         ))}
 
+        {/* Agent Assignment Intro */}
+        {chatTicket.status !== 'Completed' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} style={{ marginBottom: '24px', marginTop: '16px' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>Elena Voss</h4>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#6366f1" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                  <span style={{ fontSize: '10px', color: '#6366f1', background: 'rgba(99,102,241,0.1)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Security Operations</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', backdropFilter: 'blur(10px)', marginTop: '4px' }}>
+                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
+                    Hello, I'm Elena.<br/><br/>
+                    I've reviewed your request and opened a secure realtime channel. I will be personally handling Case <span style={{ fontFamily: 'monospace', color: '#fff' }}>{chatTicket.case_id}</span> today. How can I assist you further?
+                  </p>
+                </div>
+                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>Elena Voss · {new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'numeric'}).format(new Date())}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Waiting indicator */}
         {!adminReply && chatTicket.status !== 'Completed' && (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 15px rgba(255,255,255,0.2)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px 16px 16px 4px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '6px', alignItems: 'center' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s ease-in-out infinite' }} />
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s 0.2s ease-in-out infinite' }} />
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'rgba(255,255,255,0.5)', animation: 'vrlBlink 1.4s 0.4s ease-in-out infinite' }} />
@@ -233,18 +272,15 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
 
         {/* Admin Reply */}
         {adminReply && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 15px rgba(255,255,255,0.2)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&q=80" alt="Elena Voss" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ maxWidth: '85%' }}>
-              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px 16px 16px 4px', padding: '14px 18px', backdropFilter: 'blur(10px)' }}>
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px 16px 16px 16px', padding: '14px 18px', backdropFilter: 'blur(10px)' }}>
                 <p style={{ fontSize: '13.5px', color: '#fff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{adminReply}</p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Verlyn Support Team</span>
-              </div>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>Elena Voss · Security Operations</p>
             </div>
           </motion.div>
         )}
@@ -271,7 +307,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.7)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'grid', placeItems: 'center',
       padding: '20px'
     }}>
       <motion.div
@@ -314,7 +350,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Content Area */}
-        <div style={{ overflowY: 'auto', flex: 1, position: 'relative', zIndex: 10 }} className="scrollbar-hide">
+        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, position: 'relative', zIndex: 10 }} className="scrollbar-hide">
           <AnimatePresence mode="wait">
             
             {/* ── MENU VIEW ── */}

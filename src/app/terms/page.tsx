@@ -1,92 +1,76 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import LegalPageLayout, { LegalSection, LegalNotice, LegalContact } from '@/components/LegalPageLayout';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — Verlyn',
-  description: 'Legal agreement governing access to and use of the Verlyn network infrastructure.',
+  description: 'Legal agreement governing access to and use of the Verlyn network.',
 };
 
 export default function TermsPage() {
   return (
-    <main style={{
-      minHeight: '100dvh', background: '#000', color: '#fff',
-      padding: 'clamp(48px, 8vw, 120px) clamp(24px, 5vw, 64px)',
-      fontFamily: 'Inter, system-ui, sans-serif',
-    }}>
-      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: '13px', color: '#7c3aed', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '56px' }}>
-          ← Back to System
-        </Link>
+    <LegalPageLayout
+      eyebrow="Legal Documentation"
+      title="Terms of Service"
+      reference="VRL-TOS-2025-04 · Effective immediately upon access"
+    >
+      <LegalNotice>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Important Notice</p>
+        <p style={{ fontSize: '13px', lineHeight: 1.65 }}>
+          Access to Verlyn infrastructure is a privilege governed by this agreement. Your continued use constitutes full acceptance of these terms. Violation results in immediate, permanent access revocation.
+        </p>
+      </LegalNotice>
 
-        <div style={{ marginBottom: '56px' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 500, marginBottom: '12px' }}>
-            Legal Framework
-          </p>
-          <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
-            Terms of Service
-          </h1>
-          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: '12px' }}>
-            Document Reference: VRL-TOS-04 · Enforcement Date: Immediate
-          </p>
+      <LegalSection title="1. Identity Verification">
+        Access to Verlyn requires stringent identity confirmation through secure channels prior to credential issuance. We prohibit disposable emails, anonymizing proxies during registration, and falsified credentials. Circumvention of identity verification constitutes a critical protocol violation and grounds for permanent removal.
+      </LegalSection>
+
+      <LegalSection title="2. Network Behavior Standards">
+        While message content remains end-to-end encrypted and opaque to Verlyn infrastructure, network metadata—including connection timing, packet volume, and routing paths—is monitored by automated anomaly detection. This monitoring identifies DoS patterns, Sybil activity, and protocol abuse without compromising cryptographic confidentiality.
+      </LegalSection>
+
+      <LegalSection title="3. Data Retention Doctrine">
+        Verlyn adheres to aggressive data minimization. Cryptographic session keys are ephemeral. System logs follow a 7-day rolling purge cycle. Pre-registration data is retained solely for queue management and destroyed upon queue closure. No historical archives of user activity are maintained.
+      </LegalSection>
+
+      <LegalSection title="4. Enforcement">
+        Enforcement is automated and final. Upon violation detection, credential revocation executes immediately. There is no appeal process. Revoked identity keys are permanently blacklisted across all global routing nodes.
+      </LegalSection>
+
+      <LegalSection title="5. Abuse Classification">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {[
+            { level: 'Level I', name: 'Operational Abuse', desc: 'Automated registration attempts, API over-polling.', consequence: '24-hour IP suspension' },
+            { level: 'Level II', name: 'Identity Fraud', desc: 'Compromised domains, credential falsification.', consequence: 'Permanent identity ban' },
+            { level: 'Level III', name: 'Infrastructure Attack', desc: 'Packet manipulation, routing exploitation, DoS.', consequence: 'Global blocklist + legal referral' },
+          ].map(item => (
+            <div key={item.level} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{item.level} · </span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{item.name}</span>
+                </div>
+                <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, whiteSpace: 'nowrap' }}>{item.consequence}</span>
+              </div>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{item.desc}</p>
+            </div>
+          ))}
         </div>
+      </LegalSection>
 
-        <article style={{ display: 'flex', flexDirection: 'column', gap: '40px', color: 'rgba(255,255,255,0.6)', fontSize: '15px', lineHeight: 1.75 }}>
-          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px' }}>
-            <p style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>WARNING</p>
-            <p style={{ fontSize: '13px', marginTop: '8px' }}>Access to Verlyn infrastructure is a privilege, not a right. Violation of these terms will result in immediate, permanent revocation of access credentials and network blacklisting.</p>
-          </div>
+      <LegalSection title="6. Data Sovereignty">
+        You retain absolute ownership of cryptographic keys generated on your device. Verlyn does not claim ownership over, nor possess technical capability to access, content transmitted through our infrastructure. We do not monetize network traffic under any circumstances.
+      </LegalSection>
 
-          <Section title="1. Identity Verification Requirements">
-            Access to Verlyn requires stringent identity confirmation. To maintain network integrity, participants must verify their identity via secure asynchronous channels prior to credential issuance. We prohibit the use of disposable emails, anonymizing proxy networks during registration, and falsified credentials. Any attempt to circumvent identity verification represents a critical protocol violation.
-          </Section>
+      <LegalSection title="7. Legal Jurisdiction">
+        This agreement is governed by the laws of the Republic of India. Exclusive jurisdiction rests with the courts of Bengaluru, India. Verlyn reserves the right to seek injunctive relief in any jurisdiction where infrastructure abuse originates.
+      </LegalSection>
 
-          <Section title="2. Network Behavior Monitoring">
-            While message content remains end-to-end encrypted and opaque to Verlyn infrastructure, network metadata (connection timing, packet volume, routing paths) is strictly monitored by automated anomaly detection systems. This monitoring identifies DoS patterns, Sybil activity, and protocol abuse without compromising cryptographic confidentiality. We reserve the right to throttle or terminate connections exhibiting signatures of malicious automation.
-          </Section>
-
-          <Section title="3. Data Retention Policy">
-            We adhere to an aggressive data minimization doctrine. Cryptographic session keys are ephemeral. System logs are purged on a 7-day rolling cycle. Pre-registration data is retained solely for queue management and abuse prevention (via IP hashing) and is permanently destroyed upon queue closure. Verlyn maintains no historical archives of user activity.
-          </Section>
-
-          <Section title="4. Enforcement Mechanisms">
-            Enforcement of these terms is absolute and automated. Upon detection of a violation, the system executes an immediate credential revocation protocol. There is no appeal process. A revoked identity key is permanently blacklisted at the network edge, preventing reconnection across all global routing nodes.
-          </Section>
-
-          <Section title="5. Abuse Classification (Levels)">
-            <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <li><strong>Level 1 (Operational Abuse):</strong> Automated registration attempts, API polling exceeding limits. Consequence: 24-hour IP block.</li>
-              <li><strong>Level 2 (Identity Fraud):</strong> Use of compromised domains, credential falsification. Consequence: Permanent identity ban.</li>
-              <li><strong>Level 3 (Infrastructure Attack):</strong> Packet manipulation, routing exploitation, DoS. Consequence: Global network blocklist and legal referral.</li>
-            </ul>
-          </Section>
-
-          <Section title="6. Data Sovereignty">
-            You retain absolute ownership of the cryptographic keys generated on your device. Verlyn does not claim ownership over, nor do we possess the technical capability to access, the content transmitted through our routing infrastructure. We do not monetize network traffic.
-          </Section>
-
-          <Section title="7. Legal Jurisdiction">
-            This agreement and any dispute arising from it shall be governed by and construed in accordance with the laws of the Republic of India. The courts of Bengaluru, India shall have exclusive jurisdiction. However, Verlyn reserves the right to seek injunctive relief or file civil claims in any global jurisdiction where infrastructure abuse originates.
-          </Section>
-
-          <div style={{ marginTop: '8px', padding: '20px 24px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: '4px' }}>
-            <p style={{ fontSize: '13px', color: '#a78bfa', fontWeight: 500 }}>
-              Legal Correspondence: <strong>admin@kensano.in</strong><br />
-              All notices must be sent in writing to the above address.
-            </p>
-          </div>
-        </article>
-      </div>
-    </main>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '14px', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
-        {title}
-      </h2>
-      <div>{children}</div>
-    </section>
+      <LegalSection title="8. Contact">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <LegalContact email="legal@verlyn.in" label="Legal Department" description="Terms disputes, compliance inquiries, and formal legal correspondence." />
+          <LegalContact email="support@verlyn.in" label="General Support" description="User-facing inquiries and access-related questions." />
+        </div>
+      </LegalSection>
+    </LegalPageLayout>
   );
 }

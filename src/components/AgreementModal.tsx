@@ -73,7 +73,7 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
             position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.92)',
             backdropFilter: 'blur(16px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'grid', placeItems: 'center',
             padding: '24px',
           }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -134,7 +134,7 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
               ref={scrollRef}
               onScroll={handleScroll}
               style={{
-                flex: 1, overflowY: 'auto', padding: '24px 28px',
+                flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px 28px',
                 fontSize: '13px', lineHeight: '1.75', color: 'rgba(255,255,255,0.55)',
               }}
             >

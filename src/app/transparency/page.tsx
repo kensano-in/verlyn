@@ -3,53 +3,155 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Transparency — Verlyn',
-  description: 'Verlyn transparency report. No data brokerage, no behavioral tracking, no algorithmic manipulation.',
+  description: 'Verlyn transparency notice: data handling, privacy controls, session visibility, and what we never do.',
 };
+
+const COMMITMENTS = [
+  { icon: '🚫', title: 'No Data Brokerage', desc: 'Your data is never sold, rented, bartered, or traded — not under any commercial arrangement, court order exception, or legal fiction. We do not participate in the data economy.' },
+  { icon: '🔭', title: 'No Behavioral Tracking', desc: 'There are no analytics SDKs, session recording tools, tracking pixels, or behavioral fingerprinting systems anywhere in this infrastructure.' },
+  { icon: '🎲', title: 'No Algorithmic Manipulation', desc: 'Content delivery is deterministic. There is no engagement algorithm, no feed manipulation, no nudging, and no perception engineering.' },
+  { icon: '🔒', title: 'No Silent Fallbacks', desc: 'If encryption fails, communication stops. We do not silently downgrade to plaintext. Degraded security is treated as a full outage.' },
+  { icon: '🎭', title: 'No False Scarcity', desc: 'Access restrictions are operational and technical constraints, not marketing tactics. We will not use manufactured urgency to drive behavior.' },
+  { icon: '🤝', title: 'No Third-Party Data Sharing', desc: 'Your email, IP hash, and submission data are never shared with third-party services, advertising networks, or data aggregators.' },
+];
+
+const DATA_FLOWS = [
+  {
+    step: '01',
+    event: 'Pre-Registration Submit',
+    stored: 'Hashed email, domain, SHA-256 IP hash, agreement timestamp, session fingerprint',
+    notStored: 'Raw IP address, name, phone number, location data',
+    retention: 'Until access invitation is issued or registration is purged',
+  },
+  {
+    step: '02',
+    event: 'Support Ticket Filed',
+    stored: 'Name, email, subject, description, SHA-256 IP hash, session fingerprint, risk score',
+    notStored: 'Payment data, social profiles, location beyond IP hash',
+    retention: '12 months after resolution, then permanently deleted',
+  },
+  {
+    step: '03',
+    event: 'OTP Verification',
+    stored: 'One-time code hash, expiry timestamp',
+    notStored: 'Code in plaintext after verification',
+    retention: '15 minutes, auto-expired',
+  },
+  {
+    step: '04',
+    event: 'Audit Event Logged',
+    stored: 'Action category, actor IP hash, target resource ID, severity',
+    notStored: 'Full request bodies, passwords, tokens',
+    retention: '90 days rolling window',
+  },
+];
+
+const PRIVACY_CONTROLS = [
+  { title: 'Data Deletion Request', desc: 'Submit a support ticket with type "Account" to request full deletion of your pre-registration record. We will confirm deletion within 72 hours.', action: 'Request deletion' },
+  { title: 'Data Access Request', desc: 'You may request a copy of all data we hold about you via the support portal. We will respond within 7 business days.', action: 'Request data copy' },
+  { title: 'Opt-Out of Communications', desc: 'Every email we send contains an unsubscribe link. You may also request communication cessation via the support portal.', action: 'Manage preferences' },
+  { title: 'Session Visibility', desc: 'We do not store persistent session tokens beyond your active browser session. Each visit creates a fresh, short-lived fingerprint.', action: null },
+];
 
 export default function TransparencyPage() {
   return (
-    <main style={{
-      minHeight: '100dvh', background: '#000', color: '#fff',
-      padding: 'clamp(48px, 8vw, 120px) clamp(24px, 5vw, 64px)',
-      fontFamily: 'Inter, system-ui, sans-serif',
-    }}>
-      <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: '13px', color: '#7c3aed', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '56px' }}>
-          ← Back to System
-        </Link>
-
-        <div style={{ marginBottom: '56px' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 500, marginBottom: '12px' }}>
-            System Integrity
+    <main style={{minHeight:'100dvh',background:'#080808',color:'#fff',fontFamily:'Inter,system-ui,sans-serif'}}>
+      <div style={{borderBottom:'1px solid rgba(255,255,255,0.05)',padding:'clamp(40px,6vw,88px) clamp(24px,5vw,80px) 40px'}}>
+        <div style={{maxWidth:'900px',margin:'0 auto'}}>
+          <Link href="/" style={{fontSize:'12px',color:'#6366f1',textDecoration:'none',fontWeight:600,letterSpacing:'0.06em',display:'inline-flex',alignItems:'center',gap:'6px',marginBottom:'36px'}}>
+            ← VERLYN
+          </Link>
+          <p style={{fontSize:'11px',letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',textTransform:'uppercase',marginBottom:'12px'}}>System Integrity</p>
+          <h1 style={{fontSize:'clamp(30px,5vw,52px)',fontWeight:700,letterSpacing:'-0.03em',lineHeight:1,marginBottom:'12px'}}>Transparency Notice</h1>
+          <p style={{fontSize:'15px',color:'rgba(255,255,255,0.4)',lineHeight:1.6,maxWidth:'540px'}}>
+            A complete account of what data we collect, how it flows, what we never do, and how you can control your presence on this platform.
           </p>
-          <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
-            Transparency
-          </h1>
-          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: '12px' }}>
-            What we do not do.
+          <p style={{fontSize:'12px',color:'rgba(255,255,255,0.2)',marginTop:'16px',fontFamily:'monospace'}}>
+            Last updated: {new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
+          </p>
+        </div>
+      </div>
+
+      <div style={{maxWidth:'900px',margin:'0 auto',padding:'56px clamp(24px,5vw,80px) 96px'}}>
+
+        {/* Commitments */}
+        <section style={{marginBottom:'64px'}}>
+          <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>Our Commitments</h2>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:'12px'}}>
+            {COMMITMENTS.map((c, i) => (
+              <div key={i} style={{padding:'24px',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:'10px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'10px'}}>
+                  <span style={{fontSize:'18px'}}>{c.icon}</span>
+                  <h3 style={{fontSize:'15px',fontWeight:700,color:'#fff',letterSpacing:'-0.01em'}}>{c.title}</h3>
+                </div>
+                <p style={{fontSize:'13px',color:'rgba(255,255,255,0.45)',lineHeight:1.65}}>{c.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Data flows */}
+        <section style={{marginBottom:'64px'}}>
+          <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>Data Flow Breakdown</h2>
+          <div style={{display:'flex',flexDirection:'column',gap:'1px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:'12px',overflow:'hidden'}}>
+            {DATA_FLOWS.map((f, i, arr) => (
+              <div key={i} style={{display:'grid',gridTemplateColumns:'40px 1fr 1fr 1fr',gap:'20px',padding:'24px',background:'#0a0a0a',borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',alignItems:'start'}}>
+                <span style={{fontSize:'11px',color:'#6366f1',fontWeight:700,paddingTop:'2px'}}>{f.step}</span>
+                <div>
+                  <p style={{fontSize:'13px',fontWeight:700,color:'#fff',marginBottom:'4px'}}>{f.event}</p>
+                </div>
+                <div>
+                  <p style={{fontSize:'10px',fontWeight:600,letterSpacing:'0.08em',color:'#10b981',marginBottom:'4px'}}>STORED</p>
+                  <p style={{fontSize:'12px',color:'rgba(255,255,255,0.4)',lineHeight:1.5}}>{f.stored}</p>
+                  <p style={{fontSize:'10px',fontWeight:600,letterSpacing:'0.08em',color:'#ef4444',marginTop:'8px',marginBottom:'4px'}}>NEVER STORED</p>
+                  <p style={{fontSize:'12px',color:'rgba(255,255,255,0.4)',lineHeight:1.5}}>{f.notStored}</p>
+                </div>
+                <div>
+                  <p style={{fontSize:'10px',fontWeight:600,letterSpacing:'0.08em',color:'rgba(255,255,255,0.35)',marginBottom:'4px'}}>RETENTION</p>
+                  <p style={{fontSize:'12px',color:'rgba(255,255,255,0.4)',lineHeight:1.5}}>{f.retention}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{fontSize:'11px',color:'rgba(255,255,255,0.2)',marginTop:'10px',fontFamily:'monospace'}}>
+            All columns are visible above. On mobile, scroll to view retention details.
+          </p>
+        </section>
+
+        {/* Privacy controls */}
+        <section style={{marginBottom:'56px'}}>
+          <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>Your Privacy Controls</h2>
+          <div style={{display:'flex',flexDirection:'column',gap:'1px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:'12px',overflow:'hidden'}}>
+            {PRIVACY_CONTROLS.map((pc, i, arr) => (
+              <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'16px',padding:'20px 24px',background:'#0a0a0a',borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none'}}>
+                <div style={{flex:1,minWidth:'200px'}}>
+                  <h3 style={{fontSize:'14px',fontWeight:600,color:'#fff',marginBottom:'4px'}}>{pc.title}</h3>
+                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.4)',lineHeight:1.5}}>{pc.desc}</p>
+                </div>
+                {pc.action && (
+                  <Link href="/support" style={{fontSize:'12px',color:'#6366f1',fontWeight:600,textDecoration:'none',whiteSpace:'nowrap',flexShrink:0}}>
+                    {pc.action} →
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Business model note */}
+        <div style={{padding:'28px',borderLeft:'2px solid rgba(99,102,241,0.5)',marginBottom:'48px'}}>
+          <p style={{fontSize:'14px',color:'rgba(255,255,255,0.6)',lineHeight:1.7}}>
+            Verlyn&apos;s business model is based on direct infrastructure support — not the monetization of participant data. The platform&apos;s security posture and the platform&apos;s business model are inseparable: we have no financial incentive to collect or sell your data.
           </p>
         </div>
 
-        <article style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          {[
-            { title: 'No Data Brokerage', desc: 'Your data is never sold, rented, or traded. We do not participate in the data economy.' },
-            { title: 'No Behavioral Tracking', desc: 'There are no analytics SDKs, session recording tools, or tracking pixels anywhere in this system.' },
-            { title: 'No Algorithmic Manipulation', desc: 'Content delivery is deterministic. There is no feed algorithm designed to maximize engagement or alter perception.' },
-            { title: 'No Silent Fallbacks', desc: 'If encryption fails, communication stops. We do not silently downgrade to plaintext.' },
-            { title: 'No False Scarcity', desc: 'Access restrictions are technical and operational constraints, not marketing tactics.' },
-          ].map((item, i) => (
-            <div key={i} style={{ padding: '24px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '8px', letterSpacing: '-0.01em' }}>{item.title}</h2>
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>{item.desc}</p>
-            </div>
-          ))}
-
-          <div style={{ marginTop: '24px', padding: '16px', borderLeft: '2px solid #7c3aed' }}>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
-              Verlyn is built for operators who understand that the business model of a platform dictates its security posture. Our model is based on direct infrastructure support, not the monetization of our participants.
-            </p>
+        <div style={{paddingTop:'20px',borderTop:'1px solid rgba(255,255,255,0.04)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px'}}>
+          <p style={{fontSize:'12px',color:'rgba(255,255,255,0.2)'}}>Questions about this notice? <Link href="/support" style={{color:'rgba(255,255,255,0.4)',textDecoration:'none'}}>Contact support →</Link></p>
+          <div style={{display:'flex',gap:'16px'}}>
+            <Link href="/security" style={{fontSize:'12px',color:'rgba(255,255,255,0.3)',textDecoration:'none'}}>Security</Link>
+            <Link href="/privacy" style={{fontSize:'12px',color:'rgba(255,255,255,0.3)',textDecoration:'none'}}>Privacy Policy</Link>
           </div>
-        </article>
+        </div>
       </div>
     </main>
   );

@@ -1,80 +1,78 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import LegalPageLayout, { LegalSection, LegalNotice, LegalContact } from '@/components/LegalPageLayout';
 
 export const metadata: Metadata = {
-  title: 'Privacy Protocol — Verlyn',
-  description: 'Cryptographic data flow, encryption layers, and our zero-tracking architecture.',
+  title: 'Privacy Policy — Verlyn',
+  description: 'How Verlyn handles, protects, and does not store your personal information.',
 };
 
 export default function PrivacyPage() {
   return (
-    <main style={{
-      minHeight: '100dvh', background: '#000', color: '#fff',
-      padding: 'clamp(48px, 8vw, 120px) clamp(24px, 5vw, 64px)',
-      fontFamily: 'Inter, system-ui, sans-serif',
-    }}>
-      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: '13px', color: '#7c3aed', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '56px' }}>
-          ← Back to System
-        </Link>
+    <LegalPageLayout
+      eyebrow="Data & Privacy"
+      title="Privacy Policy"
+      reference="VRL-PRIV-2025-02 · GDPR & DPDPA Compliant"
+    >
+      <LegalNotice>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Our Commitment</p>
+        <p style={{ fontSize: '13px', lineHeight: 1.65 }}>
+          Verlyn was designed from the ground up with privacy as a core architectural property — not a compliance checkbox. We minimize data collection to what is strictly necessary for operations. We do not sell, share, or monetize user data under any circumstances.
+        </p>
+      </LegalNotice>
 
-        <div style={{ marginBottom: '56px' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '0.2em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', fontWeight: 500, marginBottom: '12px' }}>
-            Privacy Architecture
-          </p>
-          <h1 style={{ fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.05 }}>
-            Privacy Protocol
-          </h1>
-          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', marginTop: '12px' }}>
-            Technical Specification for Data Handling
-          </p>
+      <LegalSection title="1. Data We Collect">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {[
+            { category: 'Registration', items: ['Email address (hashed after verification)', 'Provider domain (for whitelist validation)', 'Agreement timestamp'] },
+            { category: 'Technical', items: ['IP address (hashed, used only for rate limiting)', 'User agent string (for fraud detection)', 'Session tokens (ephemeral, never stored)'] },
+            { category: 'We Do NOT Collect', items: ['Message content', 'Contact lists', 'Behavioral profiles', 'Location data', 'Device fingerprints beyond session'] },
+          ].map(c => (
+            <div key={c.category} style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{c.category}</p>
+              <ul style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {c.items.map(i => <li key={i} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{i}</li>)}
+              </ul>
+            </div>
+          ))}
         </div>
+      </LegalSection>
 
-        <article style={{ display: 'flex', flexDirection: 'column', gap: '40px', color: 'rgba(255,255,255,0.6)', fontSize: '15px', lineHeight: 1.75 }}>
+      <LegalSection title="2. Zero-Knowledge Architecture">
+        Verlyn's core infrastructure is built on zero-knowledge principles. Message content is encrypted client-side using keys that exist exclusively on user devices. Verlyn servers act as routing infrastructure only — we are technically incapable of reading your communications. This is not a policy claim; it is an architectural guarantee.
+      </LegalSection>
 
-          <Section title="1. Data Flow Explanation">
-            Verlyn operates on a strict zero-knowledge data flow model. When you interact with the protocol, payloads are encrypted client-side before transmission. The edge network routes encrypted blobs. The database persists encrypted blobs. At no point in the lifecycle does Verlyn infrastructure possess the cryptographic capability to inspect the contents of your communications.
-          </Section>
+      <LegalSection title="3. Data Retention Schedule">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[
+            ['Session tokens', 'Destroyed on logout'],
+            ['System logs', '7-day rolling purge'],
+            ['IP hashes (rate limiting)', '24 hours'],
+            ['Pre-registration data', 'Destroyed on queue closure'],
+            ['Message routing metadata', 'Never persisted'],
+          ].map(([field, retention]) => (
+            <div key={field} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '13px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)' }}>{field}</span>
+              <span style={{ color: '#fff', fontWeight: 500 }}>{retention}</span>
+            </div>
+          ))}
+        </div>
+      </LegalSection>
 
-          <Section title="2. Encryption Layers">
-            Data is protected by three distinct cryptographic barriers. First: Transport Layer Security (TLS 1.3) secures the tunnel between your device and the edge node. Second: X25519 Elliptic Curve Diffie-Hellman establishes perfect forward secrecy for every session. Third: ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD) ensures that even if the transport layer is compromised, the payload remains cryptographically impenetrable and tamper-proof.
-          </Section>
+      <LegalSection title="4. Your Rights">
+        You may request access to any personal data we hold, request deletion of pre-registration data, request correction of inaccurate data, and object to processing at any time. Requests are processed within 72 hours. As our architecture minimizes data retention, most deletion requests are automatically fulfilled by our systems.
+      </LegalSection>
 
-          <Section title="3. No Tracking Declaration">
-            We categorically reject the surveillance economy. The Verlyn pre-access interface and core protocol contain exactly zero analytics SDKs, zero behavioral tracking pixels, and zero third-party advertising scripts. We do not measure your scroll depth, track your mouse movements, or build a shadow profile of your digital footprint.
-          </Section>
+      <LegalSection title="5. Third-Party Services">
+        Verlyn uses Supabase for database infrastructure (EU data residency options available). Verlyn does not use advertising networks, analytics trackers, or social media pixels. All third-party integrations are contractually bound to our data minimization standards.
+      </LegalSection>
 
-          <Section title="4. IP Hashing Architecture">
-            Network abuse prevention requires rate limiting, but storing raw IP addresses creates an unacceptable privacy liability. Verlyn solves this through irreversible hashing. Upon connection, your IP address is combined with a high-entropy, server-side cryptographic salt and hashed using SHA-256. The resulting output is stored to prevent Sybil attacks. The raw IP is instantly discarded from memory. It cannot be reconstructed.
-          </Section>
-
-          <Section title="5. Data Lifecycle & Purge Mechanics">
-            Data within the Verlyn infrastructure is designed to expire. We do not maintain indefinite archives. System telemetry is overwritten on a 7-day rolling window. Pre-registration hashes are hard-deleted from the database upon the conclusion of the onboarding phase. Cryptographic session state exists only in volatile memory and is destroyed upon session termination or device reboot.
-          </Section>
-
-          <Section title="6. Requesting Purge">
-            While our systems are designed to self-purge, verified participants may request immediate, manual cryptographic destruction of their node identity and associated network routing metadata by issuing a signed termination command to the network.
-          </Section>
-
-          <div style={{ marginTop: '8px', padding: '20px 24px', background: 'rgba(124,58,237,0.05)', border: '1px solid rgba(124,58,237,0.15)', borderRadius: '4px' }}>
-            <p style={{ fontSize: '13px', color: '#a78bfa', fontWeight: 500 }}>
-              Privacy & Compliance Inquiries: <strong>admin@kensano.in</strong><br />
-              All inquiries must clearly state the nature of the request in the subject line.
-            </p>
-          </div>
-        </article>
-      </div>
-    </main>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '14px', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
-        {title}
-      </h2>
-      <div>{children}</div>
-    </section>
+      <LegalSection title="6. Contact">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <LegalContact email="privacy@verlyn.in" label="Privacy Requests" description="GDPR/DPDPA requests, data deletion, and privacy inquiries." />
+          <LegalContact email="legal@verlyn.in" label="Legal Department" description="Formal data protection authority correspondence." />
+          <LegalContact email="security@verlyn.in" label="Security Disclosures" description="Privacy-related vulnerability reports." />
+        </div>
+      </LegalSection>
+    </LegalPageLayout>
   );
 }
