@@ -311,8 +311,9 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.7)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      display: 'grid', placeItems: 'center',
-      padding: '20px'
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px',
+      overflowY: 'auto',
     }}>
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
@@ -320,14 +321,16 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         exit={{ opacity: 0, y: 10, scale: 0.98 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         style={{
-          width: '100%', maxWidth: '440px', height: '85vh', maxHeight: '720px',
+          width: '100%', maxWidth: '440px',
+          height: 'calc(100dvh - 32px)', maxHeight: '720px',
           background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '20px',
           overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 40px 100px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
-          position: 'relative'
+          position: 'relative',
+          flexShrink: 0,
         }}
       >
         {/* Header */}

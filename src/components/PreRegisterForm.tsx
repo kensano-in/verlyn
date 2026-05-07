@@ -190,8 +190,8 @@ export default function PreRegisterForm() {
         setOtpCode(''); setOtpError(''); setOtpAttempts(0);
         setStage('otp');
       } else {
-        const body = await otpRes.json();
-        setFormError(body.error || 'Failed to send verification code.');
+        // otpData already parsed above — use it directly
+        setFormError(otpData.error || 'Failed to send verification code.');
         setStage('form');
       }
     } catch {

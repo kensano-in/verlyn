@@ -105,8 +105,14 @@ function StepRow({ step, i, total }: { step: { title: string; desc: string }; i:
 }
 
 export default function HomePage() {
-  const [transparencyMode, setTransparencyMode] = React.useState(false);
-  const [introComplete, setIntroComplete]       = React.useState(false);
+  // Check sessionStorage so intro only plays once per browser session
+  // (not on every navigation back from /terms, /privacy etc)
+  const [introComplete, setIntroComplete] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('vrl_intro_done') === '1';
+    }
+    return false;
+  });
   const [showSupport, setShowSupport]           = React.useState(false);
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
@@ -122,9 +128,10 @@ export default function HomePage() {
     adminClickTimeout.current = setTimeout(() => setAdminClicks(0), 2000);
   };
 
-  React.useEffect(() => {
-    // Intro always shows now
-  }, []);
+  const handleIntroComplete = () => {
+    sessionStorage.setItem('vrl_intro_done', '1');
+    setIntroComplete(true);
+  };
 
   const features = [
     { num: '01', title: 'Private Social Space', desc: 'Share and connect without exposure. Your social circle, entirely private and truly yours.' },
@@ -155,15 +162,15 @@ export default function HomePage() {
       minHeight: '100dvh',
       fontFamily: 'var(--font-sans)',
     }}>
-      {/* ── CINEMATIC INTRO ── */}
-      <IntroScreen onComplete={() => setIntroComplete(true)} />
+      {/* ── CINEMATIC INTRO ── only shows if not seen this session */}
+      {!introComplete && <IntroScreen onComplete={handleIntroComplete} />}
 
       {/* ── MAIN CONTENT ── */}
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: introComplete ? 1 : 0 }}
         animate={{ opacity: introComplete ? 1 : 0 }}
         transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
-        style={{ pointerEvents: introComplete ? 'auto' : 'none', height: introComplete ? 'auto' : '100dvh', overflow: introComplete ? 'visible' : 'hidden' }}
+        style={{ pointerEvents: introComplete ? 'auto' : 'none' }}
       >
 
         {/* ── BACKGROUND 3D ── */}

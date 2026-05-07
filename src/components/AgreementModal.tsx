@@ -81,8 +81,9 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
             position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.92)',
             backdropFilter: 'blur(16px)',
-            display: 'grid', placeItems: 'center',
-            padding: '24px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px',
+            overflowY: 'auto',
           }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
@@ -98,7 +99,8 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
               borderRadius: '20px',
               overflow: 'hidden',
               display: 'flex', flexDirection: 'column',
-              maxHeight: '88vh',
+              height: 'calc(100dvh - 32px)', maxHeight: '840px',
+              flexShrink: 0,
             }}
           >
             {/* Header */}
