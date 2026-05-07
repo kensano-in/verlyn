@@ -164,7 +164,7 @@ export default function HomePage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: introComplete ? 1 : 0 }}
         transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1] }}
-        style={{ pointerEvents: introComplete ? 'auto' : 'none' }}
+        style={{ pointerEvents: introComplete ? 'auto' : 'none', height: introComplete ? 'auto' : '100dvh', overflow: introComplete ? 'visible' : 'hidden' }}
       >
 
         {/* ── BACKGROUND 3D ── */}

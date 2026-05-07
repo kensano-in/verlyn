@@ -25,6 +25,7 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (open) {
+      document.body.style.overflow = 'hidden';
       setChecked(false);
       setScrolledToEnd(false);
       setReadTime(0);
@@ -40,8 +41,13 @@ export default function AgreementModal({ open, onAccept, onClose }: AgreementMod
           setScrolledToEnd(true); // content fits without scroll
         }
       }, 100);
+    } else {
+      document.body.style.overflow = '';
     }
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      document.body.style.overflow = '';
+    };
   }, [open]);
 
   const handleScroll = useCallback(() => {

@@ -57,6 +57,10 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
       const stored = localStorage.getItem('vrl_support_tickets');
       if (stored) setTickets(JSON.parse(stored));
     } catch (e) {}
+
+    // Prevent background scrolling while modal is active
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
   }, []);
 
   // Poll for admin reply every 5s when in chat view

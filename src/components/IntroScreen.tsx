@@ -37,6 +37,9 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
   useEffect(() => {
     if (!mounted) return;
 
+    // Prevent scrolling while intro is active
+    document.body.style.overflow = 'hidden';
+
     const t = (fn: () => void, ms: number) => {
       const id = window.setTimeout(fn, ms) as unknown as number;
       timers.current.push(id);
@@ -57,7 +60,10 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
     }, 5400);
     t(() => done(), 6900);
 
-    return () => timers.current.forEach(clearTimeout);
+    return () => {
+      timers.current.forEach(clearTimeout);
+      document.body.style.overflow = '';
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
@@ -211,7 +217,6 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
         </span>
       </div>
 
-      {/* Skip button */}
       <button
         onClick={() => { setSkip(true); done(); }}
         style={{
