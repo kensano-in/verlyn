@@ -60,6 +60,15 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
+  const messagesRef = useRef<any[]>([]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+
+  useEffect(() => {
+    if (view === 'chat' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, [view]);
+
   // Poll real messages from support_messages table every 4s
   useEffect(() => {
     if (view !== 'chat' || !chatTicket) return;
@@ -68,7 +77,14 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         const res = await fetch(`/api/support/messages?case_id=${chatTicket.case_id}`);
         if (!res.ok) return;
         const data = await res.json();
-        setMessages(data.messages || []);
+        const newMsgs = data.messages || [];
+        if (newMsgs.length > messagesRef.current.length) {
+          const lastMsg = newMsgs[newMsgs.length - 1];
+          if (lastMsg.sender_type === 'agent' && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('Verlyn Support', { body: lastMsg.content });
+          }
+        }
+        setMessages(newMsgs);
         setTimeout(() => {
           chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
         }, 80);

@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
         sender_type: sender_type || 'user',
         content: content.trim(),
         agent_name: agent_name || null,
-        agent_role: agent_role || null,
         is_internal: is_internal || false,
       })
       .select()
