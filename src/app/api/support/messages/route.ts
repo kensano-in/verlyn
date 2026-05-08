@@ -126,6 +126,27 @@ export async function POST(req: NextRequest) {
         .from('support_tickets')
         .update({ status: 'In progress', admin_reply: null, updated_at: new Date().toISOString() })
         .eq('id', resolvedTicketId);
+
+      // ── Notify Telegram ──
+      try {
+        const { data: ticketInfo } = await supabase.from('support_tickets').select('case_id').eq('id', resolvedTicketId).single();
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493';
+        if (botToken && ticketInfo) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: `📩 *USER CHAT REPLY:* \`${ticketInfo.case_id}\`\n────────────────\n${content.trim()}\n\n💡 _Simply reply to this notification to respond._`,
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [[{ text: '📑 Manage Case', callback_data: `manage_${ticketInfo.case_id}` }]]
+              }
+            })
+          });
+        }
+      } catch (e) { console.error('TG Notification error:', e); }
     }
 
     return NextResponse.json({ message: data }, { status: 201 });

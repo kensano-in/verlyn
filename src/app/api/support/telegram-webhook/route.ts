@@ -200,50 +200,51 @@ async function handleCallback(cb: any) {
     });
   }
 
-  if (data === 'main_menu') {
-    // Re-check auth for main menu re-entry
-    const isAuthorized = await checkSession(supabase, chatId);
-    if (!isAuthorized) {
-      await editUI(`${THEME.header}\n${THEME.divider}\nSession expired. Please use /auth to re-establish access.`, {
-        inline_keyboard: []
-      });
-      return NextResponse.json({ ok: true });
-    }
-
-    await editUI(`${THEME.header}\n${THEME.divider}\nOperational dashboard active. Select a module to continue.`, {
-      inline_keyboard: [
-        [{ text: '🛰️ LIVE NETWORK STATS', callback_data: 'stats' }],
-        [{ text: '📋 PRIORITY QUEUE', callback_data: 'list_active' }],
-        [{ text: '🛡️ SECURITY AUDIT', callback_data: 'audit' }],
-        [{ text: '🔴 TERMINATE SESSION', callback_data: 'logout' }]
-      ]
-    });
-  }
-
-  if (data.startsWith('manage_')) {
-    const cid = data.replace('manage_', '');
-    const { data: t } = await supabase.from('support_tickets').select('*').eq('case_id', cid).single();
-    if (t) {
-      const msg = `📑 *DOSSIER: ${cid}*\n${THEME.divider}\n` +
-                  `*STATUS:* 🟢 ${t.status}\n` +
-                  `*CLIENT:* ${t.full_name}\n` +
-                  `*EMAIL:* \`${t.email}\`\n` +
-                  `*TOPIC:* ${t.subject}\n\n` +
-                  `*DESCRIPTION:*\n\`${t.description}\`\n\n` +
-                  `📅 *FILED:* ${new Date(t.created_at).toLocaleString()}`;
-      
-      await editUI(msg, {
+    if (data === 'main_menu') {
+      // Re-check auth for main menu re-entry
+      const isAuthorized = await checkSession(supabase, chatId);
+      if (!isAuthorized) {
+        await editUI(`${THEME.header}\n${THEME.divider}\nSession expired. Please use /auth to re-establish access.`, {
+          inline_keyboard: []
+        });
+        return NextResponse.json({ ok: true });
+      }
+  
+      await editUI(`${THEME.header}\n${THEME.divider}\nOperational dashboard active. Select a module to continue.`, {
         inline_keyboard: [
-          [{ text: '💬 SEND RESPONSE', callback_data: `reply_hint_${cid}` }],
-          [
-            { text: '✅ RESOLVE', callback_data: `resolve_${cid}` },
-            { text: '🚫 BAN', callback_data: `ban_${cid}` }
-          ],
-          [{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]
+          [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/admin/dashboard' } }],
+          [{ text: '📋 PRIORITY QUEUE', callback_data: 'list_active' }, { text: '🛡️ SECURITY AUDIT', callback_data: 'audit' }],
+          [{ text: '📊 LIVE STATS', callback_data: 'stats' }],
+          [{ text: '🔴 TERMINATE SESSION', callback_data: 'logout' }]
         ]
       });
     }
-  }
+  
+    if (data.startsWith('manage_')) {
+      const cid = data.replace('manage_', '');
+      const { data: t } = await supabase.from('support_tickets').select('*').eq('case_id', cid).single();
+      if (t) {
+        const msg = `📑 *DOSSIER: ${cid}*\n${THEME.divider}\n` +
+                    `*STATUS:* 🟢 ${t.status}\n` +
+                    `*CLIENT:* ${t.full_name}\n` +
+                    `*EMAIL:* \`${t.email}\`\n` +
+                    `*TOPIC:* ${t.subject}\n\n` +
+                    `*DESCRIPTION:*\n\`${t.description}\`\n\n` +
+                    `📅 *FILED:* ${new Date(t.created_at).toLocaleString()}`;
+        
+        await editUI(msg, {
+          inline_keyboard: [
+            [{ text: '🖥️ OPEN IN WEB CONSOLE', web_app: { url: `https://verlyn.in/admin/dashboard` } }],
+            [{ text: '💬 SEND RESPONSE', callback_data: `reply_hint_${cid}` }],
+            [
+              { text: '✅ RESOLVE', callback_data: `resolve_${cid}` },
+              { text: '🚫 BAN', callback_data: `ban_${cid}` }
+            ],
+            [{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]
+          ]
+        });
+      }
+    }
 
   if (data.startsWith('reply_hint_')) {
     const cid = data.replace('reply_hint_', '');
