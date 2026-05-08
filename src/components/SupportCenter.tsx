@@ -138,6 +138,13 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     // Filter out timestamps older than 24 hours
     history = history.filter(ts => now - ts < ONE_DAY);
     
+    // Check for active ticket
+    const hasActiveTicket = tickets.some(t => !['Resolved', 'Completed', 'Closed'].includes(t.status));
+    if (hasActiveTicket) {
+      setError('You already have an active request. Please wait until it is resolved before submitting a new one.');
+      return;
+    }
+
     if (history.length >= 3) {
       const oldest = history[0];
       const hoursLeft = Math.ceil((ONE_DAY - (now - oldest)) / 3600000);
