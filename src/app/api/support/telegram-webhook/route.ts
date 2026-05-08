@@ -101,17 +101,33 @@ export async function POST(req: NextRequest) {
       if (caseIdMatch) {
         const caseId = caseIdMatch[0];
         
-        // 1. Insert into support_messages (REAL CHAT BRIDGE)
-        await supabase.from('support_messages').insert({
-          case_id: caseId,
-          content: text,
-          sender_type: 'agent'
-        });
+        // Resolve ticket_id (UUID) from case_id (Text)
+        const { data: ticket } = await supabase
+          .from('support_tickets')
+          .select('id')
+          .eq('case_id', caseId)
+          .single();
 
-        // 2. Update ticket status
-        await supabase.from('support_tickets').update({ status: 'In progress' }).eq('case_id', caseId);
+        if (ticket) {
+          // 1. Insert into support_messages (REAL CHAT BRIDGE)
+          const { error: msgErr } = await supabase.from('support_messages').insert({
+            ticket_id: ticket.id,
+            content: text,
+            sender_type: 'agent',
+            agent_name: 'Verlyn Admin'
+          });
 
-        await sendTelegramMessage(chatId, `✅ *MESSAGE TRANSMITTED:* Response relayed to \`${caseId}\``);
+          if (msgErr) {
+            console.error('[TG Webhook] Msg Insert Error:', msgErr);
+            await sendTelegramMessage(chatId, `❌ *DB ERROR:* Could not insert message into chat bridge.`);
+          } else {
+            // 2. Update ticket status
+            await supabase.from('support_tickets').update({ status: 'Active Session' }).eq('id', ticket.id);
+            await sendTelegramMessage(chatId, `✅ *MESSAGE TRANSMITTED:* Response relayed to \`${caseId}\``);
+          }
+        } else {
+          await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${caseId}\` not found in database.`);
+        }
       }
     }
 
