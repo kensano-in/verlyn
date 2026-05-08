@@ -106,8 +106,8 @@ const SECURITY_PILLARS = [
 
 export default function SecurityPage() {
   return (
-    <main style={{minHeight:'100dvh',background:'#080808',color:'#fff',fontFamily:'Inter,system-ui,sans-serif'}}>
-      <div style={{borderBottom:'1px solid rgba(255,255,255,0.05)',padding:'clamp(40px,6vw,88px) clamp(24px,5vw,80px) 40px'}}>
+    <main style={{minHeight:'100dvh',background:'#080808',color:'#fff',fontFamily:'Inter,system-ui,sans-serif',overflowX:'hidden'}}>
+      <div style={{borderBottom:'1px solid rgba(255,255,255,0.05)',padding:'clamp(40px,6vw,88px) clamp(16px,5vw,80px) 40px',overflowX:'hidden'}}>
         <div style={{maxWidth:'1100px',margin:'0 auto'}}>
           <Link href="/" style={{fontSize:'12px',color:'#6366f1',textDecoration:'none',fontWeight:600,letterSpacing:'0.06em',display:'inline-flex',alignItems:'center',gap:'6px',marginBottom:'36px'}}>
             ← VERLYN
@@ -120,7 +120,7 @@ export default function SecurityPage() {
         </div>
       </div>
 
-      <div style={{maxWidth:'1100px',margin:'0 auto',padding:'56px clamp(24px,5vw,80px) 96px'}}>
+      <div style={{maxWidth:'1100px',margin:'0 auto',padding:'56px clamp(16px,5vw,80px) 96px'}}>
 
         {/* Trust badge row */}
         <div style={{display:'flex',flexWrap:'wrap',gap:'10px',marginBottom:'56px'}}>
@@ -132,9 +132,9 @@ export default function SecurityPage() {
         </div>
 
         {/* Security pillars grid */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(480px,1fr))',gap:'1px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:'12px',overflow:'hidden'}}>
+        <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
           {SECURITY_PILLARS.map((p, i) => (
-            <div key={i} style={{padding:'32px',background:'#0a0a0a',borderBottom:'1px solid rgba(255,255,255,0.03)'}}>
+            <div key={i} style={{padding:'clamp(20px, 4vw, 32px)',background:'#0a0a0a',borderBottom:'1px solid rgba(255,255,255,0.03)',boxSizing:'border-box',width:'100%'}}>
               <div style={{display:'flex',alignItems:'flex-start',gap:'14px',marginBottom:'20px'}}>
                 <span style={{fontSize:'22px',lineHeight:1,flexShrink:0}}>{p.icon}</span>
                 <div>
@@ -142,11 +142,11 @@ export default function SecurityPage() {
                   <p style={{fontSize:'11px',color:'#6366f1',fontWeight:600,letterSpacing:'0.08em',textTransform:'uppercase'}}>{p.subtitle}</p>
                 </div>
               </div>
-              <ul style={{paddingLeft:'0',display:'flex',flexDirection:'column',gap:'8px',listStyle:'none'}}>
+              <ul style={{paddingLeft:'0',display:'flex',flexDirection:'column',gap:'10px',listStyle:'none',width:'100%'}}>
                 {p.items.map((item, j) => (
-                  <li key={j} style={{display:'flex',alignItems:'flex-start',gap:'10px',fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.55}}>
+                  <li key={j} style={{display:'flex',alignItems:'flex-start',gap:'10px',fontSize:'13px',color:'rgba(255,255,255,0.5)',lineHeight:1.55,width:'100%',boxSizing:'border-box'}}>
                     <span style={{color:'#6366f1',fontWeight:700,flexShrink:0,marginTop:'1px'}}>→</span>
-                    {item}
+                    <span style={{flex:1,minWidth:0,wordBreak:'break-word',overflowWrap:'anywhere'}}>{item}</span>
                   </li>
                 ))}
               </ul>

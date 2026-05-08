@@ -46,7 +46,7 @@ export default function AccessModelPage() {
         </div>
       </div>
 
-      <div style={{maxWidth:'1000px',margin:'0 auto',padding:'56px clamp(24px,5vw,80px) 96px'}}>
+      <div style={{maxWidth:'1000px',margin:'0 auto',padding:'56px clamp(16px,5vw,80px) 96px'}}>
 
         {/* Why invitation-only */}
         <section style={{marginBottom:'64px'}}>
@@ -86,17 +86,17 @@ export default function AccessModelPage() {
           <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>How Moderation Works</h2>
           <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
             {MODERATION_LAYERS.map((m, i) => (
-              <div key={i} style={{padding:'20px 24px',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:'10px',display:'flex',gap:'20px',alignItems:'flex-start'}}>
-                <span style={{fontSize:'10px',fontWeight:700,letterSpacing:'0.08em',padding:'3px 8px',borderRadius:'4px',flexShrink:0,marginTop:'2px',
-                  background: m.layer === 'Automated' ? 'rgba(99,102,241,0.15)' : m.layer === 'Human' ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.12)',
-                  color: m.layer === 'Automated' ? '#818cf8' : m.layer === 'Human' ? '#34d399' : '#94a3b8',
-                }}>
-                  {m.layer.toUpperCase()}
-                </span>
-                <div>
-                  <h3 style={{fontSize:'14px',fontWeight:600,color:'#fff',marginBottom:'4px'}}>{m.title}</h3>
-                  <p style={{fontSize:'13px',color:'rgba(255,255,255,0.45)',lineHeight:1.6}}>{m.desc}</p>
+              <div key={i} style={{padding:'20px',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.05)',borderRadius:'10px',display:'flex',flexDirection:'column',gap:'12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                  <span style={{fontSize:'10px',fontWeight:700,letterSpacing:'0.08em',padding:'3px 8px',borderRadius:'4px',flexShrink:0,
+                    background: m.layer === 'Automated' ? 'rgba(99,102,241,0.15)' : m.layer === 'Human' ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.12)',
+                    color: m.layer === 'Automated' ? '#818cf8' : m.layer === 'Human' ? '#34d399' : '#94a3b8',
+                  }}>
+                    {m.layer.toUpperCase()}
+                  </span>
+                  <h3 style={{fontSize:'14px',fontWeight:600,color:'#fff'}}>{m.title}</h3>
                 </div>
+                <p style={{fontSize:'13px',color:'rgba(255,255,255,0.45)',lineHeight:1.6}}>{m.desc}</p>
               </div>
             ))}
           </div>

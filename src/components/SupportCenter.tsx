@@ -281,8 +281,8 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      padding: '60px 16px', zIndex: 100000,
-      background: 'rgba(5,5,5,0.8)', backdropFilter: 'blur(10px)',
+      padding: '60px 16px', zIndex: 999999,
+      background: 'rgba(5,5,5,0.85)', backdropFilter: 'blur(20px)',
       overflowY: 'auto',
     }} onClick={onClose}>
       <motion.div
@@ -292,7 +292,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         style={{
           width: '100%', maxWidth: '440px',
-          height: 'min(90vh, 720px)',
+          maxHeight: 'min(85vh, 820px)',
           margin: 'auto 0',
           background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.1)',
