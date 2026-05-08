@@ -167,18 +167,19 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   }, [joinStep, selectedTicket, authKey]);
 
   // 6. Admin send message
-  const sendAdminMsg = async () => {
-    if (!chatInput.trim() || !selectedTicket || chatSending) return;
-    const text = chatInput;
-    setChatInput('');
+  const sendAdminMsg = async (overrideText?: string, overrideName?: string) => {
+    const text = overrideText || chatInput;
+    const name = overrideName || adminName;
+    if (!text.trim() || !selectedTicket || chatSending) return;
+    if (!overrideText) setChatInput('');
     setChatSending(true);
-    setChatMessages(prev => [...prev, { id: Date.now(), sender_type: 'agent', agent_name: adminName, content: text, created_at: new Date().toISOString() }]);
+    setChatMessages(prev => [...prev, { id: Date.now(), sender_type: 'agent', agent_name: name, content: text, created_at: new Date().toISOString() }]);
     setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
     try {
       await fetch('/api/support/messages', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: selectedTicket.id, content: text, sender_type: 'agent', agent_name: adminName })
+        body: JSON.stringify({ ticket_id: selectedTicket.id, content: text, sender_type: 'agent', agent_name: name })
       });
       // Update ticket status to Active Session
       await fetch('/api/admin/tickets', {
@@ -568,9 +569,25 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                         <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>Enter your name to join the session</p>
                         <div style={{ display: 'flex', gap: '12px' }}>
                           <input autoFocus value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)}
-                            onKeyDown={e => { if (e.key === 'Enter' && adminNameInput.trim()) { setAdminName(adminNameInput.trim()); setJoinStep('chat'); setChatMessages([]); } }}
+                            onKeyDown={e => { 
+                              if (e.key === 'Enter' && adminNameInput.trim()) { 
+                                const name = adminNameInput.trim();
+                                setAdminName(name); 
+                                setJoinStep('chat'); 
+                                setChatMessages([]);
+                                sendAdminMsg(`Hello, I am ${name} from Verlyn Support. I've joined the session to assist you with your request. How can I help you today?`, name);
+                              } 
+                            }}
                             placeholder="Your name..." style={{ flex: 1, padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#fff', fontSize: '13px', outline: 'none' }} />
-                          <button onClick={() => { if (adminNameInput.trim()) { setAdminName(adminNameInput.trim()); setJoinStep('chat'); setChatMessages([]); } }}
+                          <button onClick={() => { 
+                            if (adminNameInput.trim()) { 
+                              const name = adminNameInput.trim();
+                              setAdminName(name); 
+                              setJoinStep('chat'); 
+                              setChatMessages([]);
+                              sendAdminMsg(`Hello, I am ${name} from Verlyn Support. I've joined the session to assist you with your request. How can I help you today?`, name);
+                            } 
+                          }}
                             style={{ padding: '12px 24px', background: '#fff', color: '#000', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
                             Enter
                           </button>
@@ -617,8 +634,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                                     <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
                                   </div>
                                 </div>
-                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff' }}>{(adminName||'A')[0]}</span>
+                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                                 </div>
                               </div>
                             )
@@ -630,7 +647,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAdminMsg(); } }}
                             placeholder={`Reply as ${adminName}...`}
                             style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', padding: '10px 14px', outline: 'none' }} />
-                          <button onClick={sendAdminMsg} disabled={chatSending || !chatInput.trim()}
+                          <button onClick={() => sendAdminMsg()} disabled={chatSending || !chatInput.trim()}
                             style={{ padding: '10px 20px', background: chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.1)', color: chatInput.trim() ? '#000' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
                             Send
                           </button>
