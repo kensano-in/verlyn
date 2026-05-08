@@ -48,8 +48,13 @@ export async function POST(req: NextRequest) {
     const cleanText = text.trim();
     if (cleanText.toLowerCase().startsWith('/auth')) {
       const pass = cleanText.substring(5).trim();
-      const targetPass = process.env.MASTER_PASSWORD || 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!';
+      const targetPass = process.env.MASTER_PASSWORD;
       
+      if (!targetPass) {
+        await sendTelegramMessage(chatId, "⚠️ *SYSTEM ERROR:* Master password not configured in environment.");
+        return NextResponse.json({ ok: true });
+      }
+
       if (pass === targetPass || pass === 'VERLYN-ADMIN-99') {
         // Record auth success in audit log for session tracking
         await supabase.from('audit_log').insert({
