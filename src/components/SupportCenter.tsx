@@ -31,6 +31,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [reportType, setReportType] = useState('general');
+  const [customReportType, setCustomReportType] = useState('');
   const [description, setDescription] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -126,7 +127,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
           fullName, 
           email, 
           subject, 
-          reportType, 
+          reportType: reportType === 'customize' ? `Custom: ${customReportType}` : reportType, 
           description, 
           agreed 
         })
@@ -436,7 +437,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <label style={lblStyles}>Inquiry Category</label>
-                <div style={{ position: 'relative', marginBottom: '16px' }}>
+                <div style={{ position: 'relative', marginBottom: reportType === 'customize' ? '12px' : '16px' }}>
                   <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{ ...inpStyles, appearance: 'none', cursor: 'pointer', paddingRight: '40px', marginBottom: 0 }}>
                     <option value="general" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
                     <option value="tech" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Support</option>
@@ -446,9 +447,24 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                     <option value="bug" style={{ background: '#0a0a0a', color: '#fff' }}>Bug Report</option>
                     <option value="legal" style={{ background: '#0a0a0a', color: '#fff' }}>Legal & Compliance</option>
                     <option value="partnership" style={{ background: '#0a0a0a', color: '#fff' }}>Partnership Inquiry</option>
+                    <option value="suggestion" style={{ background: '#0a0a0a', color: '#fff' }}>Feature Suggestion</option>
+                    <option value="customize" style={{ background: '#0a0a0a', color: '#fff' }}>Customize Inquiry</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6"/></svg>
                 </div>
+
+                {reportType === 'customize' && (
+                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '16px' }}>
+                    <input 
+                      type="text" 
+                      value={customReportType} 
+                      onChange={e=>setCustomReportType(e.target.value)} 
+                      placeholder="Specify your custom inquiry type..." 
+                      required 
+                      style={{ ...inpStyles, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.2)' }} 
+                    />
+                  </motion.div>
+                )}
 
                 <label style={lblStyles}>Subject <span style={{color:'rgba(255,255,255,0.3)',fontWeight:400,textTransform:'none',letterSpacing:0}}>({SUBJECT_MIN} words min)</span></label>
                 <input type="text" value={subject} onChange={e=>setSubject(e.target.value)} required style={{...inpStyles, borderColor: subject.length>0 && subjectWords<SUBJECT_MIN ? 'rgba(239,68,68,0.5)' : subject.length>0 && subjectWords>=SUBJECT_MIN ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}} placeholder="Brief description of the request..." />

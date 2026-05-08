@@ -192,6 +192,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   };
 
   const getCategoryLabel = (cat: string) => {
+    if (cat.startsWith('Custom:')) return cat;
     const labels: Record<string, string> = {
       general: 'General Inquiries',
       tech: 'Technical Support',
@@ -200,9 +201,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
       billing: 'Payment & Billing',
       bug: 'Bug Reports',
       legal: 'Legal & Compliance',
-      partnership: 'Partnership Inquiry'
+      partnership: 'Partnership Inquiry',
+      suggestion: 'Feature Suggestions'
     };
-    return labels[cat] || 'Uncategorized';
+    return labels[cat] || cat;
   };
 
   const getStatusColor = (status: string) => {
