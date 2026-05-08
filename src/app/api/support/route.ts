@@ -148,10 +148,11 @@ export async function POST(req: NextRequest) {
         if (botToken) {
           const text = `🚨 *VERLYN ${reportType.toUpperCase()} ALERT*\n\n` +
                        `*Case ID:* \`${caseId}\`\n` +
-                       `*User:* ${fullName} (${email})\n` +
+                       `*User:* ${fullName}\n` +
+                       `*Email:* ${email}\n` +
                        `*Subject:* ${subject}\n\n` +
-                       `*Description:*\n${description}\n\n` +
-                       `_Reply with Case ID to assist from Dashboard._`;
+                       `*Message:*\n${description}\n\n` +
+                       `💡 *Direct Action:*\nReply to this message to send an instant response to the user.`;
           
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
