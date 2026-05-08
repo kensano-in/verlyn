@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const message = body.message;
     const chatId = message?.chat?.id;
     
-    // Log for debugging (Vercel logs)
+    // Log for debugging
     console.log(`[TG Webhook] Incoming from: ${chatId} (Expected: ${ADMIN_CHAT_ID})`);
 
     if (!message || String(chatId) !== ADMIN_CHAT_ID) return NextResponse.json({ ok: true });
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       // 🛑 IMMEDIATELY DELETE PASSWORD MESSAGE
       await deleteTelegramMessage(chatId, messageId);
 
-      if (pass === targetPass || pass === 'VERLYN-ADMIN-99') {
+      if (pass === targetPass || pass === 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!') {
         await supabase.from('audit_log').insert({
           action: 'tg_auth_success',
           ip_address: `tg:${chatId}`,
@@ -87,17 +87,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Check Session Authorization ─────────────────────────────────────────
-    const { data: lastAuth } = await supabase
-      .from('audit_log')
-      .select('metadata, created_at')
-      .eq('action', 'tg_auth_success')
-      .eq('ip_address', `tg:${chatId}`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    const isAuthorized = lastAuth && (Date.now() - new Date(lastAuth.created_at).getTime() < 3600000);
-
+    const isAuthorized = await checkSession(supabase, chatId);
     if (!isAuthorized) {
       await sendTelegramMessage(chatId, "⚠️ *SESSION EXPIRED*\nPlease re-authenticate using `/auth`.");
       return NextResponse.json({ ok: true });
@@ -110,16 +100,18 @@ export async function POST(req: NextRequest) {
       
       if (caseIdMatch) {
         const caseId = caseIdMatch[0];
-        const { error: updateErr } = await supabase
-          .from('support_tickets')
-          .update({ admin_reply: text, status: 'In progress' })
-          .eq('case_id', caseId);
+        
+        // 1. Insert into support_messages (REAL CHAT BRIDGE)
+        await supabase.from('support_messages').insert({
+          case_id: caseId,
+          content: text,
+          sender_type: 'agent'
+        });
 
-        if (updateErr) {
-          await sendTelegramMessage(chatId, `❌ *TRANSMISSION ERROR:* Could not relay to \`${caseId}\``);
-        } else {
-          await sendTelegramMessage(chatId, `✅ *MESSAGE RELAYED:* Response transmitted to \`${caseId}\``);
-        }
+        // 2. Update ticket status
+        await supabase.from('support_tickets').update({ status: 'In progress' }).eq('case_id', caseId);
+
+        await sendTelegramMessage(chatId, `✅ *MESSAGE TRANSMITTED:* Response relayed to \`${caseId}\``);
       }
     }
 
@@ -128,6 +120,19 @@ export async function POST(req: NextRequest) {
     console.error('[TG Webhook] Error:', err);
     return NextResponse.json({ ok: true });
   }
+}
+
+async function checkSession(supabase: any, chatId: string | number) {
+  const { data: lastAuth } = await supabase
+    .from('audit_log')
+    .select('metadata, created_at')
+    .eq('action', 'tg_auth_success')
+    .eq('ip_address', `tg:${chatId}`)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  return lastAuth && (Date.now() - new Date(lastAuth.created_at).getTime() < 3600000);
 }
 
 async function handleCallback(cb: any) {
@@ -141,7 +146,15 @@ async function handleCallback(cb: any) {
     { auth: { persistSession: false } }
   );
 
-  // Helper to edit the current message
+  // 🛡️ AUTHORIZATION GATE
+  if (data !== 'logout' && data !== 'main_menu') {
+    const isAuthorized = await checkSession(supabase, chatId);
+    if (!isAuthorized) {
+      await sendTelegramMessage(chatId, "⚠️ *SESSION EXPIRED*\nPlease re-authenticate using `/auth`.");
+      return NextResponse.json({ ok: true });
+    }
+  }
+
   const editUI = async (text: string, markup: any) => {
     await editTelegramMessage(chatId, messageId, text, markup);
   };
@@ -172,6 +185,15 @@ async function handleCallback(cb: any) {
   }
 
   if (data === 'main_menu') {
+    // Re-check auth for main menu re-entry
+    const isAuthorized = await checkSession(supabase, chatId);
+    if (!isAuthorized) {
+      await editUI(`${THEME.header}\n${THEME.divider}\nSession expired. Please use /auth to re-establish access.`, {
+        inline_keyboard: []
+      });
+      return NextResponse.json({ ok: true });
+    }
+
     await editUI(`${THEME.header}\n${THEME.divider}\nOperational dashboard active. Select a module to continue.`, {
       inline_keyboard: [
         [{ text: '🛰️ LIVE NETWORK STATS', callback_data: 'stats' }],
@@ -233,6 +255,15 @@ async function handleCallback(cb: any) {
       `_Telemetry updated in real-time._`,
       { inline_keyboard: [[{ text: '⬅️ BACK', callback_data: 'main_menu' }]] }
     );
+  }
+
+  if (data === 'audit') {
+    const { data: logs } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(5);
+    let msg = "🛡️ *SECURITY AUDIT LOG*\n" + THEME.divider + "\n\n";
+    logs?.forEach(l => {
+      msg += `• ${new Date(l.created_at).toLocaleTimeString()} | *${l.action}*\n_${l.ip_address}_\n\n`;
+    });
+    await editUI(msg, { inline_keyboard: [[{ text: '⬅️ BACK', callback_data: 'main_menu' }]] });
   }
 
   if (data === 'logout') {
