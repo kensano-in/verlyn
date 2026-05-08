@@ -35,6 +35,8 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notifyAgreed, setNotifyAgreed] = useState(false);
+  const [showNotifyReason, setShowNotifyReason] = useState(false);
 
   // Chat State
   const [chatTicket, setChatTicket] = useState<Ticket | null>(null);
@@ -429,10 +431,14 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 <label style={lblStyles}>Inquiry Category</label>
                 <div style={{ position: 'relative', marginBottom: '16px' }}>
                   <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{ ...inpStyles, appearance: 'none', cursor: 'pointer', paddingRight: '40px', marginBottom: 0 }}>
-                    <option value="question" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
-                    <option value="account" style={{ background: '#0a0a0a', color: '#fff' }}>Account & Security</option>
-                    <option value="bug" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Issue</option>
-                    <option value="suggestion" style={{ background: '#0a0a0a', color: '#fff' }}>Platform Suggestion</option>
+                    <option value="general" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
+                    <option value="tech" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Support</option>
+                    <option value="security" style={{ background: '#0a0a0a', color: '#fff' }}>Security & Privacy</option>
+                    <option value="account" style={{ background: '#0a0a0a', color: '#fff' }}>Account Access</option>
+                    <option value="billing" style={{ background: '#0a0a0a', color: '#fff' }}>Payment & Billing</option>
+                    <option value="bug" style={{ background: '#0a0a0a', color: '#fff' }}>Bug Report</option>
+                    <option value="legal" style={{ background: '#0a0a0a', color: '#fff' }}>Legal & Compliance</option>
+                    <option value="partnership" style={{ background: '#0a0a0a', color: '#fff' }}>Partnership Inquiry</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6"/></svg>
                 </div>
@@ -449,6 +455,32 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                     I authorize Verlyn to securely process this data for support purposes according to the Privacy Policy.
                   </span>
                 </label>
+
+                <div style={{ position: 'relative' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px', cursor: 'pointer', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <input type="checkbox" checked={notifyAgreed} onChange={e=>{
+                      setNotifyAgreed(e.target.checked);
+                      if(e.target.checked) setShowNotifyReason(true);
+                    }} style={{ accentColor: '#fff', width: '16px', height: '16px', flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>Enable browser notifications for agent responses.</span>
+                  </label>
+
+                  <AnimatePresence>
+                    {showNotifyReason && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                        style={{ position: 'absolute', bottom: '110%', left: 0, right: 0, zIndex: 10, background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', padding: '16px', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
+                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Why enable notifications?</p>
+                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: '12px' }}>
+                          We value your time. Enabling notifications allows us to alert you the moment an agent joins your session or replies to your inquiry, so you don't have to keep the window open.
+                        </p>
+                        <button type="button" onClick={() => {
+                          setShowNotifyReason(false);
+                          if ('Notification' in window) Notification.requestPermission();
+                        }} style={{ background: '#fff', color: '#000', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>GOT IT</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
                 {error && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '16px', textAlign: 'center', background: 'rgba(239,68,68,0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</p>}
 

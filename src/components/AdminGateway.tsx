@@ -191,6 +191,20 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     } catch { } finally { setChatSending(false); }
   };
 
+  const getCategoryLabel = (cat: string) => {
+    const labels: Record<string, string> = {
+      general: 'General Inquiries',
+      tech: 'Technical Support',
+      security: 'Security & Privacy',
+      account: 'Account Access',
+      billing: 'Payment & Billing',
+      bug: 'Bug Reports',
+      legal: 'Legal & Compliance',
+      partnership: 'Partnerships'
+    };
+    return labels[cat] || 'Uncategorized';
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Received': return '#10b981';
@@ -420,24 +434,42 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                   <input type="text" placeholder="Search records..." style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px 14px', borderRadius: '8px', color: '#fff', fontSize: '12px', outline: 'none' }} />
                 </div>
 
-                {activeTab === 'triage' && tickets.map(t => (
-                  <div key={t.id} onClick={() => { setSelectedTicket(t); setJoinStep('idle'); setChatMessages([]); setAdminNameInput(''); setChatInput(''); }}
-                    style={{
-                      padding: '20px 24px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s',
-                      background: selectedTicket?.id === t.id ? 'rgba(255,255,255,0.04)' : 'transparent',
-                      borderLeft: selectedTicket?.id === t.id ? '3px solid #6366f1' : '3px solid transparent'
-                    }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', background: `${getStatusColor(t.status)}15`, color: getStatusColor(t.status), textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.status}</span>
-                      <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>{t.case_id}</span>
-                    </div>
-                    <p style={{ fontSize: '13.5px', fontWeight: 600, color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.subject}</p>
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.full_name} · Risk: Low</p>
-                    {t.admin_reply && <p style={{ fontSize: '10px', color: '#6366f1', marginTop: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Awaiting User
-                    </p>}
-                  </div>
-                ))}
+                {activeTab === 'triage' && (
+                  (() => {
+                    const grouped = tickets.reduce((acc: any, t) => {
+                      const cat = t.report_type || 'general';
+                      if (!acc[cat]) acc[cat] = [];
+                      acc[cat].push(t);
+                      return acc;
+                    }, {});
+                    
+                    return Object.entries(grouped).map(([cat, catTickets]: [string, any]) => (
+                      <div key={cat}>
+                        <div style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', borderTop: '1px solid rgba(255,255,255,0.02)', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                          {getCategoryLabel(cat)} ({catTickets.length})
+                        </div>
+                        {catTickets.map((t: any) => (
+                          <div key={t.id} onClick={() => { setSelectedTicket(t); setJoinStep('idle'); setChatMessages([]); setAdminNameInput(''); setChatInput(''); }}
+                            style={{
+                              padding: '20px 24px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s',
+                              background: selectedTicket?.id === t.id ? 'rgba(255,255,255,0.04)' : 'transparent',
+                              borderLeft: selectedTicket?.id === t.id ? '3px solid #6366f1' : '3px solid transparent'
+                            }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', background: `${getStatusColor(t.status)}15`, color: getStatusColor(t.status), textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t.status}</span>
+                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>{t.case_id}</span>
+                            </div>
+                            <p style={{ fontSize: '13.5px', fontWeight: 600, color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.subject}</p>
+                            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.full_name} · Risk: Low</p>
+                            {t.admin_reply && <p style={{ fontSize: '10px', color: '#6366f1', marginTop: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Awaiting User
+                            </p>}
+                          </div>
+                        ))}
+                      </div>
+                    ));
+                  })()
+                )}
 
                 {activeTab === 'prereg' && preRegs.map((r: any) => (
                   <div key={r.id} onClick={() => setSelectedTicket(r)}
