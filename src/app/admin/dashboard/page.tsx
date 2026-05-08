@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Ticket {
@@ -27,17 +27,27 @@ interface Message {
 
 // ── UI Components ──────────────────────────────────────────────────────────
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    'Received': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'In progress': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'Active Session': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    'Resolved': 'bg-white/5 text-white/40 border-white/10',
+const StatusIndicator = ({ status }: { status: string }) => {
+  const configs: Record<string, { color: string; bg: string; pulse: boolean }> = {
+    'Received': { color: '#6366f1', bg: 'rgba(99,102,241,0.1)', pulse: true },
+    'In progress': { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', pulse: true },
+    'Active Session': { color: '#10b981', bg: 'rgba(16,185,129,0.1)', pulse: true },
+    'Resolved': { color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.05)', pulse: false },
   };
+  const config = configs[status] || configs['Resolved'];
+
   return (
-    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold tracking-widest uppercase border ${styles[status] || styles['Resolved']}`}>
-      {status}
-    </span>
+    <div className="flex items-center gap-2">
+      <div className="relative flex items-center justify-center">
+        {config.pulse && (
+          <div className="absolute w-2 h-2 rounded-full opacity-40 animate-ping" style={{ backgroundColor: config.color }} />
+        )}
+        <div className="w-1.5 h-1.5 rounded-full z-10" style={{ backgroundColor: config.color }} />
+      </div>
+      <span className="text-[10px] font-bold tracking-tight uppercase" style={{ color: config.color }}>
+        {status}
+      </span>
+    </div>
   );
 };
 
@@ -54,7 +64,7 @@ export default function AdminDashboard() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fetch Tickets via API
+  // 1. Fetch Tickets
   const fetchTickets = async () => {
     try {
       const res = await fetch('/api/admin/dashboard/tickets', {
@@ -71,7 +81,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // 2. Fetch Messages for selected ticket
+  // 2. Fetch Messages
   const fetchMessages = async () => {
     if (!selectedTicket) return;
     try {
@@ -149,232 +159,274 @@ export default function AdminDashboard() {
       setAuthenticated(true);
       setError('');
     } else {
-      setError('INVALID PROTOCOL KEY');
+      setError('Invalid Operational Key');
     }
   };
 
   if (!authenticated) {
     return (
-      <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center p-8 overflow-hidden relative">
-        {/* Background Gradients */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
-        
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 font-sans">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          className="w-full max-w-sm z-10"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md"
         >
-          <div className="flex flex-col items-center mb-10">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl mx-auto flex items-center justify-center shadow-2xl shadow-indigo-500/20 mb-8 transform rotate-3">
+               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Command Center</h1>
-            <p className="text-[10px] font-mono text-white/30 uppercase tracking-[0.3em]">Operational Protocol v4.2</p>
+            <h1 className="text-4xl font-bold text-white tracking-tight leading-none mb-4">Verlyn HQ</h1>
+            <p className="text-white/40 text-sm font-medium">Enterprise Support Console v5.0</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="relative group">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-1">
               <input 
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="ENTER MASTER KEY" 
-                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-5 text-white placeholder:text-white/10 outline-none focus:border-white/30 focus:bg-white/[0.05] transition-all text-center tracking-[0.2em] font-mono text-lg"
+                placeholder="Operational Key" 
+                className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-5 text-white placeholder:text-white/10 outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-center tracking-widest text-lg font-bold"
               />
-              <div className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              {error && <p className="text-[10px] text-red-500 text-center font-bold uppercase tracking-widest mt-3">{error}</p>}
             </div>
-            {error && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-red-500 text-center font-bold tracking-widest uppercase">
-                {error}
-              </motion.p>
-            )}
-            <button className="w-full bg-white text-black font-black py-5 rounded-2xl text-xs tracking-[0.2em] uppercase hover:bg-[#f2f2f2] active:scale-[0.98] transition-all shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-              Establish Session
+            <button className="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl hover:bg-indigo-500 active:scale-[0.98] transition-all shadow-xl shadow-indigo-600/20 text-sm tracking-wide">
+              Initialize Access
             </button>
           </form>
           
-          <p className="text-[9px] text-white/20 text-center mt-12 uppercase tracking-widest leading-relaxed">
-            Unauthorized access to Verlyn infrastructure is strictly prohibited.<br />All sessions are monitored and recorded.
-          </p>
+          <div className="mt-16 pt-8 border-t border-white/5 flex items-center justify-center gap-8 opacity-20">
+             <span className="text-[10px] font-bold tracking-widest uppercase">Encrypted</span>
+             <span className="text-[10px] font-bold tracking-widest uppercase">Audited</span>
+             <span className="text-[10px] font-bold tracking-widest uppercase">Secure</span>
+          </div>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#030303] flex flex-col font-sans text-white overflow-hidden">
+    <div className="h-screen bg-[#050505] flex flex-col font-sans text-[#f2f2f2] overflow-hidden">
       {/* Header */}
-      <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-black/40 backdrop-blur-xl z-50 sticky top-0">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
-          <div>
-            <span className="text-[11px] font-black tracking-[0.2em] text-white uppercase block leading-none">Operations</span>
-            <span className="text-[9px] font-mono text-emerald-500/60 uppercase tracking-widest">System Optimal</span>
-          </div>
+      <header className="h-20 shrink-0 flex items-center justify-between px-8 bg-[#0a0a0a]/80 backdrop-blur-3xl border-b border-white/5 z-50">
+        <div className="flex items-center gap-5">
+           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+           </div>
+           <div>
+              <h2 className="text-lg font-bold tracking-tight leading-none">Command Center</h2>
+              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                 Operational
+              </p>
+           </div>
         </div>
-        <button onClick={() => window.location.reload()} className="w-9 h-9 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        </button>
+        <div className="flex items-center gap-3">
+           <button onClick={fetchTickets} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/50 hover:text-white">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+           </button>
+           <button onClick={() => window.location.reload()} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white/50 hover:text-white">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
+           </button>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-hidden flex flex-col relative">
+      <main className="flex-1 overflow-hidden flex relative">
         <AnimatePresence mode="wait">
           {!selectedTicket ? (
             <motion.div 
               key="list" 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
-              className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-hide"
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -10 }}
+              className="flex-1 overflow-y-auto px-8 py-10 space-y-8 scrollbar-hide"
             >
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight">Active Dossiers</h2>
-                  <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-1">Operational Queue</p>
+              <div className="max-w-4xl mx-auto">
+                <div className="flex items-end justify-between mb-12">
+                   <div>
+                      <h3 className="text-3xl font-bold tracking-tight mb-2">Priority Queue</h3>
+                      <p className="text-white/40 text-sm font-medium">Monitoring active support transmissions</p>
+                   </div>
+                   <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                      <span className="text-xs font-bold text-white/60 tracking-tight">{tickets.length} Active Tickets</span>
+                   </div>
                 </div>
-                <div className="bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                  <span className="text-[10px] font-bold text-white/50 tracking-widest uppercase">{tickets.length} Total</span>
-                </div>
-              </div>
 
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-32 space-y-4">
-                  <div className="w-10 h-10 border-2 border-white/10 border-t-white rounded-full animate-spin" />
-                  <p className="text-[10px] font-mono text-white/20 tracking-[0.3em] uppercase">Retrieving Data...</p>
-                </div>
-              ) : tickets.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-32 opacity-20 space-y-4">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  <p className="text-sm italic tracking-wide">Queue Empty. No active cases detected.</p>
-                </div>
-              ) : (
-                <div className="grid gap-3">
-                  {tickets.map(t => (
-                    <motion.div 
-                      key={t.id}
-                      whileHover={{ scale: 1.01, backgroundColor: 'rgba(255,255,255,0.04)' }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => setSelectedTicket(t)}
-                      className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 cursor-pointer transition-all flex items-center justify-between group"
-                    >
-                      <div className="flex-1 min-w-0 pr-4">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="text-[10px] font-mono text-white/30 tracking-tighter uppercase">{t.case_id}</span>
-                          <StatusBadge status={t.status} />
-                        </div>
-                        <h3 className="text-sm font-bold text-white/90 group-hover:text-white transition-colors truncate">{t.subject}</h3>
-                        <p className="text-[11px] text-white/40 mt-1 flex items-center gap-2">
-                          <span className="font-medium text-white/60">{t.full_name}</span>
-                          <span className="w-1 h-1 rounded-full bg-white/10" />
-                          <span className="truncate">{t.email}</span>
-                        </p>
+                {loading ? (
+                   <div className="flex flex-col items-center justify-center py-40 gap-6">
+                      <div className="w-12 h-12 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                      <p className="text-[10px] font-bold text-white/20 tracking-[0.4em] uppercase">Securing Data Stream</p>
+                   </div>
+                ) : tickets.length === 0 ? (
+                   <div className="py-40 text-center border border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
+                      <div className="w-16 h-16 bg-white/5 rounded-2xl mx-auto flex items-center justify-center mb-6">
+                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-20"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+                      <p className="text-white/20 text-sm font-medium italic">No pending dossiers. Network idle.</p>
+                   </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {tickets.map(t => (
+                      <motion.div 
+                        key={t.id}
+                        layoutId={t.id}
+                        whileHover={{ scale: 1.005, backgroundColor: 'rgba(255,255,255,0.03)' }}
+                        onClick={() => setSelectedTicket(t)}
+                        className="group p-6 rounded-3xl bg-white/[0.02] border border-white/5 cursor-pointer transition-all flex items-center gap-6"
+                      >
+                         <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-colors">
+                            <span className="text-lg font-black text-white/20 group-hover:text-indigo-400/60 transition-colors">{t.full_name.charAt(0)}</span>
+                         </div>
+                         <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1.5">
+                               <StatusIndicator status={t.status} />
+                               <span className="text-[10px] font-mono text-white/20 uppercase tracking-tighter">{t.case_id}</span>
+                            </div>
+                            <h4 className="text-base font-bold text-white/90 group-hover:text-white transition-colors truncate">{t.subject}</h4>
+                            <div className="flex items-center gap-3 mt-1.5">
+                               <span className="text-[11px] text-white/40 font-medium truncate">{t.full_name}</span>
+                               <span className="w-1 h-1 rounded-full bg-white/10" />
+                               <span className="text-[11px] text-white/30 font-mono truncate">{t.email}</span>
+                            </div>
+                         </div>
+                         <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-white/5">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M9 18l6-6-6-6"/></svg>
+                         </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </motion.div>
           ) : (
             <motion.div 
               key="chat" 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col overflow-hidden"
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col overflow-hidden bg-[#050505]"
             >
               {/* Chat Sub-Header */}
-              <div className="p-4 bg-white/[0.01] border-b border-white/5 flex items-center gap-4">
+              <div className="h-20 shrink-0 px-8 bg-black/40 backdrop-blur-2xl border-b border-white/5 flex items-center gap-6">
                 <button 
                   onClick={() => setSelectedTicket(null)}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                  className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all active:scale-95"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 </button>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-black tracking-tight truncate">{selectedTicket.subject}</h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[9px] font-mono text-white/30 uppercase tracking-tighter">{selectedTicket.case_id}</span>
-                    <span className="w-1 h-1 rounded-full bg-white/10" />
-                    <span className="text-[9px] font-bold text-emerald-500/80 uppercase tracking-widest">Active Link</span>
-                  </div>
+                   <div className="flex items-center gap-3 mb-1">
+                      <h4 className="text-base font-black tracking-tight truncate">{selectedTicket.subject}</h4>
+                      <StatusIndicator status={selectedTicket.status} />
+                   </div>
+                   <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest">{selectedTicket.case_id} — Secured Link</p>
+                </div>
+                <div className="flex items-center gap-2">
+                   <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Active</span>
+                   </div>
                 </div>
               </div>
 
-              {/* Messages Area */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-void relative">
-                <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 mb-8 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] uppercase font-black text-white/20 mb-3 tracking-[0.2em] flex items-center gap-2">
-                      <span className="w-3 h-[1px] bg-white/20" /> Initial Transmission
-                    </p>
-                    <p className="text-[13px] text-white/80 leading-relaxed font-medium">
-                      {selectedTicket.description}
-                    </p>
-                    <div className="mt-4 flex items-center gap-4 text-[10px] text-white/30 font-mono">
-                      <span>{selectedTicket.full_name}</span>
-                      <span>{new Date(selectedTicket.created_at).toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
+              {/* Chat Body */}
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-hide">
+                 <div className="max-w-3xl mx-auto space-y-10">
+                    
+                    {/* Dossier Summary Card */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-8 rounded-[32px] bg-white/[0.015] border border-white/5 relative group"
+                    >
+                       <div className="flex items-start justify-between mb-6">
+                          <div>
+                             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-2">Initial Transmission</p>
+                             <h5 className="text-xl font-bold text-white tracking-tight">{selectedTicket.report_type} Report</h5>
+                          </div>
+                          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="opacity-40"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                          </div>
+                       </div>
+                       <p className="text-sm leading-relaxed text-white/60 font-medium italic mb-8">
+                          "{selectedTicket.description}"
+                       </p>
+                       <div className="flex items-center gap-5 pt-6 border-t border-white/5">
+                          <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                             <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{selectedTicket.full_name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                             <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                             <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{new Date(selectedTicket.created_at).toLocaleDateString()}</span>
+                          </div>
+                       </div>
+                    </motion.div>
 
-                {messages.length === 0 ? (
-                  <div className="py-20 text-center opacity-20">
-                    <p className="text-xs italic">Awaiting secondary transmissions...</p>
-                  </div>
-                ) : (
-                  messages.map(m => (
-                    <div key={m.id} className={`flex flex-col ${m.sender_type === 'agent' ? 'items-end' : 'items-start'}`}>
-                      <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] leading-relaxed shadow-lg ${
-                        m.sender_type === 'agent' 
-                          ? 'bg-white text-black font-semibold rounded-tr-none' 
-                          : 'bg-white/[0.05] border border-white/10 text-white rounded-tl-none'
-                      }`}>
-                        {m.content}
-                      </div>
-                      <span className="text-[9px] text-white/20 font-mono mt-2 px-1">
-                        {m.sender_type === 'agent' ? 'OPERATOR' : 'CLIENT'} · {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                    {/* Messages List */}
+                    <div className="space-y-6">
+                       {messages.map((m, idx) => {
+                         const isAgent = m.sender_type === 'agent';
+                         return (
+                           <motion.div 
+                             key={m.id}
+                             initial={{ opacity: 0, x: isAgent ? 10 : -10 }}
+                             animate={{ opacity: 1, x: 0 }}
+                             className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
+                           >
+                              <div className={`max-w-[85%] px-6 py-4 rounded-[26px] text-sm leading-relaxed shadow-xl ${
+                                isAgent 
+                                  ? 'bg-white text-black font-semibold rounded-tr-none' 
+                                  : 'bg-[#151515] border border-white/5 text-[#f2f2f2] font-medium rounded-tl-none'
+                              }`}>
+                                 {m.content}
+                              </div>
+                              <span className="text-[9px] font-black text-white/20 mt-2 px-1 uppercase tracking-widest">
+                                 {isAgent ? 'Official Agent' : 'User Client'} · {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                           </motion.div>
+                         );
+                       })}
                     </div>
-                  ))
-                )}
+                 </div>
               </div>
 
-              {/* Reply Form */}
-              <form onSubmit={handleReply} className="p-6 bg-black border-t border-white/5 backdrop-blur-xl">
-                <div className="flex gap-3 relative">
-                  <input 
-                    type="text" 
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    disabled={isSending}
-                    placeholder="Enter command or message..."
-                    className="flex-1 bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-sm outline-none focus:border-white/30 transition-all placeholder:text-white/10"
-                  />
-                  <button 
-                    disabled={isSending || !replyText.trim()}
-                    className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-black hover:bg-[#f2f2f2] active:scale-[0.95] disabled:opacity-30 disabled:scale-100 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.1)]"
-                  >
-                    {isSending ? (
-                      <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                    ) : (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                    )}
-                  </button>
-                </div>
-              </form>
+              {/* Reply Area */}
+              <div className="shrink-0 p-8 bg-black/60 backdrop-blur-3xl border-t border-white/5">
+                 <div className="max-w-3xl mx-auto">
+                    <form onSubmit={handleReply} className="relative flex items-end gap-3 group">
+                       <div className="flex-1 relative">
+                          <textarea 
+                             value={replyText}
+                             onChange={e => setReplyText(e.target.value)}
+                             disabled={isSending}
+                             placeholder="Message client..."
+                             rows={1}
+                             className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-sm font-medium outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all placeholder:text-white/10 resize-none scrollbar-hide"
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter' && !e.shiftKey) {
+                                 e.preventDefault();
+                                 handleReply(e as any);
+                               }
+                             }}
+                          />
+                       </div>
+                       <button 
+                         disabled={isSending || !replyText.trim()}
+                         className="w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl bg-white text-black hover:bg-[#e0e0e0] active:scale-90 disabled:opacity-20 disabled:scale-100 transition-all shadow-xl shadow-white/5"
+                       >
+                          {isSending ? (
+                             <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                          ) : (
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                          )}
+                       </button>
+                    </form>
+                 </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </main>
     </div>
   );
 }
