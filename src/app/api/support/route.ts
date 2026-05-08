@@ -159,7 +159,15 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
               chat_id: chatId,
               text,
-              parse_mode: 'Markdown'
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    { text: '🛡️ Assist Now', url: 'https://verlyn.in/status' },
+                    { text: '📊 Dashboard', url: 'https://verlyn.in/status' }
+                  ]
+                ]
+              }
             })
           });
         } else {

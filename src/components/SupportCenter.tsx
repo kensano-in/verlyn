@@ -565,6 +565,31 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                   </motion.div>
                 )}
 
+                <AnimatePresence>
+                  {reportType === 'registration' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden', marginBottom: '16px' }}>
+                      <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px' }}>
+                        <p style={{ color: '#10b981', fontSize: '12px', fontWeight: 800, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                          INSTANT REGISTRATION HELP
+                        </p>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                          {[
+                            { q: "Didn't receive OTP?", a: "Check spam or wait 2 mins. Do not submit multiple requests." },
+                            { q: "Email already taken?", a: "You may have already registered. Try searching for 'Verlyn' in your inbox." },
+                            { q: "Referral code error?", a: "Ensure you are using a valid, case-sensitive invite code." }
+                          ].map((item, i) => (
+                            <div key={i} style={{ padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>{item.q}</p>
+                              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>{item.a}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <label style={lblStyles}>Subject <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>({SUBJECT_MIN} words min)</span></label>
                 <input type="text" value={subject} onChange={e => setSubject(e.target.value)} required style={{ ...inpStyles, borderColor: subject.length > 0 && subjectWords < SUBJECT_MIN ? 'rgba(239,68,68,0.5)' : subject.length > 0 && subjectWords >= SUBJECT_MIN ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)' }} placeholder="Brief description of the request..." />
 
