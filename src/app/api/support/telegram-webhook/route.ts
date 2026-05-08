@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
     if (!message || String(chatId) !== ADMIN_CHAT_ID) return NextResponse.json({ ok: true });
 
     const text = (message.text || '').trim();
-    const chatId = message.chat.id;
     const messageId = message.message_id;
 
     const supabase = createClient(
