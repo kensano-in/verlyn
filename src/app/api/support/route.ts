@@ -164,8 +164,8 @@ export async function POST(req: NextRequest) {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '🛡️ Assist Now', url: 'https://verlyn.in/status' },
-                    { text: '📊 Dashboard', url: 'https://verlyn.in/status' }
+                    { text: '⚡ MANAGE CASE', callback_data: `manage_${caseId}` },
+                    { text: '📊 STATS', callback_data: 'stats' }
                   ]
                 ]
               }
@@ -249,6 +249,26 @@ export async function PATCH(req: NextRequest) {
       .eq('case_id', case_id);
 
     if (updateErr) throw updateErr;
+
+    // ── Notify Telegram ──────────────────────────────────────────────────────
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493';
+      if (botToken) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: `📩 *USER REPLY:* \`${case_id}\`\n────────────────\n${message}\n\n💡 _Reply to this message to send an instant response._`,
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [[{ text: '📑 View Case', callback_data: `manage_${case_id}` }]]
+            }
+          })
+        });
+      }
+    } catch (e) { console.error('TG Notification error:', e); }
 
     return NextResponse.json({ success: true }, { status: 200, headers });
 
