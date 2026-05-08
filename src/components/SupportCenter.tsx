@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Logo from './Logo';
 
-type ViewState = 'menu' | 'form' | 'tracking' | 'faq' | 'chat';
+type ViewState = 'menu' | 'form' | 'tracking' | 'faq' | 'chat' | 'identity';
 
 interface Ticket {
   case_id: string;
@@ -15,13 +16,37 @@ interface Ticket {
 }
 
 const FAQS = [
-  { q: "When will I get access?", a: "Verlyn is currently rolling out access in waves based on queue position and security checks." },
-  { q: "Is my data truly secure?", a: "Yes. Our zero-knowledge architecture means we literally cannot see your messages." },
-  { q: "Can I change my registered email?", a: "For security reasons, emails cannot be changed while in the pre-registration queue." }
+  { 
+    q: 'What is the target latency for Verlyn nodes?', 
+    a: 'Verlyn is engineered for sub-120ms p95 latency across the global backbone. We utilize custom routing protocols and edge-optimization to bypass standard public congestion points.' 
+  },
+  { 
+    q: 'How does the Pre-Registration Access Model work?', 
+    a: 'Access is granted in waves based on reputation and registration sequence. Early adopters receive priority tunneling bandwidth and direct kernel-level API integration.' 
+  },
+  { 
+    q: 'Is Verlyn data truly zero-knowledge?', 
+    a: 'Absolutely. We utilize hardware security modules (HSMs) and zero-knowledge proofs (ZKPs) to ensure that even at the infrastructure level, Verlyn has no visibility into the payload of your packets.' 
+  },
+  { 
+    q: 'Can I migrate my existing identity to Verlyn?', 
+    a: 'Verlyn supports a wide range of DID (Decentralized Identity) standards. Migration tools will be available upon the public release of the Command Center.' 
+  }
 ];
 
-export default function SupportCenter({ onClose }: { onClose: () => void }) {
-  const [view, setView] = useState<ViewState>('menu');
+export default function SupportCenter({ onClose, initialView }: { onClose: () => void, initialView?: ViewState }) {
+  const [view, setView] = useState<ViewState>(initialView || 'menu');
+
+  useEffect(() => {
+    if (initialView) setView(initialView);
+  }, [initialView]);
+
+  // Scroll Lock
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -254,12 +279,12 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0,0,0,0.75)',
-      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '16px',
-    }}>
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      padding: '60px 16px', zIndex: 100000,
+      background: 'rgba(5,5,5,0.8)', backdropFilter: 'blur(10px)',
+      overflowY: 'auto',
+    }} onClick={onClose}>
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -268,6 +293,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
         style={{
           width: '100%', maxWidth: '440px',
           height: 'min(90vh, 720px)',
+          margin: 'auto 0',
           background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '20px',
@@ -276,6 +302,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
           boxShadow: '0 32px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
           position: 'relative',
         }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{
@@ -311,14 +338,12 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '16px' }}>
                   <div style={{
                     width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 20px',
-                    background: '#fff',
+                    background: 'rgba(255,255,255,0.02)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 8px 30px rgba(255,255,255,0.15)'
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
                   }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
-                      <path d="M12 16v-4m0-4h.01"/>
-                    </svg>
+                    <Logo size={32} glow={true} />
                   </div>
                   <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', marginBottom: '8px' }}>How can we assist you?</h3>
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>Our concierge team provides priority support for your inquiries and requests.</p>
@@ -327,37 +352,41 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
                   <button onClick={() => setView('faq')} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Knowledge Base</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Find answers instantly</p>
+                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Knowledge Base</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Browse official documentation</p>
                       </div>
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                   </button>
 
                   <button onClick={() => setView('form')} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Contact Concierge</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Submit a secure request</p>
+                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Contact Concierge</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Submit a priority request</p>
                       </div>
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                   </button>
+
+
                 </div>
 
                 {tickets.length > 0 && (
@@ -416,7 +445,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 <div style={{ marginTop: '40px', textAlign: 'center', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <p style={{ fontSize: '13px', color: '#fff', marginBottom: '6px', fontWeight: 500 }}>Unresolved Issue?</p>
                   <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '16px' }}>Our team is ready to assist you directly.</p>
-                  <button onClick={() => setView('form')} style={{ background: '#fff', color: '#000', padding: '12px 24px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Create Ticket</button>
+                  <button onClick={() => setView('form')} style={{ background: '#fff', color: '#000', padding: '14px 28px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', border: 'none', textTransform: 'uppercase', letterSpacing: '0.1em', boxShadow: '0 10px 30px rgba(255,255,255,0.1)' }}>Create Ticket</button>
                 </div>
               </motion.div>
             )}
@@ -508,10 +537,11 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 {error && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '16px', textAlign: 'center', background: 'rgba(239,68,68,0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</p>}
 
                 <button type="submit" disabled={loading} style={{
-                  width: '100%', padding: '16px', borderRadius: '10px', marginTop: '24px',
-                  background: loading ? 'rgba(255,255,255,0.5)' : '#fff',
-                  color: '#000', fontSize: '13px', fontWeight: 600, border: 'none', cursor: loading ? 'wait' : 'pointer',
-                  textTransform: 'uppercase', letterSpacing: '0.05em', transition: 'background 0.2s'
+                  width: '100%', padding: '18px', borderRadius: '12px', marginTop: '24px',
+                  background: loading ? 'rgba(255,255,255,0.2)' : '#fff',
+                  color: '#000', fontSize: '14px', fontWeight: 800, border: 'none', cursor: loading ? 'wait' : 'pointer',
+                  textTransform: 'uppercase', letterSpacing: '0.1em', transition: 'all 0.3s ease',
+                  boxShadow: '0 10px 40px rgba(255,255,255,0.15)'
                 }}>
                   {loading ? 'Transmitting...' : 'Submit Request'}
                 </button>
@@ -555,12 +585,13 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <button onClick={() => { setChatTicket(activeTicket); setView('chat'); }}
-                  style={{ width:'100%', padding:'16px', borderRadius:'10px', border:'none', cursor:'pointer',
-                    background:'#fff', color:'#000', fontSize:'13px', fontWeight:600, textTransform: 'uppercase', letterSpacing: '0.05em',
-                    display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', transition: 'background 0.2s' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  View Communications
-                </button>
+                    style={{ width:'100%', padding:'18px', borderRadius:'12px', border:'none', cursor:'pointer',
+                      background:'#fff', color:'#000', fontSize:'14px', fontWeight:800, textTransform: 'uppercase', letterSpacing: '0.1em',
+                      display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', transition: 'all 0.3s ease',
+                      boxShadow: '0 10px 40px rgba(255,255,255,0.15)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    View Communications
+                  </button>
               </motion.div>
             )}
 
@@ -627,6 +658,8 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 `}</style>
               </motion.div>
             )}
+
+
 
           </AnimatePresence>
         </div>

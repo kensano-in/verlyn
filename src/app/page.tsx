@@ -8,6 +8,8 @@ import Logo from '@/components/Logo';
 import IntroScreen from '@/components/IntroScreen';
 import SupportCenter from '@/components/SupportCenter';
 import AdminGateway from '@/components/AdminGateway';
+import GovernancePortal from '@/components/GovernancePortal';
+import DeveloperIdentity from '@/components/DeveloperIdentity';
 
 // Lazy-load heavy 3D scene
 const NetworkGraph = dynamic(() => import('@/components/NetworkGraph'), {
@@ -109,9 +111,13 @@ export default function HomePage() {
   // Always start false (avoids SSR/client hydration mismatch)
   // useEffect reads sessionStorage after mount - safe from hydration errors
   const [introComplete, setIntroComplete] = React.useState(false);
-  const [showSupport, setShowSupport]           = React.useState(false);
+  const [showSupport, setShowSupport] = React.useState(false);
+  const [supportView, setSupportView] = React.useState<any>('menu');
+  const [showGov, setShowGov]         = React.useState(false);
+  const [govView, setGovView]         = React.useState<any>('terms');
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
+  const [showIdentity, setShowIdentity]         = React.useState(false);
   const adminClickTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   // After mount, check if intro was already seen this session
@@ -157,6 +163,7 @@ export default function HomePage() {
     { label: 'Transparency', href: '/transparency' },
     { label: 'Status',       href: '/status' },
     { label: 'Whitepaper',   href: '/whitepaper' },
+    { label: 'Developer',    onClick: 'showIdentity' }
   ];
 
   return (
@@ -339,6 +346,7 @@ export default function HomePage() {
                         border: '1px solid rgba(255,255,255,0.05)',
                         borderRadius: '10px', textAlign: 'left',
                       }}>
+
                         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
                           <strong>Data Handling:</strong> Emails are encrypted client-side before transmission. No raw data is stored.{' '}
                           <strong>System Behavior:</strong> Access simulation uses deterministic delays to prevent timing attacks.{' '}
@@ -434,70 +442,91 @@ export default function HomePage() {
         {/* ════════════════════════════════════════════════════════════
             FOOTER
         ════════════════════════════════════════════════════════════ */}
-        <footer style={{
-          position: 'relative', zIndex: 1,
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          padding: 'clamp(36px, 5vw, 56px) var(--gutter)',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap', gap: '20px',
-          }}>
-            {/* Brand */}
-            <span
-              onClick={handleAdminClick}
-              style={{
-                fontSize: '12px', fontWeight: 700, letterSpacing: '0.12em',
-                color: 'rgba(255,255,255,0.55)', cursor: 'default', userSelect: 'none',
-                transition: 'color 0.2s',
-              }}
-            >
-              VERLYN
-            </span>
-
-            {/* Nav links */}
-            <nav style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', alignItems: 'center' }}>
-              {footerLinks.map(l => (
-                <a key={l.label} href={l.href} style={{
-                  fontSize: '10px', fontWeight: 500,
-                  letterSpacing: '0.1em', textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.22)', textDecoration: 'none',
-                  transition: 'color 0.2s ease',
+        <footer style={{ position: 'relative', zIndex: 10, padding: '120px 24px 80px', borderTop: '1px solid rgba(255,255,255,0.02)' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '60px', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            
+            {/* Left side */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+              <div 
+                onClick={handleAdminClick}
+                style={{
+                  fontSize: '16px', fontWeight: 800, letterSpacing: '0.15em',
+                  color: '#fff', cursor: 'default', userSelect: 'none'
                 }}
-                  onMouseEnter={e => { (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; }}
-                  onMouseLeave={e => { (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.22)'; }}
-                >{l.label}</a>
-              ))}
-              <button onClick={() => setShowSupport(true)} style={{
-                fontSize: '10px', fontWeight: 500,
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.22)', background: 'none',
-                border: 'none', cursor: 'pointer', padding: 0,
-                transition: 'color 0.2s ease',
-              }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.color = 'rgba(255,255,255,0.22)'; }}
-              >Support</button>
-            </nav>
+              >
+                VERLYN
+              </div>
+              
+              <nav style={{ display: 'flex', gap: '32px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {footerLinks.map(l => (
+                  <button 
+                    key={l.label} 
+                    onClick={() => {
+                      if (l.onClick === 'showIdentity') {
+                        setShowIdentity(true);
+                      } else if (l.href) {
+                        window.location.href = l.href;
+                      }
+                    }} 
+                    style={{
+                      fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+                      color: 'rgba(255,255,255,0.25)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color 0.2s'
+                    }} 
+                    onMouseEnter={e => e.currentTarget.style.color = '#fff'} 
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+                <button onClick={() => { setSupportView('menu'); setShowSupport(true); }} style={{
+                  fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.25)', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  transition: 'color 0.2s'
+                }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}>
+                  Support
+                </button>
+              </nav>
 
-            {/* Copyright */}
-            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.12)', letterSpacing: '0.05em' }}>
-              © Verlyn.in
-            </p>
+              <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '32px' }}>
+                © 2026 Verlyn · Secure Digital Infrastructure
+              </p>
+            </div>
+
           </div>
         </footer>
 
       </motion.div>{/* end intro-gated content */}
 
       {/* Support Panel */}
-      <AnimatePresence>
-        {showSupport && <SupportCenter onClose={() => setShowSupport(false)} />}
+      <AnimatePresence mode="wait">
+        {showSupport && (
+          <SupportCenter 
+            key={supportView}
+            onClose={() => setShowSupport(false)} 
+            initialView={supportView}
+          />
+        )}
       </AnimatePresence>
 
       {/* Admin Gateway */}
       <AnimatePresence>
         {showAdminGateway && <AdminGateway onClose={() => setShowAdminGateway(false)} />}
+      </AnimatePresence>
+
+      {/* Governance Portal */}
+      <AnimatePresence mode="wait">
+        {showGov && (
+          <GovernancePortal 
+            key={govView}
+            onClose={() => setShowGov(false)} 
+            initialView={govView}
+          />
+        )}
+      </AnimatePresence>
+ 
+      {/* Developer Identity Overlay */}
+      <AnimatePresence>
+        {showIdentity && <DeveloperIdentity onClose={() => setShowIdentity(false)} />}
       </AnimatePresence>
     </main>
   );

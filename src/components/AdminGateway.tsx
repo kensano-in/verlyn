@@ -1,17 +1,28 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
 
 type GatewayStep = 'pin' | 'setup' | 'login' | 'dashboard';
 
 export default function AdminGateway({ onClose }: { onClose: () => void }) {
+  // Scroll Lock
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, []);
+  
   const [step, setStep] = useState<GatewayStep>('pin');
+  const [attempts, setAttempts] = useState(0);
+  const [isBanned, setIsBanned] = useState(false);
 
   // Pin State
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
+
+
 
   // Auth State
   const [password, setPassword] = useState('');
@@ -44,10 +55,21 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
   // 1. Check PIN
   useEffect(() => {
+    if (localStorage.getItem('vrl_admin_blocked') === '1') {
+      setIsBanned(true);
+      return;
+    }
+
     if (pin.length === 6) {
       if (pin === '021008') {
         checkSetup();
       } else {
+        const nextAttempts = attempts + 1;
+        setAttempts(nextAttempts);
+        if (nextAttempts >= 3) {
+          localStorage.setItem('vrl_admin_blocked', '1');
+          setIsBanned(true);
+        }
         setPinError(true);
         setTimeout(() => {
           setPin('');
@@ -55,7 +77,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         }, 800);
       }
     }
-  }, [pin]);
+  }, [pin, attempts]);
 
   // 2. Check Setup
   const checkSetup = async () => {
@@ -127,6 +149,12 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
       setStep('dashboard');
     } catch (err: any) {
+      const nextAttempts = attempts + 1;
+      setAttempts(nextAttempts);
+      if (nextAttempts >= 3) {
+        localStorage.setItem('vrl_admin_blocked', '1');
+        setIsBanned(true);
+      }
       setError(err.message);
     } finally {
       setLoading(false);
@@ -243,11 +271,55 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     );
   };
 
+  if (isBanned) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          zIndex: 200000,
+          background: '#000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+          backdropFilter: 'blur(40px)',
+        }}
+      >
+        <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'inline-block', padding: '12px 24px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid #ff3b30', borderRadius: '12px', marginBottom: '32px' }}>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: '#ff3b30', letterSpacing: '0.2em', textTransform: 'uppercase' }}>Security Breach Detected</span>
+          </motion.div>
+          <h1 style={{ fontSize: '32px', color: '#fff', fontWeight: 400, marginBottom: '16px', letterSpacing: '-0.03em' }}>Access Permanently Revoked</h1>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, marginBottom: '40px' }}>
+            Multiple unauthorized attempts detected. This device has been blacklisted from the administrative gateway.
+          </p>
+          <div style={{ padding: '12px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: 'rgba(255,255,255,0.02)', fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.2)', textAlign: 'left' }}>
+            ERR_GATEWAY_BLACKLISTED_PERSISTENT<br/>
+            TRACE: {Date.now().toString(16)}<br/>
+            STATUS: PERMANENT_DENIAL
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 99999,
-      background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 99999,
+      background: 'rgba(0,0,0,0.9)',
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      padding: '60px 24px',
+      overflowY: 'auto',
     }}>
       <AnimatePresence mode="wait">
 
@@ -256,7 +328,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         {/* ========================================================= */}
         {step === 'pin' && (
           <motion.div key="pin" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-            style={{ textAlign: 'center', position: 'relative' }}>
+            style={{ textAlign: 'center', position: 'relative', margin: 'auto 0' }}>
             <button onClick={onClose} style={{ position: 'absolute', top: '-60px', right: '-40px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
@@ -285,7 +357,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         {/* ========================================================= */}
         {step === 'setup' && (
           <motion.div key="setup" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            style={{ background: '#0a0a0a', padding: '48px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', maxWidth: '460px', width: '100%', textAlign: 'center', boxShadow: '0 40px 100px rgba(0,0,0,0.8)' }}>
+            style={{ margin: 'auto 0', background: '#0a0a0a', padding: '48px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', maxWidth: '460px', width: '100%', textAlign: 'center', boxShadow: '0 40px 100px rgba(0,0,0,0.8)' }}>
             <h1 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', marginBottom: '12px' }}>Security Initialization</h1>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '32px', lineHeight: 1.5 }}>
               Scan this QR code with your authenticator app to secure the command gateway.
@@ -301,7 +373,12 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                     placeholder="000000"
                     style={{ flex: 1, padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', outline: 'none', textAlign: 'center', letterSpacing: '8px', fontSize: '24px', fontWeight: 600, fontFamily: 'monospace' }}
                   />
-                  <button onClick={verifySetupToken} disabled={verifyingSetup || setupToken.length !== 6} style={{ padding: '0 32px', background: '#fff', color: '#000', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: (verifyingSetup || setupToken.length !== 6) ? 'not-allowed' : 'pointer', opacity: (verifyingSetup || setupToken.length !== 6) ? 0.5 : 1, transition: 'all 0.2s' }}>
+                  <button onClick={verifySetupToken} disabled={verifyingSetup || setupToken.length !== 6} style={{ 
+                    padding: '0 32px', background: '#fff', color: '#000', fontWeight: 800, border: 'none', 
+                    borderRadius: '12px', cursor: (verifyingSetup || setupToken.length !== 6) ? 'not-allowed' : 'pointer', 
+                    opacity: (verifyingSetup || setupToken.length !== 6) ? 0.5 : 1, transition: 'all 0.3s ease',
+                    textTransform: 'uppercase', letterSpacing: '0.1em', boxShadow: '0 10px 30px rgba(255,255,255,0.1)'
+                  }}>
                     {verifyingSetup ? '...' : 'Verify'}
                   </button>
                 </div>
@@ -366,7 +443,12 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
               {error && <p style={{ color: '#ef4444', fontSize: '12px', textAlign: 'center', marginBottom: '24px', background: 'rgba(239,68,68,0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.2)' }}>{error}</p>}
 
-              <button type="submit" disabled={loading} style={{ width: '100%', padding: '18px', background: '#fff', color: '#000', fontWeight: 700, border: 'none', borderRadius: '12px', cursor: loading ? 'wait' : 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em', transition: 'background 0.2s' }}>
+              <button type="submit" disabled={loading} style={{ 
+                width: '100%', padding: '20px', background: '#fff', color: '#000', fontWeight: 800, 
+                border: 'none', borderRadius: '14px', cursor: loading ? 'wait' : 'pointer', 
+                textTransform: 'uppercase', letterSpacing: '0.15em', transition: 'all 0.3s ease',
+                boxShadow: '0 10px 40px rgba(255,255,255,0.15)'
+              }}>
                 {loading ? 'Authenticating...' : 'Access Command'}
               </button>
             </form>
@@ -592,7 +674,12 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                         <p style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: 600 }}>Join Live Chat</p>
                         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '20px' }}>Enter the chat to reply directly to {selectedTicket.full_name} in real-time.</p>
                         <button onClick={() => setJoinStep('enter_name')}
-                          style={{ padding: '12px 32px', background: '#fff', color: '#000', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          style={{ 
+                            padding: '14px 40px', background: '#fff', color: '#000', border: 'none', 
+                            borderRadius: '12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', 
+                            textTransform: 'uppercase', letterSpacing: '0.1em', transition: 'all 0.3s ease',
+                            boxShadow: '0 10px 30px rgba(255,255,255,0.1)'
+                          }}>
                           Join Session
                         </button>
                       </div>
@@ -622,7 +709,11 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                               sendAdminMsg(`Hello, I am ${name} from Verlyn Support. I've joined the session to assist you with your request. How can I help you today?`, name);
                             } 
                           }}
-                            style={{ padding: '12px 24px', background: '#fff', color: '#000', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                            style={{ 
+                              padding: '12px 24px', background: '#fff', color: '#000', border: 'none', 
+                              borderRadius: '10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer',
+                              textTransform: 'uppercase', letterSpacing: '0.1em', transition: 'all 0.3s ease'
+                            }}>
                             Enter
                           </button>
                         </div>
@@ -682,7 +773,12 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                             placeholder={`Reply as ${adminName}...`}
                             style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', padding: '10px 14px', outline: 'none' }} />
                           <button onClick={() => sendAdminMsg()} disabled={chatSending || !chatInput.trim()}
-                            style={{ padding: '10px 20px', background: chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.1)', color: chatInput.trim() ? '#000' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
+                            style={{ 
+                              padding: '10px 24px', background: chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.1)', 
+                              color: chatInput.trim() ? '#000' : 'rgba(255,255,255,0.3)', border: 'none', 
+                              borderRadius: '10px', fontSize: '12px', fontWeight: 800, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', 
+                              transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.1em'
+                            }}>
                             Send
                           </button>
                         </div>

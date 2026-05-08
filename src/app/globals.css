@@ -137,6 +137,7 @@
 
 /* ─── Base ───────────────────────────────────────────────────────── */
 html {
+  scrollbar-gutter: stable;
   background: var(--bg-void);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;

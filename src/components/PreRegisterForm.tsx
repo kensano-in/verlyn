@@ -310,7 +310,8 @@ export default function PreRegisterForm() {
           lineHeight: 1.65, maxWidth: '300px', margin: '0 auto 32px',
         }}>
           This helps us keep Verlyn free of duplicate accounts and ensures every seat goes to a real person. If you believe this is a mistake, reach out to{' '}
-          <span style={{ color: 'rgba(168,85,247,0.7)' }}>support@verlyn.in</span>
+          This helps us keep Verlyn free of duplicate accounts and ensures every seat goes to a real person. If you believe this is a mistake, reach out to{' '}
+          <span style={{ color: 'rgba(99,102,241,0.8)' }}>support@verlyn.in</span>
         </p>
 
         {/* Hairline */}
@@ -406,18 +407,18 @@ export default function PreRegisterForm() {
                 transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 20 }}
                 style={{
                   width: '52px', height: '52px', borderRadius: '50%',
-                  border: '1px solid rgba(168,85,247,0.4)',
-                  background: 'radial-gradient(circle at 40% 35%, rgba(168,85,247,0.2), transparent 70%)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'radial-gradient(circle at 40% 35%, rgba(255,255,255,0.1), transparent 70%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   margin: '0 auto 20px',
-                  boxShadow: '0 0 32px rgba(168,85,247,0.2)',
+                  boxShadow: '0 0 32px rgba(255,255,255,0.1)',
                 }}
               >
                 {/* SVG checkmark */}
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
                   <motion.path
                     d="M5 11.5L9 15.5L17 7"
-                    stroke="rgba(168,85,247,0.9)" strokeWidth="1.5"
+                    stroke="#fff" strokeWidth="1.5"
                     strokeLinecap="round" strokeLinejoin="round"
                     initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
                     transition={{ delay: 0.35, duration: 0.5, ease: 'easeOut' }}
@@ -447,10 +448,10 @@ export default function PreRegisterForm() {
                 {/* Pulsing dot */}
                 <span style={{
                   width: '5px', height: '5px', borderRadius: '50%',
-                  background: '#a855f7', display: 'inline-block',
+                  background: '#fff', display: 'inline-block',
                   animation: 'vrlPulse 2s ease-in-out infinite',
                 }} />
-                <span style={{ fontSize: '10px', color: 'rgba(168,85,247,0.7)', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                   Access Secured
                 </span>
               </motion.div>
@@ -543,11 +544,11 @@ export default function PreRegisterForm() {
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 padding: '5px 12px', borderRadius: '20px',
-                background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)',
+                background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)',
                 marginBottom: '16px',
               }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#a855f7', display: 'inline-block' }} />
-                <span style={{ fontSize: '11px', color: '#c4b5fd', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1', display: 'inline-block' }} />
+                <span style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                   Identity Verification
                 </span>
               </div>
@@ -585,14 +586,12 @@ export default function PreRegisterForm() {
 
             <button type="submit" disabled={otpCode.length !== 6 || otpLoading} style={{
               width: '100%', padding: '16px', borderRadius: '12px',
-              background: otpCode.length === 6
-                ? 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-                : 'rgba(255,255,255,0.06)',
-              color: otpCode.length === 6 ? '#fff' : 'rgba(255,255,255,0.3)',
+              background: otpCode.length === 6 ? '#fff' : 'rgba(255,255,255,0.06)',
+              color: otpCode.length === 6 ? '#000' : 'rgba(255,255,255,0.3)',
               fontWeight: 700, fontSize: '15px', border: 'none',
               cursor: otpCode.length === 6 && !otpLoading ? 'pointer' : 'not-allowed',
               transition: 'all 0.25s ease',
-              boxShadow: otpCode.length === 6 ? '0 4px 20px rgba(168,85,247,0.35)' : 'none',
+              boxShadow: otpCode.length === 6 ? '0 10px 30px rgba(255,255,255,0.15)' : 'none',
             }}>
               {otpLoading ? 'Verifying…' : 'Complete Verification'}
             </button>
@@ -604,7 +603,7 @@ export default function PreRegisterForm() {
                 </p>
               ) : !resendUsed ? (
                 <button type="button" onClick={() => requestOTP(agreementTs ?? '', true)}
-                  style={{ background:'none', border:'none', color:'#a855f7', fontSize:'13px', fontWeight:500, cursor:'pointer', textDecoration:'underline', textUnderlineOffset:'3px' }}>
+                  style={{ background:'none', border:'none', color:'#6366f1', fontSize:'13px', fontWeight:500, cursor:'pointer', textDecoration:'underline', textUnderlineOffset:'3px' }}>
                   Resend code
                 </button>
               ) : (
@@ -631,7 +630,7 @@ export default function PreRegisterForm() {
           >
             <div style={{
               position:'absolute', top:0, left:'15%', width:'70%', height:'60%',
-              background:'radial-gradient(ellipse at top, rgba(168,85,247,0.12) 0%, transparent 70%)',
+              background:'radial-gradient(ellipse at top, rgba(99,102,241,0.15) 0%, transparent 70%)',
               pointerEvents:'none', zIndex:0,
             }} />
 
@@ -656,12 +655,12 @@ export default function PreRegisterForm() {
                       onClick={() => { setGender(opt); setFormError(''); }}
                       style={{
                         flex:1, padding:'13px 8px', borderRadius:'12px',
-                        background: gender === opt ? 'rgba(168,85,247,0.18)' : 'rgba(0,0,0,0.35)',
-                        border: `1px solid ${gender === opt ? 'rgba(168,85,247,0.55)' : 'rgba(255,255,255,0.06)'}`,
+                        background: gender === opt ? 'rgba(99,102,241,0.1)' : 'rgba(0,0,0,0.35)',
+                        border: `1px solid ${gender === opt ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.06)'}`,
                         color: gender === opt ? '#fff' : 'rgba(255,255,255,0.45)',
                         fontSize:'13px', fontWeight:600, cursor:'pointer',
                         transition:'all 0.25s ease',
-                        boxShadow: gender === opt ? '0 0 16px rgba(168,85,247,0.25)' : 'none',
+                        boxShadow: gender === opt ? '0 0 16px rgba(99,102,241,0.15)' : 'none',
                       }}>
                       {opt === 'Prefer not to say' ? 'Other' : opt}
                     </button>
@@ -677,12 +676,12 @@ export default function PreRegisterForm() {
               </div>
 
               <button type="submit" disabled={formLoading} style={{
-                width:'100%', padding:'16px', borderRadius:'13px',
-                background: formLoading ? 'rgba(168,85,247,0.4)' : 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
-                color:'#fff', fontWeight:700, fontSize:'15px', border:'none',
+                width:'100%', padding: '17px', borderRadius: '13px',
+                background: formLoading ? 'rgba(255,255,255,0.2)' : '#fff',
+                color: '#000', fontWeight: 800, fontSize: '15px', border: 'none',
                 cursor: formLoading ? 'wait' : 'pointer',
-                boxShadow:'0 4px 24px rgba(168,85,247,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
-                transition:'all 0.3s ease',
+                boxShadow: '0 10px 40px rgba(255,255,255,0.15)',
+                transition: 'all 0.3s ease',
               }}>
                 {formLoading ? 'Processing…' : 'Pre-Register Now'}
               </button>
@@ -710,8 +709,8 @@ export default function PreRegisterForm() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes vrlPulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(168,85,247,0.6); }
-          50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(168,85,247,0); }
+          0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+          50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(255,255,255,0); }
         }
       `}</style>
     </>
