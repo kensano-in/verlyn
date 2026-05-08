@@ -31,7 +31,6 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [reportType, setReportType] = useState('general');
-  const [customReportType, setCustomReportType] = useState('');
   const [description, setDescription] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -127,7 +126,7 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
           fullName, 
           email, 
           subject, 
-          reportType: reportType === 'other' ? `Other: ${customReportType}` : reportType, 
+          reportType, 
           description, 
           agreed 
         })
@@ -437,44 +436,19 @@ export default function SupportCenter({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <label style={lblStyles}>Inquiry Category</label>
-                <div style={{ position: 'relative', marginBottom: reportType === 'other' ? '12px' : '16px' }}>
+                <div style={{ position: 'relative', marginBottom: '16px' }}>
                   <select value={reportType} onChange={e=>setReportType(e.target.value)} style={{ ...inpStyles, appearance: 'none', cursor: 'pointer', paddingRight: '40px', marginBottom: 0 }}>
-                    <optgroup label="Critical / Urgent" style={{ background: '#0a0a0a', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal' }}>
-                      <option value="critical" style={{ background: '#0a0a0a', color: '#fff' }}>Critical Infrastructure Failure</option>
-                      <option value="breach" style={{ background: '#0a0a0a', color: '#fff' }}>Security Incident / Data Breach</option>
-                    </optgroup>
-                    <optgroup label="Core Inquiries" style={{ background: '#0a0a0a', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal' }}>
-                      <option value="general" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
-                      <option value="tech" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Support</option>
-                      <option value="protocol" style={{ background: '#0a0a0a', color: '#fff' }}>Protocol Architecture (ZKP)</option>
-                    </optgroup>
-                    <optgroup label="Compliance & Legal" style={{ background: '#0a0a0a', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal' }}>
-                      <option value="compliance" style={{ background: '#0a0a0a', color: '#fff' }}>Regulatory Compliance Audit</option>
-                      <option value="legal" style={{ background: '#0a0a0a', color: '#fff' }}>Law Enforcement Request</option>
-                      <option value="identity" style={{ background: '#0a0a0a', color: '#fff' }}>Identity Verification (KYC/AML)</option>
-                    </optgroup>
-                    <optgroup label="Business & Development" style={{ background: '#0a0a0a', color: 'rgba(255,255,255,0.4)', fontStyle: 'normal' }}>
-                      <option value="enterprise" style={{ background: '#0a0a0a', color: '#fff' }}>Enterprise Licensing</option>
-                      <option value="partnership" style={{ background: '#0a0a0a', color: '#fff' }}>Strategic Partnership</option>
-                      <option value="vulnerability" style={{ background: '#0a0a0a', color: '#fff' }}>Vulnerability Disclosure</option>
-                    </optgroup>
-                    <option value="other" style={{ background: '#0a0a0a', color: '#fff' }}>Other / Custom Inquiry</option>
+                    <option value="general" style={{ background: '#0a0a0a', color: '#fff' }}>General Inquiry</option>
+                    <option value="tech" style={{ background: '#0a0a0a', color: '#fff' }}>Technical Support</option>
+                    <option value="security" style={{ background: '#0a0a0a', color: '#fff' }}>Security & Privacy</option>
+                    <option value="account" style={{ background: '#0a0a0a', color: '#fff' }}>Account Access</option>
+                    <option value="billing" style={{ background: '#0a0a0a', color: '#fff' }}>Payment & Billing</option>
+                    <option value="bug" style={{ background: '#0a0a0a', color: '#fff' }}>Bug Report</option>
+                    <option value="legal" style={{ background: '#0a0a0a', color: '#fff' }}>Legal & Compliance</option>
+                    <option value="partnership" style={{ background: '#0a0a0a', color: '#fff' }}>Partnership Inquiry</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6"/></svg>
                 </div>
-
-                {reportType === 'other' && (
-                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '16px' }}>
-                    <input 
-                      type="text" 
-                      value={customReportType} 
-                      onChange={e=>setCustomReportType(e.target.value)} 
-                      placeholder="Specify your inquiry type..." 
-                      required 
-                      style={{ ...inpStyles, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.2)' }} 
-                    />
-                  </motion.div>
-                )}
 
                 <label style={lblStyles}>Subject <span style={{color:'rgba(255,255,255,0.3)',fontWeight:400,textTransform:'none',letterSpacing:0}}>({SUBJECT_MIN} words min)</span></label>
                 <input type="text" value={subject} onChange={e=>setSubject(e.target.value)} required style={{...inpStyles, borderColor: subject.length>0 && subjectWords<SUBJECT_MIN ? 'rgba(239,68,68,0.5)' : subject.length>0 && subjectWords>=SUBJECT_MIN ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}} placeholder="Brief description of the request..." />

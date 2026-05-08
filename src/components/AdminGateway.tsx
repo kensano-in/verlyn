@@ -192,7 +192,6 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   };
 
   const getCategoryLabel = (cat: string) => {
-    if (cat.startsWith('Other:')) return cat;
     const labels: Record<string, string> = {
       general: 'General Inquiries',
       tech: 'Technical Support',
@@ -200,17 +199,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
       account: 'Account Access',
       billing: 'Payment & Billing',
       bug: 'Bug Reports',
-      legal: 'Law Enforcement / Legal',
-      partnership: 'Strategic Partnerships',
-      critical: 'CRITICAL FAILURE',
-      breach: 'SECURITY INCIDENT',
-      protocol: 'Protocol/ZKP',
-      compliance: 'Regulatory/Audit',
-      identity: 'Identity/KYC',
-      enterprise: 'Enterprise Solutions',
-      vulnerability: 'Bug Bounty / VDP'
+      legal: 'Legal & Compliance',
+      partnership: 'Partnership Inquiry'
     };
-    return labels[cat] || cat;
+    return labels[cat] || 'Uncategorized';
   };
 
   const getStatusColor = (status: string) => {
