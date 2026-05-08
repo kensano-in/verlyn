@@ -147,24 +147,29 @@ export async function POST(req: NextRequest) {
     // ── Telegram Notification for Emergency & Registration ────────────────────
     if (reportType === 'emergency' || reportType === 'registration') {
       try {
-        const botToken = '8650094503:AAFL6OkIGLis-ae6JPlnNVM6IxZjzPL9pDA';
-        const chatId = '7814788493';
-        const text = `🚨 *VERLYN ${reportType.toUpperCase()} ALERT*\n\n` +
-                     `*Case ID:* \`${caseId}\`\n` +
-                     `*User:* ${fullName} (${email})\n` +
-                     `*Subject:* ${subject}\n\n` +
-                     `*Description:*\n${description}\n\n` +
-                     `_Reply with Case ID to assist from Dashboard._`;
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493'; // Fallback chat ID if not set
         
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text,
-            parse_mode: 'Markdown'
-          })
-        });
+        if (botToken) {
+          const text = `🚨 *VERLYN ${reportType.toUpperCase()} ALERT*\n\n` +
+                       `*Case ID:* \`${caseId}\`\n` +
+                       `*User:* ${fullName} (${email})\n` +
+                       `*Subject:* ${subject}\n\n` +
+                       `*Description:*\n${description}\n\n` +
+                       `_Reply with Case ID to assist from Dashboard._`;
+          
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text,
+              parse_mode: 'Markdown'
+            })
+          });
+        } else {
+          console.warn('[Support API] Telegram bot token not configured in environment variables.');
+        }
       } catch (err) {
         console.error('Telegram API error:', err);
       }
