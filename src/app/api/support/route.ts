@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     }
 
     const caseId = `CASE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const priority = (reportType === 'emergency' || reportType === 'security') ? 'critical' : riskScore > 30 ? 'normal' : 'normal';
+    const priority = (reportType === 'emergency' || reportType === 'security') ? 'high' : riskScore > 30 ? 'normal' : 'normal';
     const userAgent = req.headers.get('user-agent') ?? 'unknown';
 
     const { error: dbError } = await supabaseAdmin
