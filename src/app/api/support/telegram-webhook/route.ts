@@ -18,11 +18,16 @@ export async function POST(req: NextRequest) {
     
     // ── Handle Callback Queries (SPA-style navigation) ──────────────────────
     if (body.callback_query) {
-      return handleCallback(body.callback_query);
+      return await handleCallback(body.callback_query);
     }
 
     const message = body.message;
-    if (!message || String(message.chat.id) !== ADMIN_CHAT_ID) return NextResponse.json({ ok: true });
+    const chatId = message?.chat?.id;
+    
+    // Log for debugging (Vercel logs)
+    console.log(`[TG Webhook] Incoming from: ${chatId} (Expected: ${ADMIN_CHAT_ID})`);
+
+    if (!message || String(chatId) !== ADMIN_CHAT_ID) return NextResponse.json({ ok: true });
 
     const text = (message.text || '').trim();
     const chatId = message.chat.id;
