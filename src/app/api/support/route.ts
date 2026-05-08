@@ -128,13 +128,8 @@ export async function POST(req: NextRequest) {
         report_type:  reportType,
         description,
         status:       'Received',
-        priority,
         ip_address:   ip,
-        ip_hash:      ipHash,
         user_agent:   userAgent,
-        session_fp:   sessionFp,
-        risk_score:   riskScore,
-        spam_signals: allSignals.length > 0 ? allSignals : null,
       });
 
     if (dbError) {
