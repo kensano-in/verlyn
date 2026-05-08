@@ -49,12 +49,11 @@ export function timingSafeEqual(a: string, b: string): boolean {
 export function securityHeaders(): Record<string, string> {
   return {
     'X-Content-Type-Options':           'nosniff',
-    'X-Frame-Options':                  'DENY',
     'X-XSS-Protection':                 '1; mode=block',
     'Referrer-Policy':                  'strict-origin-when-cross-origin',
     'Permissions-Policy':               'camera=(), microphone=(), geolocation=()',
     'Strict-Transport-Security':        'max-age=63072000; includeSubDomains; preload',
-    'Content-Security-Policy':          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' *.supabase.co wss://*.supabase.co",
+    'Content-Security-Policy':          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' *.supabase.co wss://*.supabase.co; frame-ancestors 'self' https://t.me https://web.telegram.org https://*.telegram.org;",
     'Cache-Control':                    'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma':                           'no-cache',
   };
