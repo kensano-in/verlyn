@@ -368,7 +368,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
                   </button>
 
-                  <button onClick={() => setView('form')} style={{
+                  <button onClick={() => { setReportType('general'); setView('form'); }} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
                     borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
@@ -384,6 +384,42 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                       </div>
                     </div>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                  </button>
+
+                  <button onClick={() => { setReportType('registration'); setView('form'); }} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Registration Issue</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Get instant help signing up</p>
+                      </div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+                  </button>
+
+                  <button onClick={() => { setReportType('emergency'); setView('form'); }} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '24px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
+                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.1)'
+                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)'; }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '15px', fontWeight: 800, color: '#ef4444', marginBottom: '2px', letterSpacing: '0.02em' }}>Emergency Support</p>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Strict rules apply • Instant action</p>
+                      </div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
                   </button>
 
 
