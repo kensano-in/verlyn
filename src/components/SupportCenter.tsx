@@ -129,11 +129,19 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     e.preventDefault();
     setError('');
 
-    // 6-hour spam guard (client-side)
-    const lastSent = localStorage.getItem('vrl_support_last');
-    if (lastSent && Date.now() - parseInt(lastSent) < 6 * 60 * 60 * 1000) {
-      const hoursLeft = Math.ceil((6 * 60 * 60 * 1000 - (Date.now() - parseInt(lastSent))) / 3600000);
-      setError(`Request limit reached. Please wait ${hoursLeft}h before submitting another request.`);
+    // 3-ticket per 24 hours spam guard (client-side)
+    const historyStr = localStorage.getItem('vrl_support_history');
+    let history: number[] = historyStr ? JSON.parse(historyStr) : [];
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    
+    // Filter out timestamps older than 24 hours
+    history = history.filter(ts => now - ts < ONE_DAY);
+    
+    if (history.length >= 3) {
+      const oldest = history[0];
+      const hoursLeft = Math.ceil((ONE_DAY - (now - oldest)) / 3600000);
+      setError(`Request limit reached. You can submit up to 3 tickets per 24 hours. Please wait ${hoursLeft}h before submitting another request.`);
       return;
     }
 
@@ -171,7 +179,8 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
       const updatedTickets = [newTicket, ...tickets];
       setTickets(updatedTickets);
       localStorage.setItem('vrl_support_tickets', JSON.stringify(updatedTickets));
-      localStorage.setItem('vrl_support_last', Date.now().toString());
+      history.push(now);
+      localStorage.setItem('vrl_support_history', JSON.stringify(history));
 
       setChatTicket(newTicket);
       setActiveTicket(newTicket);

@@ -105,9 +105,9 @@ export function rateLimit(key: string, cfg: RateLimitConfig): RateLimitResult {
 
 // ── Pre-configured limiters ──────────────────────────────────────────────────
 
-/** Support ticket submission: 1 per 6h per IP */
+/** Support ticket submission: 3 per 24h per IP */
 export const supportTicketLimiter = (ip: string) =>
-  rateLimit(`support:${ip}`, { limit: 1, windowMs: 6 * 60 * 60 * 1000, blockMs: 6 * 60 * 60 * 1000 });
+  rateLimit(`support:${ip}`, { limit: 3, windowMs: 24 * 60 * 60 * 1000, blockMs: 24 * 60 * 60 * 1000 });
 
 /** Pre-registration: 3 attempts per 10m per IP */
 export const preRegisterLimiter = (ip: string) =>
