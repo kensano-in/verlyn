@@ -45,8 +45,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Command: /auth <password> ─────────────────────────────────────────────
-    if (text.startsWith('/auth ')) {
-      const pass = text.split(' ')[1];
+    if (text.startsWith('/auth')) {
+      // Handle both "/auth password" and "/auth\npassword"
+      const pass = text.replace('/auth', '').trim();
+      
       if (pass === MASTER_PASSWORD) {
         // Record auth success in audit log for session tracking
         await supabase.from('audit_log').insert({
