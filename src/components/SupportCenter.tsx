@@ -461,7 +461,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={lblStyles}>Email Address</label>
-                    <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required style={inpStyles} placeholder="Registered Email" />
+                    <input type="email" value={email} onChange={e=>setEmail(e.target.value)} required style={inpStyles} placeholder={reportType === 'registration' ? 'Valid Email Address' : 'Registered Email'} />
                   </div>
                 </div>
 
@@ -478,9 +478,27 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                     <option value="partnership" style={{ background: '#0a0a0a', color: '#fff' }}>Partnership Inquiry</option>
                     <option value="suggestion" style={{ background: '#0a0a0a', color: '#fff' }}>Feature Suggestion</option>
                     <option value="customize" style={{ background: '#0a0a0a', color: '#fff' }}>Customize Inquiry</option>
+                    <option value="registration" style={{ background: '#0a0a0a', color: '#fff' }}>Problem in Registration</option>
+                    <option value="emergency" style={{ background: '#260000', color: '#ef4444', fontWeight: 'bold' }}>🚨 Emergency Support</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6"/></svg>
                 </div>
+
+                <AnimatePresence>
+                  {reportType === 'emergency' && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden', marginBottom: '16px' }}>
+                      <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px' }}>
+                        <p style={{ color: '#ef4444', fontSize: '12px', fontWeight: 800, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '0.05em' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                          STRICT USAGE POLICY
+                        </p>
+                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11.5px', lineHeight: 1.5 }}>
+                          Emergency support grants immediate access to our concierge team. If this feature is used for unnecessary reasons, you will be <b>blocked from contacting support for 48 hours</b> and your email will be <b>flagged for 7 days</b>.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {reportType === 'customize' && (
                   <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '16px' }}>

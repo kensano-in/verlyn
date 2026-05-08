@@ -14,7 +14,7 @@ const NAME_MAX_CHARS    = 80;
 
 const wordCount = (str: string) => str.trim().split(/\s+/).filter(Boolean).length;
 
-const VALID_REPORT_TYPES = ['question', 'account', 'bug', 'suggestion', 'security', 'other'];
+const VALID_REPORT_TYPES = ['general', 'tech', 'security', 'account', 'billing', 'bug', 'legal', 'partnership', 'suggestion', 'customize', 'emergency', 'registration'];
 
 // ── POST: Submit new ticket ────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const fullName   = deepSanitize(raw.fullName, NAME_MAX_CHARS);
     const email      = deepSanitize(raw.email, 254).toLowerCase();
     const subject    = deepSanitize(raw.subject, SUBJECT_MAX_CHARS);
-    const reportType = deepSanitize(raw.reportType, 20);
+    const reportType = deepSanitize(raw.reportType, 50);
     const description = deepSanitize(raw.description, DESC_MAX_CHARS);
     const agreed     = Boolean(raw.agreed);
 
@@ -63,30 +63,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (fullName.length > NAME_MAX_CHARS) {
-      return NextResponse.json({ error: 'Name is too long.' }, { status: 400, headers });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400, headers });
-    }
-
-    if (wordCount(subject) < SUBJECT_MIN_WORDS) {
-      return NextResponse.json(
-        { error: `Subject needs at least ${SUBJECT_MIN_WORDS} words (you wrote ${wordCount(subject)}).` },
-        { status: 400, headers }
-      );
-    }
-
-    if (wordCount(description) < DESC_MIN_WORDS) {
-      return NextResponse.json(
-        { error: `Description needs at least ${DESC_MIN_WORDS} words. Please provide more detail so we can help you.` },
-        { status: 400, headers }
-      );
-    }
-
-    if (!VALID_REPORT_TYPES.includes(reportType)) {
+    if (!VALID_REPORT_TYPES.includes(reportType) && !reportType.startsWith('Custom: ')) {
       return NextResponse.json({ error: 'Invalid report type.' }, { status: 400, headers });
+    }
+
+    // ── Database Verification ─────────────────────────────────────────────────
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+
+    // Enforce Registered User Only Rule (Except Registration Issues)
+    if (reportType !== 'registration') {
+      const { data: userExists } = await supabaseAdmin
+        .from('preregistrations')
+        .select('id')
+        .eq('email', email)
+        .single();
+      
+      if (!userExists) {
+        return NextResponse.json(
+          { error: 'Support is only available for registered users. Please use the "Problem in registration" option if you need help signing up.' },
+          { status: 403, headers }
+        );
+      }
     }
 
     // ── Spam analysis ─────────────────────────────────────────────────────────
@@ -105,7 +106,6 @@ export async function POST(req: NextRequest) {
       Math.round((subjectSpam.score * 0.35) + (descriptionSpam.score * 0.55) + (nameSpam.score * 0.1))
     );
 
-    // Hard-reject obvious spam (score >= 60)
     if (riskScore >= 60) {
       await auditSpamDetect(ipHash, 'all');
       return NextResponse.json(
@@ -114,15 +114,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Persist to database ───────────────────────────────────────────────────
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
-
     const caseId = `CASE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const priority = reportType === 'security' ? 'high' : riskScore > 30 ? 'normal' : 'normal';
+    const priority = (reportType === 'emergency' || reportType === 'security') ? 'critical' : riskScore > 30 ? 'normal' : 'normal';
     const userAgent = req.headers.get('user-agent') ?? 'unknown';
 
     const { error: dbError } = await supabaseAdmin
@@ -145,16 +138,37 @@ export async function POST(req: NextRequest) {
       });
 
     if (dbError) {
-      if (dbError.code === '42P01') {
-        console.warn('[Support API] support_tickets table missing. Run the SQL migration.');
-      } else {
-        console.error('[Support API] DB error:', dbError.message);
-        return NextResponse.json({ error: 'Failed to submit ticket. Please try again.' }, { status: 500, headers });
-      }
+      console.error('[Support API] DB error:', dbError.message);
+      return NextResponse.json({ error: 'Failed to submit ticket. Please try again.' }, { status: 500, headers });
     }
 
-    // ── Audit trail ───────────────────────────────────────────────────────────
     await auditTicketCreate(ipHash, caseId);
+
+    // ── Telegram Notification for Emergency & Registration ────────────────────
+    if (reportType === 'emergency' || reportType === 'registration') {
+      try {
+        const botToken = '8650094503:AAFL6OkIGLis-ae6JPlnNVM6IxZjzPL9pDA';
+        const chatId = '7814788493';
+        const text = `🚨 *VERLYN ${reportType.toUpperCase()} ALERT*\n\n` +
+                     `*Case ID:* \`${caseId}\`\n` +
+                     `*User:* ${fullName} (${email})\n` +
+                     `*Subject:* ${subject}\n\n` +
+                     `*Description:*\n${description}\n\n` +
+                     `_Reply with Case ID to assist from Dashboard._`;
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (err) {
+        console.error('Telegram API error:', err);
+      }
+    }
 
     return NextResponse.json({
       success:    true,
