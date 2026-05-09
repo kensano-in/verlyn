@@ -338,6 +338,13 @@ export async function POST(req: NextRequest) {
         "Unauthorized access detected. This terminal is strictly monitored.\n\n" +
         "👉 *Authentication Required*\n" +
         "Use `/auth <PASSWORD>` to establish a secure 60-minute session.\n\n" +
+        "👉 *Advanced Mobile Commands*\n" +
+        "`/ban CASE-ID` - Perma-ban user and IP\n" +
+        "`/resolve CASE-ID` - Mark case as resolved\n" +
+        "`/purge CASE-ID` - Wipe case chat history\n" +
+        "`/trace CASE-ID` - Fetch IP intelligence\n" +
+        "`/escalate CASE-ID` - Mark as high priority\n" +
+        "`/quarantine CASE-ID` - Isolate as spam\n\n" +
         "⚠️ _For security, your password message will be purged immediately._",
         {}, supabase
       );
@@ -384,6 +391,56 @@ export async function POST(req: NextRequest) {
     }
 
     await trackMessageId(supabase, chatId, messageId);
+
+    // ADVANCED MOBILE COMMANDS
+    if (text.startsWith('/')) {
+      const parts = text.split(' ');
+      const cmd = parts[0].toLowerCase();
+      const targetCase = parts[1]?.toUpperCase();
+
+      if (['/ban', '/resolve', '/purge', '/trace', '/escalate', '/quarantine'].includes(cmd) && targetCase) {
+        await deleteTelegramMessage(chatId, messageId); // Clean up the command message
+        
+        // Execute the command action directly
+        if (cmd === '/ban') {
+           const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', targetCase).single();
+           if (ticket) {
+             if (ticket.ip_address) await supabase.from('spam_blacklist').insert({ ip_address: ticket.ip_address, reason: `Banned from TG Mobile Command for case ${targetCase}` });
+             if (ticket.email) await supabase.from('spam_blacklist').insert({ ip_address: ticket.email, reason: `Banned from TG Mobile Command for case ${targetCase}` });
+             await supabase.from('support_tickets').update({ status: 'Resolved', is_spam: true }).eq('case_id', targetCase);
+             await sendTelegramMessage(chatId, `🚫 *USER BANNED:* \`${targetCase}\` target blacklisted.`, {}, supabase);
+           } else {
+             await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${targetCase}\` not found.`, {}, supabase);
+           }
+        }
+        else if (cmd === '/resolve') {
+           await supabase.from('support_tickets').update({ status: 'Resolved' }).eq('case_id', targetCase);
+           await sendTelegramMessage(chatId, `✅ *CASE RESOLVED:* \`${targetCase}\` archived.`, {}, supabase);
+        }
+        else if (cmd === '/purge') {
+           const { data: ticket } = await supabase.from('support_tickets').select('id').eq('case_id', targetCase).single();
+           if (ticket) {
+             await supabase.from('support_messages').delete().eq('ticket_id', ticket.id);
+             await sendTelegramMessage(chatId, `🗑️ *LOGS PURGED:* \`${targetCase}\` history wiped.`, {}, supabase);
+           }
+        }
+        else if (cmd === '/trace') {
+           const { data: ticket } = await supabase.from('support_tickets').select('ip_address').eq('case_id', targetCase).single();
+           if (ticket) {
+             await sendTelegramMessage(chatId, `🔍 *IP TRACE ${targetCase}:* \`${ticket.ip_address || 'UNKNOWN'}\``, {}, supabase);
+           }
+        }
+        else if (cmd === '/escalate') {
+           await supabase.from('support_tickets').update({ status: 'Escalated' }).eq('case_id', targetCase);
+           await sendTelegramMessage(chatId, `⚠️ *ESCALATED:* \`${targetCase}\` marked as high priority.`, {}, supabase);
+        }
+        else if (cmd === '/quarantine') {
+           await supabase.from('support_tickets').update({ status: 'Quarantined', is_spam: true }).eq('case_id', targetCase);
+           await sendTelegramMessage(chatId, `🛡️ *QUARANTINED:* \`${targetCase}\` isolated from queue.`, {}, supabase);
+        }
+        return NextResponse.json({ ok: true });
+      }
+    }
 
     if (message.reply_to_message) {
       const originalText = message.reply_to_message.text || '';
