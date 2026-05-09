@@ -444,158 +444,140 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             {view === 'menu' && (
               <motion.div key="menu" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} style={{ padding: '24px' }}>
 
-                <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '16px' }}>
-                  <div style={{
-                    width: '56px', height: '56px', borderRadius: '50%', margin: '0 auto 20px',
-                    background: 'rgba(255,255,255,0.02)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
-                  }}>
-                    <Logo size={32} glow={true} />
+                {/* Hero header */}
+                <div style={{ textAlign: 'center', marginBottom: '28px', marginTop: '8px' }}>
+                  <div style={{ position: 'relative', width: '68px', height: '68px', margin: '0 auto 18px' }}>
+                    <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(from 0deg, rgba(99,102,241,0.6), rgba(16,185,129,0.4), rgba(99,102,241,0.6))', animation: 'spin 4s linear infinite', padding: '1.5px' }}>
+                      <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#0a0a0a' }} />
+                    </div>
+                    <div style={{ position: 'absolute', inset: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Logo size={32} glow={true} />
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, borderRadius: '50%', background: '#10b981', border: '2px solid #0a0a0a', boxShadow: '0 0 8px rgba(16,185,129,0.8)' }} />
                   </div>
-                  <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', marginBottom: '8px' }}>How can we assist you?</h3>
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>Our concierge team provides priority support for your inquiries and requests.</p>
+                  <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Verlyn Support</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.8)' }} />
+                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, letterSpacing: '0.04em' }}>All Systems Operational</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>Concierge response in under 2 hours</p>
                 </div>
 
-                <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
-                  <button onClick={() => setView('faq')} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                {/* Action buttons */}
+                <div style={{ display: 'grid', gap: '10px', marginBottom: '24px' }}>
+                  {[
+                    { label: 'Knowledge Base', sub: 'Browse documentation & FAQs', tag: 'Instant', tagColor: '#6366f1', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>, iconBg: 'rgba(99,102,241,0.12)', iconBorder: 'rgba(99,102,241,0.25)', action: () => setView('faq'), border: 'rgba(255,255,255,0.07)' },
+                    { label: 'Contact Concierge', sub: 'Submit a support request', tag: '< 2h', tagColor: '#3b82f6', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>, iconBg: 'rgba(59,130,246,0.12)', iconBorder: 'rgba(59,130,246,0.25)', action: () => { setReportType('general'); setView('form'); }, border: 'rgba(255,255,255,0.07)' },
+                    { label: 'Registration Help', sub: 'Get help with access & signup', tag: 'Priority', tagColor: '#10b981', icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>, iconBg: 'rgba(16,185,129,0.12)', iconBorder: 'rgba(16,185,129,0.25)', action: () => { setReportType('registration'); setView('form'); }, border: 'rgba(255,255,255,0.07)' },
+                  ].map((item, i) => (
+                    <motion.button key={i} onClick={item.action}
+                      whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'rgba(255,255,255,0.025)', border: `1px solid ${item.border}`, borderRadius: '14px', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '11px', background: item.iconBg, border: `1px solid ${item.iconBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</div>
+                        <div>
+                          <p style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '3px', letterSpacing: '-0.01em' }}>{item.label}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)' }}>{item.sub}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Knowledge Base</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Browse official documentation</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: item.tagColor, background: `${item.tagColor}18`, padding: '3px 8px', borderRadius: '6px', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>{item.tag}</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
                       </div>
-                    </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
+                    </motion.button>
+                  ))}
 
-                  <button onClick={() => { setReportType('general'); setView('form'); }} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                  {/* Emergency — special styling */}
+                  <motion.button onClick={() => { setReportType('emergency'); setView('form'); }}
+                    whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: '14px', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '11px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                       </div>
                       <div>
-                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Contact Concierge</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Submit a priority request</p>
+                        <p style={{ fontSize: '14px', fontWeight: 800, color: '#ef4444', marginBottom: '3px', letterSpacing: '-0.01em' }}>Emergency Protocol</p>
+                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Strict policy applies · Immediate action</p>
                       </div>
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-
-                  <button onClick={() => { setReportType('registration'); setView('form'); }} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '24px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>Registration Issue</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Get instant help signing up</p>
-                      </div>
-                    </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-
-                  <button onClick={() => { setReportType('emergency'); setView('form'); }} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '24px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)',
-                    borderRadius: '16px', cursor: 'pointer', transition: 'all 0.3s ease', textAlign: 'left',
-                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.1)'
-                  }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)'; }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                      <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '15px', fontWeight: 800, color: '#ef4444', marginBottom: '2px', letterSpacing: '0.02em' }}>Emergency Support</p>
-                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>Strict rules apply • Instant action</p>
-                      </div>
-                    </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(239, 68, 68, 0.4)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,68,68,0.4)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                  </motion.button>
 
 
                 </div>
 
                 {tickets.length > 0 && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <h4 style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px', paddingLeft: '4px' }}>Your Cases</h4>
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', paddingLeft: '2px' }}>
+                      <h4 style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Your Cases</h4>
+                      <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace' }}>{tickets.length} record{tickets.length > 1 ? 's' : ''}</span>
+                    </div>
                     <div style={{ display: 'grid', gap: '8px' }}>
                       {tickets.map((t) => {
                         const isActive = !['Resolved', 'Completed', 'Closed'].includes(t.status);
+                        const statusColor = isActive ? '#10b981' : 'rgba(255,255,255,0.25)';
                         return (
-                          <div key={t.case_id} onClick={() => { setChatTicket(t); setView('chat'); }}
-                            style={{
-                              padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
-                              background: isActive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)',
-                              borderRadius: '12px',
-                              border: isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
-                              transition: 'all 0.2s'
-                            }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0, background: isActive ? '#10b981' : 'rgba(255,255,255,0.2)', boxShadow: isActive ? '0 0 8px rgba(16,185,129,0.6)' : 'none' }} />
+                          <motion.div key={t.case_id} onClick={() => { setChatTicket(t); setView('chat'); }}
+                            whileHover={{ scale: 1.01, borderColor: isActive ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.12)' }}
+                            style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer', background: isActive ? 'rgba(16,185,129,0.04)' : 'rgba(255,255,255,0.015)', borderRadius: '12px', border: isActive ? '1px solid rgba(16,185,129,0.15)' : '1px solid rgba(255,255,255,0.06)', transition: 'all 0.2s' }}>
+                            <div style={{ position: 'relative', flexShrink: 0 }}>
+                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: statusColor, boxShadow: isActive ? `0 0 10px ${statusColor}` : 'none' }} />
+                              {isActive && <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: statusColor, opacity: 0.4, animation: 'ping 2s cubic-bezier(0,0,0.2,1) infinite' }} />}
+                            </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: '13px', fontWeight: 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.subject}</p>
-                              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                <span style={{ fontSize: '10px', fontWeight: 700, color: isActive ? '#10b981' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em', background: isActive ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{t.status}</span>
-                                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>{t.case_id}</span>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: isActive ? '#fff' : 'rgba(255,255,255,0.45)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.subject}</p>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: isActive ? '#10b981' : 'rgba(255,255,255,0.25)', background: isActive ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)', padding: '2px 7px', borderRadius: '5px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t.status}</span>
+                                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)', fontFamily: 'monospace', letterSpacing: '0.03em' }}>{t.case_id.split('-').slice(1).join('-')}</span>
                               </div>
                             </div>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
-                          </div>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isActive ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.15)'} strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                          </motion.div>
                         );
                       })}
                     </div>
                   </div>
                 )}
 
-                {/* ── Case Lookup ── */}
-                <div style={{ marginTop: tickets.length > 0 ? '8px' : '0' }}>
+                {/* Case Lookup */}
+                <div style={{ marginBottom: '20px' }}>
                   {!showLookup ? (
                     <button onClick={() => setShowLookup(true)}
-                      style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.04em' }}
+                      style={{ width: '100%', padding: '13px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', color: 'rgba(255,255,255,0.38)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.03em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                       onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.38)'; }}
                     >
-                      🔎 Find existing case by ID
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Recover existing case by ID
                     </button>
                   ) : (
-                    <form onSubmit={handleLookupCase} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
-                      <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Enter Your Case ID</p>
+                    <form onSubmit={handleLookupCase} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '18px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Enter Case ID</p>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                          autoFocus
-                          value={lookupCaseId}
-                          onChange={e => { setLookupCaseId(e.target.value); setLookupError(''); }}
+                        <input autoFocus value={lookupCaseId} onChange={e => { setLookupCaseId(e.target.value); setLookupError(''); }}
                           placeholder="CASE-XXXXXXXX-XXXX"
-                          style={{ flex: 1, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '12px', fontFamily: 'monospace', outline: 'none', letterSpacing: '0.05em' }}
+                          style={{ flex: 1, padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '9px', color: '#fff', fontSize: '12px', fontFamily: 'monospace', outline: 'none', letterSpacing: '0.05em' }}
                         />
                         <button type="submit" disabled={lookupLoading || !lookupCaseId.trim()}
-                          style={{ padding: '12px 16px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', opacity: lookupLoading || !lookupCaseId.trim() ? 0.5 : 1 }}>
-                          {lookupLoading ? '...' : 'Find'}
+                          style={{ padding: '11px 16px', background: '#fff', color: '#000', border: 'none', borderRadius: '9px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', opacity: lookupLoading || !lookupCaseId.trim() ? 0.5 : 1 }}>
+                          {lookupLoading ? '…' : 'Find'}
                         </button>
                       </div>
                       {lookupError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '8px' }}>{lookupError}</p>}
                       <button type="button" onClick={() => { setShowLookup(false); setLookupCaseId(''); setLookupError(''); }}
-                        style={{ marginTop: '8px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '11px', cursor: 'pointer', padding: '0' }}>Cancel</button>
+                        style={{ marginTop: '10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '11px', cursor: 'pointer', padding: '0' }}>Cancel</button>
                     </form>
                   )}
+                </div>
+
+                {/* Trust strip */}
+                <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', justifyContent: 'space-around' }}>
+                  {[{ icon: '🔒', label: 'E2E Encrypted' }, { icon: '⚡', label: 'Sub-2h Response' }, { icon: '🛡️', label: 'Zero-Log Policy' }].map((t, i) => (
+                    <div key={i} style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '14px', marginBottom: '4px' }}>{t.icon}</div>
+                      <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.28)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.label}</p>
+                    </div>
+                  ))}
                 </div>
 
               </motion.div>
@@ -902,6 +884,9 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes ping { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+        @keyframes vrlPulse { 0%,100%{opacity:0.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.08)} }
       `}</style>
     </div>
   );

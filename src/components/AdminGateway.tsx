@@ -585,42 +585,112 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                 
                 {activeTab === 'overwatch' && (
                   <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '24px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Global Overwatch</h2>
-                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '32px' }}>Realtime telemetry and system status.</p>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+                      <div>
+                        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', marginBottom: '4px' }}>Global Overwatch</h2>
+                        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>NODE: VERLYN-PRIME &nbsp;·&nbsp; {new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '8px 16px', borderRadius: '10px' }}>
+                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.8)', animation: 'vrlBlink 2s infinite' }} />
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#10b981', letterSpacing: '0.05em' }}>ALL SYSTEMS NOMINAL</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Active Cases', value: tickets.length, color: '#6366f1' },
-                        { label: 'Agents Online', value: '4', color: '#10b981' },
-                        { label: 'Avg Response', value: '1.2m', color: '#f59e0b' },
-                        { label: 'Risk Score', value: 'Low', color: '#8b5cf6' }
+                        { label: 'Active Cases', value: tickets.filter(t => !['Resolved','Completed','Closed'].includes(t.status)).length, total: tickets.length, color: '#6366f1', trend: '+2', icon: '📋' },
+                        { label: 'Resolved Today', value: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, total: null, color: '#10b981', trend: '+5', icon: '✅' },
+                        { label: 'Avg Response', value: '1.4m', total: null, color: '#f59e0b', trend: '-0.3m', icon: '⚡' },
+                        { label: 'Threat Level', value: 'LOW', total: null, color: '#8b5cf6', trend: 'STABLE', icon: '🛡️' }
                       ].map((stat, i) => (
-                        <div key={i} style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px', fontWeight: 600 }}>{stat.label}</p>
-                          <p style={{ fontSize: '32px', fontWeight: 700, color: stat.color }}>{stat.value}</p>
+                        <div key={i} style={{ background: 'rgba(255,255,255,0.025)', padding: '22px 20px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${stat.color}60, transparent)` }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                            <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>{stat.label}</p>
+                            <span style={{ fontSize: '14px' }}>{stat.icon}</span>
+                          </div>
+                          <p style={{ fontSize: '28px', fontWeight: 800, color: stat.color, letterSpacing: '-0.02em', marginBottom: '6px' }}>{stat.value}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '10px', color: 'rgba(16,185,129,0.8)', fontWeight: 600 }}>{stat.trend}</span>
+                            {stat.total !== null && <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)' }}>of {stat.total} total</span>}
+                          </div>
                         </div>
                       ))}
                     </div>
 
-                    <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '32px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff' }}>Live Security Feed</h3>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', animation: 'vrlBlink 2s infinite' }} />
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>WSS://VERLYN-CORE</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                      {/* Activity Feed */}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                          <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Live Activity</h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', animation: 'vrlBlink 2s infinite' }} />
+                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>LIVE</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          {[
+                            { time: 'Now', event: 'New ticket received', sub: tickets[0]?.case_id || 'No recent tickets', color: '#6366f1', dot: '#6366f1' },
+                            { time: '3m', event: 'Case status updated', sub: 'In Progress → Resolved', color: '#10b981', dot: '#10b981' },
+                            { time: '12m', event: 'Spam filter triggered', sub: '3 submissions blocked', color: '#f59e0b', dot: '#f59e0b' },
+                            { time: '28m', event: 'Admin session started', sub: 'Auth via 2FA token', color: '#8b5cf6', dot: '#8b5cf6' },
+                          ].map((log, i) => (
+                            <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                              <div style={{ flexShrink: 0, paddingTop: '3px' }}>
+                                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: log.dot, boxShadow: `0 0 6px ${log.dot}` }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                  <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>{log.event}</p>
+                                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>{log.time}</span>
+                                </div>
+                                <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{log.sub}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                      {/* Queue health */}
+                      <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px' }}>
+                        <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '20px' }}>Queue Breakdown</h3>
                         {[
-                          { time: 'Just now', event: 'New support ticket received.', type: 'info' },
-                          { time: '2m ago', event: 'Elena Voss (Security Ops) joined Case VX-20491.', type: 'success' },
-                          { time: '15m ago', event: 'Automated spam filter blocked 3 submissions.', type: 'warning' }
-                        ].map((log, i) => (
-                          <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i === 2 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace', width: '80px', flexShrink: 0 }}>{log.time}</span>
-                            <span style={{ fontSize: '13px', color: log.type === 'warning' ? '#f59e0b' : log.type === 'success' ? '#10b981' : '#fff' }}>{log.event}</span>
+                          { label: 'Received', count: tickets.filter(t => t.status === 'Received').length, color: '#10b981' },
+                          { label: 'In Progress', count: tickets.filter(t => t.status === 'In progress').length, color: '#3b82f6' },
+                          { label: 'In Review', count: tickets.filter(t => t.status === 'In review').length, color: '#f59e0b' },
+                          { label: 'Resolved', count: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, color: '#8b5cf6' },
+                        ].map((row, i) => {
+                          const pct = tickets.length > 0 ? Math.round((row.count / tickets.length) * 100) : 0;
+                          return (
+                            <div key={i} style={{ marginBottom: '14px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>{row.label}</span>
+                                <span style={{ fontSize: '11px', color: row.color, fontWeight: 700, fontFamily: 'monospace' }}>{row.count} ({pct}%)</span>
+                              </div>
+                              <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: row.color, borderRadius: '2px', transition: 'width 0.8s ease', boxShadow: `0 0 8px ${row.color}60` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Recent tickets table */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', padding: '24px' }}>
+                      <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#fff', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '16px' }}>Recent Tickets</h3>
+                      <div style={{ display: 'grid', gap: '1px' }}>
+                        {tickets.slice(0, 5).map((t: any, i: number) => (
+                          <div key={t.id} onClick={() => { setSelectedTicket(t); setActiveTab('triage'); setJoinStep('idle'); }} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 160px 100px', gap: '16px', padding: '12px 16px', borderRadius: '8px', cursor: 'pointer', alignItems: 'center', background: i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent', transition: 'background 0.2s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                            onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent'}>
+                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.subject}</p>
+                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{t.case_id?.split('-').slice(1,3).join('-')}</span>
+                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>{t.full_name}</p>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: getStatusColor(t.status), background: `${getStatusColor(t.status)}18`, padding: '3px 8px', borderRadius: '5px', textAlign: 'center' }}>{t.status}</span>
                           </div>
                         ))}
+                        {tickets.length === 0 && <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)', padding: '20px', textAlign: 'center' }}>No tickets yet</p>}
                       </div>
                     </div>
                   </div>
