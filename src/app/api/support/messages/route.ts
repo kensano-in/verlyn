@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     if (sender_type === 'agent' && !is_internal) {
       await supabase
         .from('support_tickets')
-        .update({ status: 'Active Session', admin_reply: content.trim(), updated_at: new Date().toISOString() })
+        .update({ status: 'In progress', admin_reply: content.trim(), updated_at: new Date().toISOString() })
         .eq('id', resolvedTicketId);
     }
 

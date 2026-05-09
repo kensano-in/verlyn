@@ -504,7 +504,7 @@ export async function POST(req: NextRequest) {
           await supabase.from('support_messages').insert({
             ticket_id: ticket.id, content: text, sender_type: 'agent', agent_name: 'Verlyn Admin'
           });
-          await supabase.from('support_tickets').update({ status: 'Active Session' }).eq('id', ticket.id);
+          await supabase.from('support_tickets').update({ status: 'In progress' }).eq('id', ticket.id);
           // Delete admin's response to keep chat clean
           await deleteTelegramMessage(chatId, messageId);
           await sendTelegramMessage(chatId, `✅ *MESSAGE TRANSMITTED:* Response relayed to \`${caseId}\``, {}, supabase);

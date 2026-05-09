@@ -285,8 +285,8 @@ function TgAdminConsole() {
                     <div className="flex justify-between items-center w-full">
                       <span className="font-mono text-[10px] text-white/50 uppercase tracking-[0.2em]">{t.case_id}</span>
                       <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                        t.status === 'In progress' ? 'bg-indigo-500/10 text-indigo-400' : 
-                        t.status === 'Active Session' ? 'bg-emerald-500/10 text-emerald-400' :
+                        t.status === 'Received' ? 'bg-indigo-500/10 text-indigo-400' : 
+                        t.status === 'In progress' ? 'bg-emerald-500/10 text-emerald-400' :
                         'bg-amber-500/10 text-amber-400'
                       }`}>
                         {t.status}

@@ -128,9 +128,6 @@ export async function PATCH(req: NextRequest) {
     if (priority)       updatePayload.priority       = priority;
     if (assigned_to !== undefined) updatePayload.assigned_to = assigned_to;
     if (internal_notes !== undefined) updatePayload.internal_notes = internal_notes;
-    if (status === 'Resolved' || status === 'Completed') {
-      updatePayload.resolved_at = new Date().toISOString();
-    }
 
     if (Object.keys(updatePayload).length === 0) {
       return NextResponse.json({ error: 'Nothing to update.' }, { status: 400, headers });

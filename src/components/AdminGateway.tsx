@@ -169,7 +169,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status })
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Failed');
+      }
       setTickets(tickets.map(t => t.id === id ? { ...t, status } : t));
       if (selectedTicket?.id === id) setSelectedTicket((p: any) => ({ ...p, status }));
     } catch (err: any) { alert(err.message); }
@@ -209,13 +212,13 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket_id: selectedTicket.id, content: text, sender_type: 'agent', agent_name: name })
       });
-      // Update ticket status to Active Session
+      // Update ticket status to In progress
       await fetch('/api/admin/tickets', {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedTicket.id, status: 'Active Session' })
+        body: JSON.stringify({ id: selectedTicket.id, status: 'In progress' })
       });
-      setTickets(ts => ts.map(t => t.id === selectedTicket.id ? { ...t, status: 'Active Session' } : t));
+      setTickets(ts => ts.map(t => t.id === selectedTicket.id ? { ...t, status: 'In progress' } : t));
     } catch { } finally { setChatSending(false); }
   };
 
