@@ -147,6 +147,37 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     return () => clearInterval(interval);
   }, [view, chatTicket]);
 
+  // Poll live ticket status every 5s so UI reflects admin actions immediately
+  useEffect(() => {
+    if ((view !== 'chat' && view !== 'tracking') || (!chatTicket && !activeTicket)) return;
+    const caseId = chatTicket?.case_id || activeTicket?.case_id;
+    if (!caseId) return;
+    const pollStatus = async () => {
+      try {
+        const res = await fetch(`/api/support/status?case_id=${caseId}`);
+        if (!res.ok) return;
+        const live = await res.json();
+        // Update chatTicket status
+        if (chatTicket && live.status !== chatTicket.status) {
+          setChatTicket(prev => prev ? { ...prev, status: live.status } : prev);
+        }
+        // Update activeTicket status
+        if (activeTicket && live.status !== activeTicket.status) {
+          setActiveTicket(prev => prev ? { ...prev, status: live.status } : prev);
+        }
+        // Sync to localStorage
+        setTickets(prev => {
+          const updated = prev.map(p => p.case_id === caseId ? { ...p, status: live.status } : p);
+          localStorage.setItem('vrl_support_tickets', JSON.stringify(updated));
+          return updated;
+        });
+      } catch {}
+    };
+    pollStatus();
+    const interval = setInterval(pollStatus, 5000);
+    return () => clearInterval(interval);
+  }, [view, chatTicket?.case_id, activeTicket?.case_id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -395,7 +426,9 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
           )}
 
           <h2 style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            {view === 'menu' ? 'Verlyn Global Support' : view === 'form' ? 'Secure Request' : view === 'faq' ? 'Knowledge Base' : 'Case Dossier'}
+            {view === 'menu' ? 'Verlyn Global Support' : view === 'form' ? 'Secure Request' : view === 'faq' ? 'Knowledge Base' :
+             (chatTicket && ['Resolved','Completed','Closed'].includes(chatTicket.status)) || (activeTicket && ['Resolved','Completed','Closed'].includes(activeTicket.status))
+               ? 'Case Closed' : 'Active Case'}
           </h2>
 
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: '4px', display: 'flex', transition: 'color 0.2s' }}>
@@ -771,8 +804,8 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Concierge team is investigating</p>
                     </div>
 
-                    <div style={{ position: 'relative', opacity: activeTicket.status === 'Completed' ? 1 : 0.3 }}>
-                      <div style={{ position: 'absolute', left: '-22px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: activeTicket.status === 'Completed' ? '#fff' : 'rgba(255,255,255,0.2)', boxShadow: activeTicket.status === 'Completed' ? '0 0 12px rgba(255,255,255,0.5)' : 'none' }} />
+                    <div style={{ position: 'relative', opacity: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? 1 : 0.3 }}>
+                      <div style={{ position: 'absolute', left: '-22px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? '#10b981' : 'rgba(255,255,255,0.2)', boxShadow: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? '0 0 12px rgba(16,185,129,0.6)' : 'none' }} />
                       <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Case Resolved</p>
                       <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Final resolution provided</p>
                     </div>
@@ -809,10 +842,15 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
 
                 {/* Reply Form */}
                 <div style={{ padding: '0 24px 24px 24px' }}>
-                  {chatTicket.status === 'Completed' ? (
-                    <div style={{ textAlign: 'center', padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>This case has been marked as resolved. If you need further assistance, please open a new request.</span>
-                    </div>
+                  {['Resolved', 'Completed', 'Closed'].includes(chatTicket.status) ? (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ textAlign: 'center', padding: '20px 16px', background: 'rgba(16,185,129,0.05)', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      </div>
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#10b981', marginBottom: '6px' }}>Case {chatTicket.status}</p>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>This case has been closed by our team. If you need further assistance, please open a new request.</p>
+                    </motion.div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {selectedFile && (
