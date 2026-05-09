@@ -52,6 +52,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   const [chatInput, setChatInput] = useState('');
   const [chatSending, setChatSending] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // 1. Check PIN
   useEffect(() => {
@@ -517,19 +519,39 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
               {/* ── Sidebar ── */}
               <div style={{ width: '360px', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', background: '#0a0a0a', overflowY: 'auto' }} className="scrollbar-hide">
 
-                {/* Search/Filter placeholder */}
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <input type="text" placeholder="Search records..." style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px 14px', borderRadius: '8px', color: '#fff', fontSize: '12px', outline: 'none' }} />
+                {/* Search + Filter */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '8px' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)', padding: '9px 10px 9px 30px', borderRadius: '8px', color: '#fff', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', borderRadius: '8px', padding: '9px 10px', fontSize: '11px', outline: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                    <option value="all" style={{ background: '#111' }}>All</option>
+                    <option value="Received" style={{ background: '#111' }}>Received</option>
+                    <option value="In progress" style={{ background: '#111' }}>In Progress</option>
+                    <option value="In review" style={{ background: '#111' }}>In Review</option>
+                    <option value="Resolved" style={{ background: '#111' }}>Resolved</option>
+                    <option value="Closed" style={{ background: '#111' }}>Closed</option>
+                  </select>
                 </div>
 
                 {activeTab === 'triage' && (
                   (() => {
-                    const grouped = tickets.reduce((acc: any, t) => {
+                    const filtered = tickets.filter(t => {
+                      const q = searchQuery.toLowerCase();
+                      const matchQ = !q || t.subject?.toLowerCase().includes(q) || t.full_name?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q) || t.case_id?.toLowerCase().includes(q);
+                      const matchS = statusFilter === 'all' || t.status === statusFilter;
+                      return matchQ && matchS;
+                    });
+                    const grouped = filtered.reduce((acc: any, t) => {
                       const cat = t.report_type || 'general';
                       if (!acc[cat]) acc[cat] = [];
                       acc[cat].push(t);
                       return acc;
                     }, {});
+                    if (filtered.length === 0) return <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: '12px' }}>No matching records</div>;
                     
                     return Object.entries(grouped).map(([cat, catTickets]: [string, any]) => (
                       <div key={cat}>
