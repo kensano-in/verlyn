@@ -145,7 +145,7 @@ async function handleCallback(cb: any, supabase: any) {
     if (!tickets || tickets.length === 0) {
       msg += "📭 _No active requests found._";
     } else {
-      tickets.forEach(t => {
+      tickets.forEach((t: any) => {
         msg += `🔹 \`${t.case_id}\` | *${t.report_type.toUpperCase()}*\n👤 ${t.full_name}\n\n`;
       });
     }
