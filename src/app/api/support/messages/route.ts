@@ -137,10 +137,21 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `📩 *USER CHAT REPLY:* \`${ticketInfo.case_id}\`\n────────────────\n${content.trim()}\n\n💡 _Simply reply to this notification to respond._`,
+              text: `[ 𝗨𝗣𝗗𝗔𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]\n` +
+                    `𝗜𝗗: \`${ticketInfo.case_id}\`\n` +
+                    `━━━━━━━━━━━━━━━━━━━\n` +
+                    `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ USER CHAT REPLY ]\n` +
+                    `━━━━━━━━━━━━━━━━━━━\n` +
+                    `*NEW PAYLOAD:*\n> ${content.substring(0, 300)}${content.length > 300 ? '...' : ''}\n\n` +
+                    `[ 𝗜𝗡𝗧𝗘𝗟: SECURED ]   [ 𝗧𝗜𝗠𝗘: ${new Date().toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
+                    `━━━━━━━━━━━━━━━━━━━`,
               parse_mode: 'Markdown',
               reply_markup: {
-                inline_keyboard: [[{ text: '📑 Manage Case', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }]]
+                inline_keyboard: [
+                  [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${ticketInfo.case_id}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }],
+                  [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${ticketInfo.case_id}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${ticketInfo.case_id}` }],
+                  [{ text: '✅ RESOLVE', callback_data: `resolve_${ticketInfo.case_id}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${ticketInfo.case_id}` }]
+                ]
               }
             })
           });

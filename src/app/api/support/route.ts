@@ -146,13 +146,18 @@ export async function POST(req: NextRequest) {
         const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493'; // Fallback chat ID if not set
         
         if (botToken) {
-          const text = `🚨 *VERLYN ${reportType.toUpperCase()} ALERT*\n\n` +
-                       `*Case ID:* \`${caseId}\`\n` +
-                       `*User:* ${fullName}\n` +
-                       `*Email:* ${email}\n` +
-                       `*Subject:* ${subject}\n\n` +
-                       `*Message:*\n${description}\n\n` +
-                       `💡 *Direct Action:*\nReply to this message to send an instant response to the user.`;
+          const text = `[ 𝗘𝗡𝗖𝗥𝗬𝗣𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]\n` +
+                       `𝗜𝗗: \`${caseId}\`\n` +
+                       `━━━━━━━━━━━━━━━━━━━\n` +
+                       `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ NEW INCOMING ]\n` +
+                       `𝗖𝗟𝗜𝗘𝗡𝗧   :: ${fullName.toUpperCase()}\n` +
+                       `𝗖𝗢𝗡𝗧𝗔𝗖𝗧  :: \`${email}\`\n` +
+                       `𝗣𝗥𝗜𝗢𝗥𝗜𝗧𝗬 :: URGENT\n` +
+                       `━━━━━━━━━━━━━━━━━━━\n` +
+                       `*SUBJECT:*\n> ${subject}\n\n` +
+                       `*PAYLOAD:*\n> ${description.substring(0, 300)}${description.length > 300 ? '...' : ''}\n\n` +
+                       `[ 𝗜𝗡𝗧𝗘𝗟: SECURED ]   [ 𝗧𝗜𝗠𝗘: ${new Date().toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
+                       `━━━━━━━━━━━━━━━━━━━`;
           
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
@@ -163,9 +168,10 @@ export async function POST(req: NextRequest) {
               parse_mode: 'Markdown',
               reply_markup: {
                 inline_keyboard: [
-                  [
-                    { text: '⚡ MANAGE CASE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${caseId}` } }
-                  ]
+                  [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${caseId}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${caseId}` } }],
+                  [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${caseId}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${caseId}` }],
+                  [{ text: '🛡️ QUARANTINE', callback_data: `quarantine_${caseId}` }, { text: '🗑️ PURGE LOGS', callback_data: `purge_${caseId}` }],
+                  [{ text: '✅ RESOLVE', callback_data: `resolve_${caseId}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${caseId}` }]
                 ]
               }
             })
@@ -254,18 +260,31 @@ export async function PATCH(req: NextRequest) {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493';
       if (botToken) {
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: `📩 *USER REPLY:* \`${case_id}\`\n────────────────\n${message}\n\n💡 _Reply to this message to send an instant response._`,
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [[{ text: '📑 View Case', web_app: { url: `https://verlyn.in/tg-admin?case_id=${case_id}` } }]]
-            }
-          })
-        });
+          const text = `[ 𝗨𝗣𝗗𝗔𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]\n` +
+                       `𝗜𝗗: \`${case_id}\`\n` +
+                       `━━━━━━━━━━━━━━━━━━━\n` +
+                       `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ USER REPLIED ]\n` +
+                       `━━━━━━━━━━━━━━━━━━━\n` +
+                       `*NEW PAYLOAD:*\n> ${message.substring(0, 300)}${message.length > 300 ? '...' : ''}\n\n` +
+                       `[ 𝗜𝗡𝗧𝗘𝗟: SECURED ]   [ 𝗧𝗜𝗠𝗘: ${new Date().toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
+                       `━━━━━━━━━━━━━━━━━━━`;
+          
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text,
+              parse_mode: 'Markdown',
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${case_id}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${case_id}` } }],
+                  [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${case_id}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${case_id}` }],
+                  [{ text: '✅ RESOLVE', callback_data: `resolve_${case_id}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${case_id}` }]
+                ]
+              }
+            })
+          });
       }
     } catch (e) { console.error('TG Notification error:', e); }
 
