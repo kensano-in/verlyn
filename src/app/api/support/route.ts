@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
               parse_mode: 'Markdown',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${caseId}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${caseId}` } }],
+                  [{ text: '⚡ REPLY', callback_data: `reply_hint_${caseId}` }, { text: '🤖 AI AUTO', callback_data: `ai_reply_${caseId}` }, { text: '🖥️ WEB', web_app: { url: `https://verlyn.in/tg-admin?case_id=${caseId}` } }],
                   [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${caseId}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${caseId}` }],
                   [{ text: '🛡️ QUARANTINE', callback_data: `quarantine_${caseId}` }, { text: '🗑️ PURGE LOGS', callback_data: `purge_${caseId}` }],
                   [{ text: '✅ RESOLVE', callback_data: `resolve_${caseId}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${caseId}` }]

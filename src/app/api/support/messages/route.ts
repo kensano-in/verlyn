@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
               parse_mode: 'Markdown',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${ticketInfo.case_id}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }],
+                  [{ text: '⚡ REPLY', callback_data: `reply_hint_${ticketInfo.case_id}` }, { text: '🤖 AI AUTO', callback_data: `ai_reply_${ticketInfo.case_id}` }, { text: '🖥️ WEB', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }],
                   [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${ticketInfo.case_id}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${ticketInfo.case_id}` }],
                   [{ text: '✅ RESOLVE', callback_data: `resolve_${ticketInfo.case_id}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${ticketInfo.case_id}` }]
                 ]

@@ -202,7 +202,7 @@ async function handleCallback(cb: any, supabase: any) {
       
       await editUI(msg, {
         inline_keyboard: [
-          [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${cid}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${cid}` } }],
+          [{ text: '⚡ REPLY', callback_data: `reply_hint_${cid}` }, { text: '🤖 AI AUTO', callback_data: `ai_reply_${cid}` }, { text: '🖥️ WEB', web_app: { url: `https://verlyn.in/tg-admin?case_id=${cid}` } }],
           [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${cid}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${cid}` }],
           [{ text: '🛡️ QUARANTINE', callback_data: `quarantine_${cid}` }, { text: '🗑️ PURGE LOGS', callback_data: `purge_${cid}` }],
           [{ text: '✅ RESOLVE', callback_data: `resolve_${cid}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${cid}` }],
@@ -251,6 +251,58 @@ async function handleCallback(cb: any, supabase: any) {
   if (data.startsWith('reply_hint_')) {
     const cid = data.replace('reply_hint_', '');
     await sendTelegramMessage(chatId, `✍️ *TRANSMISSION MODE: ${cid}*\nReply to this message to relay your response.`, {}, supabase);
+  }
+
+  if (data.startsWith('ai_reply_')) {
+    const cid = data.replace('ai_reply_', '');
+    const { data: ticket } = await supabase.from('support_tickets').select('*').eq('case_id', cid).single();
+    if (!ticket) return;
+
+    if (ticket.status === 'Resolved') {
+      await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${cid}\` is already resolved. Cannot send AI reply.`, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
+    await editUI(`🤖 *AI AUTOPILOT ACTIVATED*\n━━━━━━━━━━━━━━━━━━━\nAnalyzing Case \`${cid}\` and generating response...`, {});
+
+    try {
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error('GEMINI_API_KEY not configured.');
+      
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const prompt = `You are the Verlyn Command AI, a high-status, professional concierge agent for Verlyn (an elite tech company).
+A user has submitted a support ticket. Write a very concise, professional, and definitive reply to the user.
+Do not use any placeholders. Keep it under 4 sentences.
+Be extremely formal, precise, and polite.
+
+User Name: ${ticket.full_name}
+Report Type: ${ticket.report_type}
+Subject: ${ticket.subject}
+Message Payload: ${ticket.description}`;
+
+      const result = await model.generateContent(prompt);
+      const aiText = result.response.text().trim();
+
+      await supabase.from('support_messages').insert({
+        ticket_id: ticket.id,
+        sender_type: 'agent',
+        content: aiText,
+        agent_name: 'Verlyn AI'
+      });
+      await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: aiText, updated_at: new Date().toISOString() }).eq('id', ticket.id);
+
+      await editUI(`🤖 *AI AUTOPILOT: SUCCESS*\n━━━━━━━━━━━━━━━━━━━\nResponse transmitted to \`${cid}\`.\n\n*PAYLOAD:*\n> ${aiText}`, {
+        inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]]
+      });
+
+    } catch (e: any) {
+      await editUI(`❌ *AI AUTOPILOT FAILED*\n━━━━━━━━━━━━━━━━━━━\nError: ${e.message}`, {
+        inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]]
+      });
+    }
   }
 
   if (data.startsWith('resolve_')) {
