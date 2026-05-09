@@ -187,21 +187,63 @@ async function handleCallback(cb: any, supabase: any) {
     const cid = data.replace('manage_', '');
     const { data: t } = await supabase.from('support_tickets').select('*').eq('case_id', cid).single();
     if (t) {
-      const msg = `📑 *DOSSIER: ${cid}*\n${THEME.divider}\n` +
-                  `*STATUS:* 🟢 ${t.status}\n` +
-                  `*CLIENT:* ${t.full_name}\n` +
-                  `*EMAIL:* \`${t.email}\`\n` +
-                  `*TOPIC:* ${t.subject}\n\n` +
-                  `*DESCRIPTION:*\n\`${t.description}\`\n\n` +
-                  `📅 *FILED:* ${new Date(t.created_at).toLocaleString()}`;
+      const msg = `[ 𝗘𝗡𝗖𝗥𝗬𝗣𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]\n` +
+                  `𝗜𝗗: \`${cid}\`\n` +
+                  `━━━━━━━━━━━━━━━━━━━\n` +
+                  `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ ${t.status.toUpperCase()} ]\n` +
+                  `𝗖𝗟𝗜𝗘𝗡𝗧   :: ${t.full_name.toUpperCase()}\n` +
+                  `𝗖𝗢𝗡𝗧𝗔𝗖𝗧  :: \`${t.email}\`\n` +
+                  `𝗣𝗥𝗜𝗢𝗥𝗜𝗧𝗬 :: NORMAL\n` +
+                  `━━━━━━━━━━━━━━━━━━━\n` +
+                  `*SUBJECT:*\n> ${t.subject}\n\n` +
+                  `*PAYLOAD:*\n> ${t.description.substring(0, 300)}${t.description.length > 300 ? '...' : ''}\n\n` +
+                  `[ 𝗜𝗡𝗧𝗘𝗟: ${t.ip_address ? 'SECURED' : 'UNAVAILABLE'} ]   [ 𝗧𝗜𝗠𝗘: ${new Date(t.created_at).toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
+                  `━━━━━━━━━━━━━━━━━━━`;
       
       await editUI(msg, {
         inline_keyboard: [
-          [{ text: '🖥️ OPEN IN WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${cid}` } }],
-          [{ text: '💬 SEND RESPONSE', callback_data: `reply_hint_${cid}` }],
-          [{ text: '✅ RESOLVE', callback_data: `resolve_${cid}` }, { text: '🚫 BAN', callback_data: `ban_${cid}` }],
-          [{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]
+          [{ text: '⚡ QUICK REPLY', callback_data: `reply_hint_${cid}` }, { text: '🖥️ WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${cid}` } }],
+          [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${cid}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${cid}` }],
+          [{ text: '🛡️ QUARANTINE', callback_data: `quarantine_${cid}` }, { text: '🗑️ PURGE LOGS', callback_data: `purge_${cid}` }],
+          [{ text: '✅ RESOLVE', callback_data: `resolve_${cid}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${cid}` }],
+          [{ text: '⬅️ RETURN TO OVERWATCH QUEUE', callback_data: 'list_active' }]
         ]
+      });
+    }
+  }
+
+  if (data.startsWith('ip_intel_')) {
+    const cid = data.replace('ip_intel_', '');
+    const { data: t } = await supabase.from('support_tickets').select('ip_address').eq('case_id', cid).single();
+    if (t) {
+      const msg = `🔍 *IP INTELLIGENCE REPORT*\n━━━━━━━━━━━━━━━━━━━\n*CASE ID:* \`${cid}\`\n*ORIGIN IP:* \`${t.ip_address || 'UNKNOWN'}\`\n\n_Note: Deep geographical tracking requires advanced API integration._`;
+      await editUI(msg, { inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]] });
+    }
+  }
+
+  if (data.startsWith('escalate_')) {
+    const cid = data.replace('escalate_', '');
+    await supabase.from('support_tickets').update({ status: 'Escalated' }).eq('case_id', cid);
+    await editUI(`⚠️ *CASE ESCALATED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` has been elevated to high priority.`, {
+      inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]]
+    });
+  }
+
+  if (data.startsWith('quarantine_')) {
+    const cid = data.replace('quarantine_', '');
+    await supabase.from('support_tickets').update({ status: 'Quarantined', is_spam: true }).eq('case_id', cid);
+    await editUI(`🛡️ *CASE QUARANTINED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` has been flagged and isolated from main queue.`, {
+      inline_keyboard: [[{ text: '⬅️ BACK TO QUEUE', callback_data: 'list_active' }]]
+    });
+  }
+
+  if (data.startsWith('purge_')) {
+    const cid = data.replace('purge_', '');
+    const { data: ticket } = await supabase.from('support_tickets').select('id').eq('case_id', cid).single();
+    if (ticket) {
+      await supabase.from('support_messages').delete().eq('ticket_id', ticket.id);
+      await editUI(`🗑️ *LOGS PURGED*\n━━━━━━━━━━━━━━━━━━━\nAll communication history for Case \`${cid}\` has been permanently wiped from the database.`, {
+        inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]]
       });
     }
   }
