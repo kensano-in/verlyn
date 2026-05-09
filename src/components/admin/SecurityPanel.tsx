@@ -1,5 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+
+const IcoHighRisk = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+const IcoFlag = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
+const IcoLock = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+const IcoGlobe = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
+const IcoGrid = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>;
+const IcoBan = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
+const IcoSearch = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+const IcoBar = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
 
 interface Props { tickets: any[]; preRegs: any[]; authKey: string; }
 
@@ -67,10 +76,10 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
   };
 
   const TABS = [
-    { id: 'overview', label: 'Overview', icon: '◈' },
-    { id: 'blacklist', label: 'Blacklist', icon: '🚫' },
-    { id: 'lookup', label: 'IP Lookup', icon: '🔍' },
-    { id: 'domains', label: 'Domains', icon: '📊' },
+    { id: 'overview', label: 'Overview', Icon: IcoGrid },
+    { id: 'blacklist', label: 'Blacklist', Icon: IcoBan },
+    { id: 'lookup', label: 'IP Lookup', Icon: IcoSearch },
+    { id: 'domains', label: 'Domains', Icon: IcoBar },
   ] as const;
 
   const inp = { flex: 1, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', borderRadius: '9px', padding: '11px 14px', fontSize: '13px', outline: 'none', fontFamily: 'monospace' };
@@ -95,8 +104,8 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
         <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '4px', marginBottom: '24px', width: 'fit-content' }}>
           {TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveSection(tab.id as any)}
-              style={{ padding: '8px 18px', borderRadius: '7px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.2s', background: activeSection === tab.id ? 'rgba(255,255,255,0.09)' : 'transparent', color: activeSection === tab.id ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-              {tab.icon} {tab.label}
+              style={{ padding: '8px 18px', borderRadius: '7px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', transition: 'all 0.2s', background: activeSection === tab.id ? 'rgba(255,255,255,0.09)' : 'transparent', color: activeSection === tab.id ? '#fff' : 'rgba(255,255,255,0.4)', display:'flex', alignItems:'center', gap:'6px' }}>
+              <tab.Icon /> {tab.label}
             </button>
           ))}
         </div>
@@ -106,14 +115,14 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '14px', marginBottom: '24px' }}>
               {[
-                { label: 'High Risk Cases', value: highRisk.length, color: '#ef4444', icon: '🔴', sub: 'Risk score > 70' },
-                { label: 'Flagged', value: flagged.length, color: '#f59e0b', icon: '⚑', sub: 'Manual flags' },
-                { label: 'Suspended', value: suspended.length, color: '#6b7280', icon: '🔒', sub: 'Locked accounts' },
-                { label: 'Repeated IPs', value: repeatedIPs.length, color: '#8b5cf6', icon: '🌐', sub: 'Multi-submit IPs' },
+                { label:'High Risk Cases', value:highRisk.length, color:'#ef4444', Icon:IcoHighRisk, sub:'Risk score > 70' },
+                { label:'Flagged', value:flagged.length, color:'#f59e0b', Icon:IcoFlag, sub:'Manual flags' },
+                { label:'Suspended', value:suspended.length, color:'#6b7280', Icon:IcoLock, sub:'Locked accounts' },
+                { label:'Repeated IPs', value:repeatedIPs.length, color:'#8b5cf6', Icon:IcoGlobe, sub:'Multi-submit IPs' },
               ].map(s => (
                 <div key={s.label} style={{ background: `${s.color}08`, border: `1px solid ${s.color}22`, borderRadius: '14px', padding: '20px', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg,${s.color}60,transparent)` }} />
-                  <div style={{ fontSize: '20px', marginBottom: '10px' }}>{s.icon}</div>
+                  <div style={{ position:'absolute', top:0, left:0, right:0, height:'2px', background:`linear-gradient(90deg,${s.color}60,transparent)` }} />
+                  <div style={{ marginBottom:'10px' }}><s.Icon /></div>
                   <div style={{ fontSize: '28px', fontWeight: 800, color: s.color, letterSpacing: '-0.02em', marginBottom: '4px' }}>{s.value}</div>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>{s.label}</div>
                   <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>{s.sub}</div>
@@ -152,9 +161,10 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
         {activeSection === 'blacklist' && (
           <div>
             <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '14px', padding: '22px', marginBottom: '20px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
-                🚫 Add to Blacklist
-              </p>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom: '14px' }}>
+                <IcoBan />
+                <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.08em', margin:0 }}>Add to Blacklist</p>
+              </div>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginBottom: '14px', lineHeight: 1.5 }}>
                 Enter an <strong style={{ color: 'rgba(255,255,255,0.6)' }}>IP address</strong> (e.g. <code style={{ fontFamily: 'monospace', color: '#f59e0b', fontSize: '11px' }}>192.168.1.1</code>) or an <strong style={{ color: 'rgba(255,255,255,0.6)' }}>email</strong> (e.g. <code style={{ fontFamily: 'monospace', color: '#f59e0b', fontSize: '11px' }}>email:user@domain.com</code>)
               </p>
@@ -197,7 +207,10 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
         {activeSection === 'lookup' && (
           <div>
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '24px', marginBottom: '20px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', marginBottom: '16px' }}>🌐 IP Telemetry Lookup</p>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'16px' }}>
+                <IcoGlobe />
+                <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', margin:0 }}>IP Telemetry Lookup</p>
+              </div>
               <div style={{ display: 'flex', gap: '10px', marginBottom: lookupResult ? '20px' : '0' }}>
                 <input value={ipInput} onChange={e => setIpInput(e.target.value)} placeholder="Enter IP address…"
                   onKeyDown={e => e.key === 'Enter' && doLookup()}
@@ -226,8 +239,8 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
                     ))}
                   </div>
                   <button onClick={() => { setBanInput(ipInput); setActiveSection('blacklist'); }}
-                    style={{ padding: '9px 20px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '9px', color: '#ef4444', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.05em' }}>
-                    🚫 Ban This IP
+                    style={{ padding: '9px 20px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '9px', color: '#ef4444', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.05em', display:'flex', alignItems:'center', gap:'6px' }}>
+                    <IcoBan /> Ban This IP
                   </button>
                 </>
               )}
@@ -240,7 +253,10 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
         {activeSection === 'domains' && (
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff' }}>Email Domain Analysis</span>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <IcoBar />
+                <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff' }}>Email Domain Analysis</span>
+              </div>
               <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{topDomains.length} unique domains</span>
             </div>
             {topDomains.map(([domain, count], i) => {
@@ -254,8 +270,8 @@ export default function SecurityPanel({ tickets, preRegs, authKey }: Props) {
                   </div>
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#7c3aed', minWidth: '28px', textAlign: 'right', fontFamily: 'monospace' }}>{count}</span>
                   <button onClick={() => { setBanInput(`email:*@${domain}`); setActiveSection('blacklist'); }}
-                    style={{ padding: '4px 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '6px', color: '#ef4444', fontSize: '9px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0 }}>
-                    BAN
+                    style={{ padding: '4px 10px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '6px', color: '#ef4444', fontSize: '9px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.05em', flexShrink: 0, display:'flex', alignItems:'center', gap:'4px' }}>
+                    <IcoBan /> BAN
                   </button>
                 </div>
               );

@@ -467,32 +467,32 @@ export default function HomePage() {
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '72px' }}>
             {[
               {
-                icon: '🔒',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
                 title: 'Your messages stay private',
                 body: 'When you send a message on Verlyn, only you and the person you\'re talking to can read it. Nobody else — not even us. This is called end-to-end encryption, and it\'s the same technology banks use.'
               },
               {
-                icon: '👤',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
                 title: 'Real people only',
                 body: 'Verlyn is invite-only. You can\'t just sign up with a fake email and a made-up name. Every person on the platform is verified, which means less spam, no bots, and better conversations.'
               },
               {
-                icon: '📵',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
                 title: 'No algorithm, no ads',
                 body: 'Verlyn does not track what you look at, sell your data to advertisers, or show you content designed to make you anxious. You see what matters to you, in the order it happened.'
               },
               {
-                icon: '🌐',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
                 title: 'Built for everyone',
                 body: 'Whether you\'re a professional, a creator, or just someone who wants a quieter corner of the internet — Verlyn works for you. No technical knowledge required.'
               },
               {
-                icon: '⚡',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
                 title: 'Fast and reliable',
                 body: 'Verlyn is engineered for speed. Messages arrive instantly. The platform stays online. There are no frustrating delays or unexpected outages during important conversations.'
               },
               {
-                icon: '🛡️',
+                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
                 title: 'We can\'t sell what we don\'t have',
                 body: 'Most platforms make money by collecting everything about you. Verlyn is different — our architecture is designed so that we never store sensitive data in a form we can read or share.'
               },

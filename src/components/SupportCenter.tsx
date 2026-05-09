@@ -572,9 +572,13 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
 
                 {/* Trust strip */}
                 <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', justifyContent: 'space-around' }}>
-                  {[{ icon: '🔒', label: 'E2E Encrypted' }, { icon: '⚡', label: 'Sub-2h Response' }, { icon: '🛡️', label: 'Zero-Log Policy' }].map((t, i) => (
+                  {[
+                    { label: 'E2E Encrypted', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+                    { label: 'Sub-2h Response', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+                    { label: 'Zero-Log Policy', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+                  ].map((t, i) => (
                     <div key={i} style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '14px', marginBottom: '4px' }}>{t.icon}</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>{t.icon}</div>
                       <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.28)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.label}</p>
                     </div>
                   ))}

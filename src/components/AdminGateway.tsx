@@ -620,10 +620,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Active Cases', value: tickets.filter(t => !['Resolved','Completed','Closed'].includes(t.status)).length, total: tickets.length, color: '#6366f1', trend: '+2', icon: '📋' },
-                        { label: 'Resolved Today', value: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, total: null, color: '#10b981', trend: '+5', icon: '✅' },
-                        { label: 'Avg Response', value: '1.4m', total: null, color: '#f59e0b', trend: '-0.3m', icon: '⚡' },
-                        { label: 'Threat Level', value: 'LOW', total: null, color: '#8b5cf6', trend: 'STABLE', icon: '🛡️' }
+                        { label: 'Active Cases', value: tickets.filter(t => !['Resolved','Completed','Closed'].includes(t.status)).length, total: tickets.length, color: '#6366f1', trend: '+2', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+                        { label: 'Resolved Today', value: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, total: null, color: '#10b981', trend: '+5', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
+                        { label: 'Avg Response', value: '1.4m', total: null, color: '#f59e0b', trend: '-0.3m', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+                        { label: 'Threat Level', value: 'LOW', total: null, color: '#8b5cf6', trend: 'STABLE', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> }
                       ].map((stat, i) => (
                         <div key={i} style={{ background: 'rgba(255,255,255,0.025)', padding: '22px 20px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
                           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${stat.color}60, transparent)` }} />

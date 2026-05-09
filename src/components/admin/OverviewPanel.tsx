@@ -21,12 +21,12 @@ export default function OverviewPanel({ tickets, preRegs, auditEvents }: Props) 
   const avgRisk = tickets.length ? Math.round(tickets.reduce((a, t) => a + (t.risk_score || 0), 0) / tickets.length) : 0;
 
   const stats = [
-    { label: 'Active Tickets', value: open, color: '#7c3aed', icon: '⚡' },
-    { label: 'Critical Cases', value: critical, color: '#ef4444', icon: '🔴' },
-    { label: 'Resolved (Total)', value: resolved, color: '#10b981', icon: '✓' },
-    { label: 'Pre-Registrations', value: preRegs.length, color: '#0891b2', icon: '◉' },
-    { label: 'Avg Risk Score', value: `${avgRisk}%`, color: avgRisk > 60 ? '#ef4444' : avgRisk > 30 ? '#f59e0b' : '#10b981', icon: '◈' },
-    { label: 'Online Agents', value: MOCK_AGENTS.filter(a => a.status === 'online').length, color: '#10b981', icon: '●' },
+    { label: 'Active Tickets',     value: open,            color: '#7c3aed', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+    { label: 'Critical Cases',     value: critical,        color: '#ef4444', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
+    { label: 'Resolved (Total)',   value: resolved,        color: '#10b981', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> },
+    { label: 'Pre-Registrations', value: preRegs.length,  color: '#0891b2', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> },
+    { label: 'Avg Risk Score',    value: `${avgRisk}%`,   color: avgRisk > 60 ? '#ef4444' : avgRisk > 30 ? '#f59e0b' : '#10b981', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={avgRisk > 60 ? '#ef4444' : avgRisk > 30 ? '#f59e0b' : '#10b981'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { label: 'Online Agents',     value: MOCK_AGENTS.filter(a => a.status === 'online').length, color: '#10b981', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
   ];
 
   const recentActivity: LiveActivity[] = [
@@ -55,7 +55,7 @@ export default function OverviewPanel({ tickets, preRegs, auditEvents }: Props) 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
             style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${s.color}22`, borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', background: `radial-gradient(circle at 100% 0%, ${s.color}15, transparent 70%)` }} />
-            <div style={{ fontSize: '20px', marginBottom: '8px' }}>{s.icon}</div>
+            <div style={{ marginBottom: '8px' }}>{s.icon}</div>
             <div style={{ fontSize: '32px', fontWeight: 700, color: s.color, letterSpacing: '-1px', lineHeight: 1 }}>{s.value}</div>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{s.label}</div>
           </motion.div>
