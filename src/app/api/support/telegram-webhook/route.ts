@@ -28,7 +28,6 @@ async function trackMessageId(supabase: any, chatId: string | number, messageId:
     const { data: session } = await supabase
       .from('audit_log')
       .select('*')
-      .eq('action', 'tg_auth_success')
       .eq('ip_address', `tg:${chatId}`)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -42,6 +41,12 @@ async function trackMessageId(supabase: any, chatId: string | number, messageId:
           metadata: { ...metadata, message_ids: [...existingIds, messageId] }
         }).eq('id', session.id);
       }
+    } else {
+      await supabase.from('audit_log').insert({
+        action: 'tg_session_pending',
+        ip_address: `tg:${chatId}`,
+        metadata: { message_ids: [messageId] }
+      });
     }
   } catch (e) {
     console.error('[TG Webhook] Track Error:', e);
@@ -50,20 +55,22 @@ async function trackMessageId(supabase: any, chatId: string | number, messageId:
 
 async function purgeSessionMessages(supabase: any, chatId: string | number) {
   try {
-    const { data: session } = await supabase
+    const { data: sessions } = await supabase
       .from('audit_log')
       .select('*')
-      .eq('action', 'tg_auth_success')
       .eq('ip_address', `tg:${chatId}`)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .not('metadata->message_ids', 'is', null);
 
-    if (session && session.metadata?.message_ids) {
-      const ids = session.metadata.message_ids;
-      // Delete sequentially to avoid rate limits but fairly fast
-      for (const id of ids) {
-        await deleteTelegramMessage(chatId, id);
+    if (sessions && sessions.length > 0) {
+      for (const session of sessions) {
+        const ids = session.metadata?.message_ids || [];
+        for (const id of ids) {
+          await deleteTelegramMessage(chatId, id);
+        }
+        // Once purged, clear the metadata so we don't try again
+        await supabase.from('audit_log').update({ 
+          metadata: { ...session.metadata, message_ids: [] } 
+        }).eq('id', session.id);
       }
     }
   } catch (e) {
@@ -266,6 +273,7 @@ export async function POST(req: NextRequest) {
     const messageId = message.message_id;
 
     if (text === '/start' || text === '/help') {
+      await deleteTelegramMessage(chatId, messageId);
       await sendTelegramMessage(chatId, 
         `${THEME.header}\n${THEME.divider}\n` +
         "Unauthorized access detected. This terminal is strictly monitored.\n\n" +
@@ -329,6 +337,8 @@ export async function POST(req: NextRequest) {
             ticket_id: ticket.id, content: text, sender_type: 'agent', agent_name: 'Verlyn Admin'
           });
           await supabase.from('support_tickets').update({ status: 'Active Session' }).eq('id', ticket.id);
+          // Delete admin's response to keep chat clean
+          await deleteTelegramMessage(chatId, messageId);
           await sendTelegramMessage(chatId, `✅ *MESSAGE TRANSMITTED:* Response relayed to \`${caseId}\``, {}, supabase);
         } else {
           await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${caseId}\` not found.`, {}, supabase);
