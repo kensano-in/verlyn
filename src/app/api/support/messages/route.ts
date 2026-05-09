@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
               text: `📩 *USER CHAT REPLY:* \`${ticketInfo.case_id}\`\n────────────────\n${content.trim()}\n\n💡 _Simply reply to this notification to respond._`,
               parse_mode: 'Markdown',
               reply_markup: {
-                inline_keyboard: [[{ text: '📑 Manage Case', callback_data: `manage_${ticketInfo.case_id}` }]]
+                inline_keyboard: [[{ text: '📑 Manage Case', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }]]
               }
             })
           });

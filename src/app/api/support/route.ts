@@ -164,8 +164,7 @@ export async function POST(req: NextRequest) {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '⚡ MANAGE CASE', callback_data: `manage_${caseId}` },
-                    { text: '📊 STATS', callback_data: 'stats' }
+                    { text: '⚡ MANAGE CASE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${caseId}` } }
                   ]
                 ]
               }
@@ -263,7 +262,7 @@ export async function PATCH(req: NextRequest) {
             text: `📩 *USER REPLY:* \`${case_id}\`\n────────────────\n${message}\n\n💡 _Reply to this message to send an instant response._`,
             parse_mode: 'Markdown',
             reply_markup: {
-              inline_keyboard: [[{ text: '📑 View Case', callback_data: `manage_${case_id}` }]]
+              inline_keyboard: [[{ text: '📑 View Case', web_app: { url: `https://verlyn.in/tg-admin?case_id=${case_id}` } }]]
             }
           })
         });
