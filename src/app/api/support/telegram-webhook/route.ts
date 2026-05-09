@@ -230,7 +230,7 @@ async function handleCallback(cb: any, supabase: any) {
   if (data === 'audit') {
     const { data: logs } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(5);
     let msg = "🛡️ *SECURITY AUDIT LOG*\n" + THEME.divider + "\n\n";
-    logs?.forEach(l => {
+    logs?.forEach((l: any) => {
       msg += `• ${new Date(l.created_at).toLocaleTimeString()} | *${l.action}*\n_${l.ip_address}_\n\n`;
     });
     await editUI(msg, { inline_keyboard: [[{ text: '⬅️ BACK', callback_data: 'main_menu' }]] });
