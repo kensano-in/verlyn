@@ -156,13 +156,14 @@ function TgAdminConsole() {
           agent_name: 'Verlyn Command' 
         })
       });
-      if (!res.ok) throw new Error('Failed to send transmission.');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send transmission.');
       triggerHaptic('success');
       await fetchCaseData();
-    } catch (err) {
+    } catch (err: any) {
       triggerHaptic('error');
       setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
-      alert('Transmission failed. Retry.');
+      alert(`Transmission Error: ${err.message}`);
     } finally {
       setSending(false);
     }
@@ -432,32 +433,38 @@ function TgAdminConsole() {
 
             {/* Input Bar */}
             <div className="p-3 bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-white/[0.04] shrink-0 pb-safe z-20">
-              <form onSubmit={executeProtocol} className="w-full relative flex items-center">
-                <div className="absolute left-4 text-white/30 pointer-events-none">
-                  <Icons.Terminal />
+              {dossier?.status === 'Resolved' ? (
+                <div className="w-full bg-white/[0.02] border border-white/[0.05] rounded-full py-3.5 text-[12px] font-mono uppercase tracking-widest text-center text-emerald-500/50">
+                  <Icons.Check /> <span className="ml-2 inline-block relative top-[-2px]">Case Resolved</span>
                 </div>
-                <input 
-                  type="text" 
-                  value={inputVal}
-                  onChange={e => setInputVal(e.target.value)}
-                  placeholder="Execute protocol..."
-                  disabled={sending}
-                  className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full pl-11 pr-12 py-3.5 text-[14px] text-white outline-none focus:border-white/[0.15] focus:bg-white/[0.05] transition-all placeholder:text-white/20 shadow-inner"
-                />
-                <button 
-                  disabled={!inputVal.trim() || sending}
-                  className={`absolute right-1.5 w-10 h-10 flex items-center justify-center rounded-full transition-all 
-                    ${inputVal.trim() && !sending 
-                      ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-90' 
-                      : 'bg-transparent text-white/20'}`}
-                >
-                  {sending ? (
-                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full" />
-                  ) : (
-                    <Icons.Send />
-                  )}
-                </button>
-              </form>
+              ) : (
+                <form onSubmit={executeProtocol} className="w-full relative flex items-center">
+                  <div className="absolute left-4 text-white/30 pointer-events-none">
+                    <Icons.Terminal />
+                  </div>
+                  <input 
+                    type="text" 
+                    value={inputVal}
+                    onChange={e => setInputVal(e.target.value)}
+                    placeholder="Execute protocol..."
+                    disabled={sending}
+                    className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full pl-11 pr-12 py-3.5 text-[14px] text-white outline-none focus:border-white/[0.15] focus:bg-white/[0.05] transition-all placeholder:text-white/20 shadow-inner"
+                  />
+                  <button 
+                    disabled={!inputVal.trim() || sending}
+                    className={`absolute right-1.5 w-10 h-10 flex items-center justify-center rounded-full transition-all 
+                      ${inputVal.trim() && !sending 
+                        ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-90' 
+                        : 'bg-transparent text-white/20'}`}
+                  >
+                    {sending ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full" />
+                    ) : (
+                      <Icons.Send />
+                    )}
+                  </button>
+                </form>
+              )}
             </div>
           </motion.div>
         )}
