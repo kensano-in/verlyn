@@ -88,8 +88,8 @@ function TgAdminConsole() {
         const tg = (window as any).Telegram.WebApp;
         tg.ready();
         tg.expand();
-        tg.setHeaderColor('#050505');
-        tg.setBackgroundColor('#000000');
+        tg.setHeaderColor('#0a0a0a');
+        tg.setBackgroundColor('#0a0a0a');
       }
     };
     document.body.appendChild(script);
@@ -187,7 +187,7 @@ function TgAdminConsole() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-[#000000] flex items-center justify-center p-6 text-white font-mono uppercase tracking-[0.2em] text-[10px]">
+      <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center p-6 text-white font-mono uppercase tracking-[0.2em] text-[10px]">
         <div className="flex flex-col items-center gap-5 text-white/30">
           <motion.div 
             animate={{ rotate: 360 }} 
@@ -203,7 +203,7 @@ function TgAdminConsole() {
   // ERROR DOSSIER VIEW
   if (error || (activeCaseId && !dossier && !loading)) {
     return (
-      <div className="fixed inset-0 bg-[#000000] flex items-center justify-center p-6 text-white text-center font-mono relative">
+      <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center p-6 text-white text-center font-mono relative">
         <button 
           onClick={() => { triggerHaptic('light'); setActiveCaseId(null); setError(''); }} 
           className="absolute top-6 left-6 p-3 text-white/40 hover:text-white bg-white/[0.02] border border-white/[0.05] rounded-xl active:scale-95 transition-all">
@@ -221,7 +221,7 @@ function TgAdminConsole() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#000000] text-white font-sans overflow-hidden selection:bg-indigo-500/30">
+    <div className="fixed inset-0 bg-[#0a0a0a] text-white font-sans overflow-hidden selection:bg-indigo-500/30">
       <AnimatePresence mode="wait">
         
         {/* ========================================================= */}
@@ -317,10 +317,10 @@ function TgAdminConsole() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 flex flex-col bg-[#020202]"
+            className="absolute inset-0 flex flex-col bg-[#0a0a0a]"
           >
             {/* Header */}
-            <header className="h-[64px] bg-[#050505]/90 backdrop-blur-2xl border-b border-white/[0.04] flex items-center justify-between px-3 shrink-0 z-20">
+            <header className="h-[64px] bg-[#0a0a0a]/90 backdrop-blur-2xl border-b border-white/[0.04] flex items-center justify-between px-3 shrink-0 z-20">
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => { triggerHaptic('light'); setActiveCaseId(null); }} 
@@ -352,7 +352,7 @@ function TgAdminConsole() {
             </header>
 
             {/* Dossier Meta */}
-            <div className="bg-gradient-to-b from-[#050505] to-transparent pt-4 pb-2 px-5 shrink-0 flex flex-col gap-2 z-10">
+            <div className="bg-gradient-to-b from-[#0a0a0a] to-transparent pt-4 pb-2 px-5 shrink-0 flex flex-col gap-2 z-10">
               <div className="flex justify-between items-center text-[12px] font-medium text-white/80">
                 <span>{dossier?.full_name}</span>
                 <span className="text-white/40 font-mono text-[10px]">{dossier ? new Date(dossier.created_at).toLocaleDateString() : ''}</span>
@@ -431,7 +431,7 @@ function TgAdminConsole() {
             </div>
 
             {/* Input Bar */}
-            <div className="p-3 bg-[#050505]/90 backdrop-blur-2xl border-t border-white/[0.04] shrink-0 pb-safe z-20">
+            <div className="p-3 bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-white/[0.04] shrink-0 pb-safe z-20">
               <form onSubmit={executeProtocol} className="w-full relative flex items-center">
                 <div className="absolute left-4 text-white/30 pointer-events-none">
                   <Icons.Terminal />
@@ -469,7 +469,7 @@ function TgAdminConsole() {
 export default function TgAdminPage() {
   return (
     <Suspense fallback={
-      <div className="fixed inset-0 bg-[#000000] flex items-center justify-center">
+      <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center">
         <div className="w-6 h-6 border-[1.5px] border-white/10 border-t-white rounded-full animate-spin" />
       </div>
     }>

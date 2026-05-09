@@ -219,6 +219,23 @@ async function handleCallback(cb: any, supabase: any) {
     });
   }
 
+  if (data.startsWith('ban_')) {
+    const cid = data.replace('ban_', '');
+    const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', cid).single();
+    if (ticket) {
+      if (ticket.ip_address) {
+        await supabase.from('spam_blacklist').insert({ ip_address: ticket.ip_address, reason: `Banned from TG Console for case ${cid}` });
+      }
+      if (ticket.email) {
+        await supabase.from('spam_blacklist').insert({ ip_address: ticket.email, reason: `Banned from TG Console for case ${cid}` });
+      }
+      await supabase.from('support_tickets').update({ status: 'Resolved', is_spam: true }).eq('case_id', cid);
+    }
+    await editUI(`🚫 *USER BANNED*\n${THEME.divider}\n\nTarget has been blacklisted. Case \`${cid}\` terminated.`, {
+      inline_keyboard: [[{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]]
+    });
+  }
+
   if (data === 'stats') {
     const { count: total } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true });
     const { count: active } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).neq('status', 'Resolved');
