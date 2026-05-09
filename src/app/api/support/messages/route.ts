@@ -119,11 +119,11 @@ export async function POST(req: NextRequest) {
         .eq('id', resolvedTicketId);
     }
 
-    // If user sent a reply, reset admin_reply and set status to In progress
+    // If user sent a reply, update status to In progress (don't null admin_reply)
     if (sender_type === 'user') {
       await supabase
         .from('support_tickets')
-        .update({ status: 'In progress', admin_reply: null, updated_at: new Date().toISOString() })
+        .update({ status: 'In progress', updated_at: new Date().toISOString() })
         .eq('id', resolvedTicketId);
 
       // ── Notify Telegram ──

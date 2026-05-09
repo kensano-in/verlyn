@@ -440,6 +440,160 @@ export default function HomePage() {
         </section>
 
         {/* ════════════════════════════════════════════════════════════
+            WHAT IS VERLYN — Plain Language Explainer
+        ════════════════════════════════════════════════════════════ */}
+        <section style={{
+          position: 'relative', zIndex: 1,
+          padding: 'clamp(80px, 10vw, 140px) var(--gutter)',
+          borderTop: '1px solid rgba(255,255,255,0.04)',
+        }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.7 }}
+            style={{ maxWidth: '720px', margin: '0 auto', textAlign: 'center', marginBottom: '72px' }}
+          >
+            <p style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.22)', fontWeight: 600, marginBottom: '18px' }}>The Basics</p>
+            <h2 style={{ fontSize: 'clamp(28px, 4.5vw, 52px)', fontWeight: 700, letterSpacing: '-0.03em', color: '#fff', marginBottom: '20px', lineHeight: 1.08 }}>
+              What is Verlyn?
+            </h2>
+            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.75 }}>
+              In plain words — Verlyn is a private, secure place to message and connect with real people online. Think of it like a social network, but one that genuinely respects you.
+            </p>
+          </motion.div>
+
+          {/* Big explainer cards */}
+          <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '72px' }}>
+            {[
+              {
+                icon: '🔒',
+                title: 'Your messages stay private',
+                body: 'When you send a message on Verlyn, only you and the person you\'re talking to can read it. Nobody else — not even us. This is called end-to-end encryption, and it\'s the same technology banks use.'
+              },
+              {
+                icon: '👤',
+                title: 'Real people only',
+                body: 'Verlyn is invite-only. You can\'t just sign up with a fake email and a made-up name. Every person on the platform is verified, which means less spam, no bots, and better conversations.'
+              },
+              {
+                icon: '📵',
+                title: 'No algorithm, no ads',
+                body: 'Verlyn does not track what you look at, sell your data to advertisers, or show you content designed to make you anxious. You see what matters to you, in the order it happened.'
+              },
+              {
+                icon: '🌐',
+                title: 'Built for everyone',
+                body: 'Whether you\'re a professional, a creator, or just someone who wants a quieter corner of the internet — Verlyn works for you. No technical knowledge required.'
+              },
+              {
+                icon: '⚡',
+                title: 'Fast and reliable',
+                body: 'Verlyn is engineered for speed. Messages arrive instantly. The platform stays online. There are no frustrating delays or unexpected outages during important conversations.'
+              },
+              {
+                icon: '🛡️',
+                title: 'We can\'t sell what we don\'t have',
+                body: 'Most platforms make money by collecting everything about you. Verlyn is different — our architecture is designed so that we never store sensitive data in a form we can read or share.'
+              },
+            ].map((card, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ delay: i * 0.07, duration: 0.55 }}
+                style={{
+                  padding: '32px 28px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '16px',
+                  transition: 'border-color 0.25s',
+                }}
+                whileHover={{ borderColor: 'rgba(255,255,255,0.14)' }}
+              >
+                <div style={{ fontSize: '28px', marginBottom: '16px' }}>{card.icon}</div>
+                <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '10px', lineHeight: 1.3 }}>{card.title}</h3>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.72 }}>{card.body}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Q&A strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-30px' }}
+            transition={{ duration: 0.6 }}
+            style={{ maxWidth: '720px', margin: '0 auto' }}
+          >
+            <p style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.22)', fontWeight: 600, marginBottom: '32px', textAlign: 'center' }}>Common Questions</p>
+            {[
+              { q: 'Is Verlyn free to use?', a: 'Yes. Verlyn is free for everyone during the early access period. We may introduce optional premium features in the future, but the core product will always remain accessible.' },
+              { q: 'Who built Verlyn?', a: 'Verlyn is built by a focused team of engineers and designers who believe the internet deserves better tools — ones that put users first rather than advertisers.' },
+              { q: 'When can I join?', a: 'Verlyn is currently in a controlled pre-launch phase. Pre-register above with your email to secure your spot. Access is released in deliberate waves to maintain quality.' },
+              { q: 'Is my data safe?', a: 'Yes. All data in transit is encrypted. We use zero-knowledge principles wherever possible, meaning we are technically unable to access your private messages.' },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-20px' }}
+                transition={{ delay: i * 0.08, duration: 0.5 }}
+                style={{
+                  padding: '24px 0',
+                  borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                  display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '32px', alignItems: 'start'
+                }}
+              >
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#fff', lineHeight: 1.4 }}>{item.q}</p>
+                <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{item.a}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Support CTA strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-20px' }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            style={{
+              maxWidth: '720px', margin: '64px auto 0',
+              padding: '32px 40px',
+              background: 'rgba(99,102,241,0.04)',
+              border: '1px solid rgba(99,102,241,0.15)',
+              borderRadius: '18px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: '20px',
+            }}
+          >
+            <div>
+              <p style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>Still have questions?</p>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>Our concierge team is here to help — any time.</p>
+            </div>
+            <button
+              onClick={() => { setSupportView('menu'); setShowSupport(true); }}
+              style={{
+                padding: '14px 28px',
+                background: '#fff', color: '#000',
+                border: 'none', borderRadius: '10px',
+                fontSize: '12px', fontWeight: 800,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+                cursor: 'pointer',
+                boxShadow: '0 8px 30px rgba(255,255,255,0.1)',
+                transition: 'all 0.2s',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.03)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+            >
+              Contact Support
+            </button>
+          </motion.div>
+        </section>
+
+        {/* ════════════════════════════════════════════════════════════
             FOOTER
         ════════════════════════════════════════════════════════════ */}
         <footer style={{ position: 'relative', zIndex: 10, padding: '120px 24px 80px', borderTop: '1px solid rgba(255,255,255,0.02)' }}>

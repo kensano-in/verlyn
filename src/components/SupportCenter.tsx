@@ -862,26 +862,26 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                           </button>
                         </div>
                       )}
-                      <form onSubmit={handleUserReply} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '8px', gap: '8px', opacity: messages.some(m => m.sender_type === 'agent') ? 1 : 0.5 }}>
+                      <form onSubmit={handleUserReply} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
                         <input
                           type="file"
                           ref={fileInputRef}
                           onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                           style={{ display: 'none' }}
                         />
-                        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={!messages.some(m => m.sender_type === 'agent')} style={{ background: 'none', border: 'none', color: selectedFile ? '#fff' : 'rgba(255,255,255,0.4)', cursor: messages.some(m => m.sender_type === 'agent') ? 'pointer' : 'not-allowed', padding: '6px', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}>
+                        <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: selectedFile ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                         </button>
                         <input
                           type="text"
                           value={userReplyText}
                           onChange={(e) => setUserReplyText(e.target.value)}
-                          disabled={sendingReply || !messages.some(m => m.sender_type === 'agent')}
-                          placeholder={messages.some(m => m.sender_type === 'agent') ? "Type your reply here..." : "Waiting for admin to join..."}
+                          disabled={sendingReply}
+                          placeholder="Type your message..."
                           style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '13px', outline: 'none', padding: '8px 4px' }}
                         />
-                        <button type="submit" disabled={sendingReply || (!userReplyText.trim() && !selectedFile) || !messages.some(m => m.sender_type === 'agent')} style={{ width: '36px', height: '36px', borderRadius: '10px', background: (userReplyText.trim() || selectedFile) && messages.some(m => m.sender_type === 'agent') ? '#fff' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: (userReplyText.trim() || selectedFile) && messages.some(m => m.sender_type === 'agent') ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={(userReplyText.trim() || selectedFile) && messages.some(m => m.sender_type === 'agent') ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        <button type="submit" disabled={sendingReply || (!userReplyText.trim() && !selectedFile)} style={{ width: '36px', height: '36px', borderRadius: '10px', background: (userReplyText.trim() || selectedFile) ? '#fff' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: (userReplyText.trim() || selectedFile) ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={(userReplyText.trim() || selectedFile) ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                       </form>
                     </div>

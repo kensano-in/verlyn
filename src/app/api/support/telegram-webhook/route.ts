@@ -223,16 +223,18 @@ async function handleCallback(cb: any, supabase: any) {
 
   if (data.startsWith('escalate_')) {
     const cid = data.replace('escalate_', '');
-    await supabase.from('support_tickets').update({ status: 'Escalated' }).eq('case_id', cid);
-    await editUI(`⚠️ *CASE ESCALATED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` has been elevated to high priority.`, {
+    // 'Escalated' is not a valid DB status — use 'In progress' with an internal note
+    await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: '[ESCALATED — HIGH PRIORITY]' }).eq('case_id', cid);
+    await editUI(`⚠️ *CASE ESCALATED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` flagged as HIGH PRIORITY and moved to In progress.`, {
       inline_keyboard: [[{ text: '⬅️ BACK TO DOSSIER', callback_data: `manage_${cid}` }]]
     });
   }
 
   if (data.startsWith('quarantine_')) {
     const cid = data.replace('quarantine_', '');
-    await supabase.from('support_tickets').update({ status: 'Quarantined', is_spam: true }).eq('case_id', cid);
-    await editUI(`🛡️ *CASE QUARANTINED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` has been flagged and isolated from main queue.`, {
+    // 'Quarantined' is not valid — use 'Closed' + is_spam flag
+    await supabase.from('support_tickets').update({ status: 'Closed', is_spam: true }).eq('case_id', cid);
+    await editUI(`🛡️ *CASE QUARANTINED*\n━━━━━━━━━━━━━━━━━━━\nCase \`${cid}\` has been flagged as spam and closed.`, {
       inline_keyboard: [[{ text: '⬅️ BACK TO QUEUE', callback_data: 'list_active' }]]
     });
   }
@@ -258,8 +260,8 @@ async function handleCallback(cb: any, supabase: any) {
     const { data: ticket } = await supabase.from('support_tickets').select('*').eq('case_id', cid).single();
     if (!ticket) return;
 
-    if (ticket.status === 'Resolved') {
-      await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${cid}\` is already resolved. Cannot send AI reply.`, {}, supabase);
+    if (['Resolved', 'Completed', 'Closed'].includes(ticket.status)) {
+      await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${cid}\` is already closed (${ticket.status}). Cannot send AI reply.`, {}, supabase);
       return NextResponse.json({ ok: true });
     }
 
@@ -328,31 +330,37 @@ Message Payload: ${ticket.description}`;
     const cid = data.replace('ban_', '');
     const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', cid).single();
     if (ticket) {
+      // Insert IP and email as separate blacklist entries with correct columns
       if (ticket.ip_address) {
-        await supabase.from('spam_blacklist').insert({ ip_address: ticket.ip_address, reason: `Banned from TG Console for case ${cid}` });
+        await supabase.from('spam_blacklist').upsert({ ip_address: ticket.ip_address, reason: `Perma-banned via TG for case ${cid}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
       }
       if (ticket.email) {
-        await supabase.from('spam_blacklist').insert({ ip_address: ticket.email, reason: `Banned from TG Console for case ${cid}` });
+        // Store email in the ip_address field since that's the blacklist key, clearly labeled
+        await supabase.from('spam_blacklist').upsert({ ip_address: `email:${ticket.email}`, reason: `Email banned via TG for case ${cid}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
       }
-      await supabase.from('support_tickets').update({ status: 'Resolved', is_spam: true }).eq('case_id', cid);
+      await supabase.from('support_tickets').update({ status: 'Closed', is_spam: true }).eq('case_id', cid);
     }
-    await editUI(`🚫 *USER BANNED*\n${THEME.divider}\n\nTarget has been blacklisted. Case \`${cid}\` terminated.`, {
+    await editUI(`🚫 *USER PERMANENTLY BANNED*\n${THEME.divider}\n\nIP & email blacklisted. Case \`${cid}\` terminated.`, {
       inline_keyboard: [[{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]]
     });
   }
 
   if (data === 'stats') {
     const { count: total } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true });
-    const { count: active } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).neq('status', 'Resolved');
-    
+    const { count: active } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).not('status', 'in', '("Resolved","Completed","Closed")');
+    const { count: resolved } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).in('status', ['Resolved', 'Completed', 'Closed']);
+    const { count: spam } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('is_spam', true);
+    const now = new Date().toUTCString();
     await editUI(
-      "🛰️ *LIVE NETWORK TELEMETRY*\n" + THEME.divider + "\n" +
-      `💠 *ACTIVE OPERATIONS:* ${active || 0}\n` +
-      `💠 *LIFETIME THROUGHPUT:* ${total || 0}\n` +
-      `💠 *SYSTEM HEALTH:* OPTIMAL (100%)\n` +
-      `💠 *ENCRYPTION:* AES-256 ACTIVE\n\n` +
-      `_Telemetry updated in real-time._`,
-      { inline_keyboard: [[{ text: '⬅️ BACK', callback_data: 'main_menu' }]] }
+      "📊 *LIVE NETWORK TELEMETRY*\n" + THEME.divider + "\n" +
+      `🟢 *ACTIVE OPERATIONS:* ${active || 0}\n` +
+      `✅ *RESOLVED CASES:* ${resolved || 0}\n` +
+      `🔢 *LIFETIME TOTAL:* ${total || 0}\n` +
+      `🚫 *SPAM / BANNED:* ${spam || 0}\n` +
+      `🔒 *ENCRYPTION:* AES-256 ACTIVE\n` +
+      `🕒 *TIMESTAMP:* ${now}\n\n` +
+      `_Real-time data from Supabase._`,
+      { inline_keyboard: [[{ text: '🔄 REFRESH', callback_data: 'stats' }, { text: '⬅️ BACK', callback_data: 'main_menu' }]] }
     );
   }
 
@@ -398,17 +406,21 @@ export async function POST(req: NextRequest) {
       await deleteTelegramMessage(chatId, messageId);
       await sendTelegramMessage(chatId, 
         `${THEME.header}\n${THEME.divider}\n` +
-        "Unauthorized access detected. This terminal is strictly monitored.\n\n" +
-        "👉 *Authentication Required*\n" +
-        "Use `/auth <PASSWORD>` to establish a secure 60-minute session.\n\n" +
-        "👉 *Advanced Mobile Commands*\n" +
-        "`/ban CASE-ID` - Perma-ban user and IP\n" +
-        "`/resolve CASE-ID` - Mark case as resolved\n" +
-        "`/purge CASE-ID` - Wipe case chat history\n" +
-        "`/trace CASE-ID` - Fetch IP intelligence\n" +
-        "`/escalate CASE-ID` - Mark as high priority\n" +
-        "`/quarantine CASE-ID` - Isolate as spam\n\n" +
-        "⚠️ _For security, your password message will be purged immediately._",
+        "This terminal is strictly monitored.\n\n" +
+        "*🔐 Authentication:*\n" +
+        "`/auth PASSWORD` — Start a 60-min session\n\n" +
+        "*📊 Query Commands:*\n" +
+        "`/queue` — List all active cases\n" +
+        "`/status CASE-ID` — Check case details\n\n" +
+        "*⚙️ Action Commands:*\n" +
+        "`/reply CASE-ID message` — Send reply to user\n" +
+        "`/resolve CASE-ID` — Mark case resolved\n" +
+        "`/escalate CASE-ID` — Flag high priority\n" +
+        "`/quarantine CASE-ID` — Close as spam\n" +
+        "`/ban CASE-ID` — Perma-ban IP & email\n" +
+        "`/purge CASE-ID` — Wipe chat logs\n" +
+        "`/trace CASE-ID` — Show origin IP\n\n" +
+        "⚠️ _For security, password messages are auto-purged._",
         {}, supabase
       );
       return NextResponse.json({ ok: true });
@@ -461,45 +473,99 @@ export async function POST(req: NextRequest) {
       const cmd = parts[0].toLowerCase();
       const targetCase = parts[1]?.toUpperCase();
 
-      if (['/ban', '/resolve', '/purge', '/trace', '/escalate', '/quarantine'].includes(cmd) && targetCase) {
-        await deleteTelegramMessage(chatId, messageId); // Clean up the command message
-        
-        // Execute the command action directly
-        if (cmd === '/ban') {
-           const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', targetCase).single();
-           if (ticket) {
-             if (ticket.ip_address) await supabase.from('spam_blacklist').insert({ ip_address: ticket.ip_address, reason: `Banned from TG Mobile Command for case ${targetCase}` });
-             if (ticket.email) await supabase.from('spam_blacklist').insert({ ip_address: ticket.email, reason: `Banned from TG Mobile Command for case ${targetCase}` });
-             await supabase.from('support_tickets').update({ status: 'Resolved', is_spam: true }).eq('case_id', targetCase);
-             await sendTelegramMessage(chatId, `🚫 *USER BANNED:* \`${targetCase}\` target blacklisted.`, {}, supabase);
-           } else {
-             await sendTelegramMessage(chatId, `❌ *ERROR:* Case \`${targetCase}\` not found.`, {}, supabase);
-           }
+      if (['/ban', '/resolve', '/purge', '/trace', '/escalate', '/quarantine', '/reply', '/status', '/queue', '/help'].includes(cmd)) {
+        await deleteTelegramMessage(chatId, messageId);
+
+        if (cmd === '/help') {
+          await sendTelegramMessage(chatId,
+            `🛰️ *COMMAND REFERENCE*\n${THEME.divider}\n` +
+            "`/auth PASSWORD` — Start session\n" +
+            "`/queue` — Show active cases\n" +
+            "`/status CASE-ID` — Check case status\n" +
+            "`/reply CASE-ID Your message` — Send reply to user\n" +
+            "`/resolve CASE-ID` — Mark resolved\n" +
+            "`/escalate CASE-ID` — High priority\n" +
+            "`/quarantine CASE-ID` — Flag as spam + close\n" +
+            "`/purge CASE-ID` — Wipe chat history\n" +
+            "`/trace CASE-ID` — Show IP address\n" +
+            "`/ban CASE-ID` — Perma-ban IP + email\n",
+            {}, supabase
+          );
+          return NextResponse.json({ ok: true });
         }
-        else if (cmd === '/resolve') {
-           await supabase.from('support_tickets').update({ status: 'Resolved' }).eq('case_id', targetCase);
-           await sendTelegramMessage(chatId, `✅ *CASE RESOLVED:* \`${targetCase}\` archived.`, {}, supabase);
+
+        if (cmd === '/queue') {
+          const { data: tickets } = await supabase.from('support_tickets').select('case_id, status, full_name, report_type').not('status', 'in', '("Resolved","Completed","Closed")').order('created_at', { ascending: false }).limit(10);
+          if (!tickets || tickets.length === 0) {
+            await sendTelegramMessage(chatId, `📬 *QUEUE EMPTY* — No active cases.`, {}, supabase);
+          } else {
+            let msg = `📋 *ACTIVE QUEUE (${tickets.length})*\n${THEME.divider}\n`;
+            tickets.forEach((t: any) => { msg += `🔹 \`${t.case_id}\` | ${t.status} | ${t.full_name}\n`; });
+            await sendTelegramMessage(chatId, msg, {}, supabase);
+          }
+          return NextResponse.json({ ok: true });
         }
-        else if (cmd === '/purge') {
-           const { data: ticket } = await supabase.from('support_tickets').select('id').eq('case_id', targetCase).single();
-           if (ticket) {
-             await supabase.from('support_messages').delete().eq('ticket_id', ticket.id);
-             await sendTelegramMessage(chatId, `🗑️ *LOGS PURGED:* \`${targetCase}\` history wiped.`, {}, supabase);
-           }
+
+        if (cmd === '/status' && targetCase) {
+          const { data: t } = await supabase.from('support_tickets').select('status, full_name, subject, created_at').eq('case_id', targetCase).single();
+          if (t) {
+            await sendTelegramMessage(chatId, `📊 *STATUS: ${targetCase}*\n${THEME.divider}\n*Status:* ${t.status}\n*Client:* ${t.full_name}\n*Subject:* ${t.subject}\n*Filed:* ${new Date(t.created_at).toUTCString()}`, {}, supabase);
+          } else {
+            await sendTelegramMessage(chatId, `❌ Case \`${targetCase}\` not found.`, {}, supabase);
+          }
+          return NextResponse.json({ ok: true });
         }
-        else if (cmd === '/trace') {
-           const { data: ticket } = await supabase.from('support_tickets').select('ip_address').eq('case_id', targetCase).single();
-           if (ticket) {
-             await sendTelegramMessage(chatId, `🔍 *IP TRACE ${targetCase}:* \`${ticket.ip_address || 'UNKNOWN'}\``, {}, supabase);
-           }
+
+        if (cmd === '/reply' && targetCase) {
+          // /reply CASE-ID the rest is the message
+          const replyContent = parts.slice(2).join(' ').trim();
+          if (!replyContent) {
+            await sendTelegramMessage(chatId, `❌ Usage: \`/reply CASE-ID Your message here\``, {}, supabase);
+            return NextResponse.json({ ok: true });
+          }
+          const { data: ticket } = await supabase.from('support_tickets').select('id, status').eq('case_id', targetCase).single();
+          if (!ticket) {
+            await sendTelegramMessage(chatId, `❌ Case \`${targetCase}\` not found.`, {}, supabase);
+          } else if (['Resolved', 'Completed', 'Closed'].includes(ticket.status)) {
+            await sendTelegramMessage(chatId, `❌ Case \`${targetCase}\` is already closed.`, {}, supabase);
+          } else {
+            await supabase.from('support_messages').insert({ ticket_id: ticket.id, content: replyContent, sender_type: 'agent', agent_name: 'Verlyn Admin' });
+            await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: replyContent, updated_at: new Date().toISOString() }).eq('id', ticket.id);
+            await sendTelegramMessage(chatId, `✅ *REPLY SENT* to \`${targetCase}\``, {}, supabase);
+          }
+          return NextResponse.json({ ok: true });
         }
-        else if (cmd === '/escalate') {
-           await supabase.from('support_tickets').update({ status: 'Escalated' }).eq('case_id', targetCase);
-           await sendTelegramMessage(chatId, `⚠️ *ESCALATED:* \`${targetCase}\` marked as high priority.`, {}, supabase);
-        }
-        else if (cmd === '/quarantine') {
-           await supabase.from('support_tickets').update({ status: 'Quarantined', is_spam: true }).eq('case_id', targetCase);
-           await sendTelegramMessage(chatId, `🛡️ *QUARANTINED:* \`${targetCase}\` isolated from queue.`, {}, supabase);
+
+        if (targetCase) {
+          if (cmd === '/ban') {
+            const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', targetCase).single();
+            if (ticket) {
+              if (ticket.ip_address) await supabase.from('spam_blacklist').upsert({ ip_address: ticket.ip_address, reason: `Banned mobile cmd ${targetCase}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
+              if (ticket.email) await supabase.from('spam_blacklist').upsert({ ip_address: `email:${ticket.email}`, reason: `Email banned mobile cmd ${targetCase}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
+              await supabase.from('support_tickets').update({ status: 'Closed', is_spam: true }).eq('case_id', targetCase);
+              await sendTelegramMessage(chatId, `🚫 *BANNED:* \`${targetCase}\` — IP & email blacklisted.`, {}, supabase);
+            } else { await sendTelegramMessage(chatId, `❌ Case \`${targetCase}\` not found.`, {}, supabase); }
+          }
+          else if (cmd === '/resolve') {
+            await supabase.from('support_tickets').update({ status: 'Resolved' }).eq('case_id', targetCase);
+            await sendTelegramMessage(chatId, `✅ *RESOLVED:* \`${targetCase}\` archived.`, {}, supabase);
+          }
+          else if (cmd === '/purge') {
+            const { data: ticket } = await supabase.from('support_tickets').select('id').eq('case_id', targetCase).single();
+            if (ticket) { await supabase.from('support_messages').delete().eq('ticket_id', ticket.id); await sendTelegramMessage(chatId, `🗑️ *PURGED:* \`${targetCase}\` history wiped.`, {}, supabase); }
+          }
+          else if (cmd === '/trace') {
+            const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', targetCase).single();
+            if (ticket) await sendTelegramMessage(chatId, `🔍 *TRACE ${targetCase}:*\nIP: \`${ticket.ip_address || 'UNKNOWN'}\`\nEmail: \`${ticket.email || 'N/A'}\``, {}, supabase);
+          }
+          else if (cmd === '/escalate') {
+            await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: '[ESCALATED]' }).eq('case_id', targetCase);
+            await sendTelegramMessage(chatId, `⚠️ *ESCALATED:* \`${targetCase}\` marked high priority.`, {}, supabase);
+          }
+          else if (cmd === '/quarantine') {
+            await supabase.from('support_tickets').update({ status: 'Closed', is_spam: true }).eq('case_id', targetCase);
+            await sendTelegramMessage(chatId, `🛡️ *QUARANTINED:* \`${targetCase}\` closed as spam.`, {}, supabase);
+          }
         }
         return NextResponse.json({ ok: true });
       }
