@@ -1,14 +1,38 @@
 'use client';
 import { useState } from 'react';
 
-const IcoHighRisk = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-const IcoFlag = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>;
-const IcoLock = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
-const IcoGlobe = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
-const IcoGrid = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>;
-const IcoBan = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>;
-const IcoSearch = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
-const IcoBar = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
+import { motion } from 'framer-motion';
+
+const AnimatedPath = ({ d, color }: { d: string, color: string }) => (
+  <>
+    <motion.path d={d} stroke={`url(#grad-sec-${color.replace('#', '')})`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
+    <motion.path d={d} stroke={color} strokeWidth="3" opacity="0.2" filter="blur(3px)" strokeLinecap="round" strokeLinejoin="round"
+      initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
+  </>
+);
+
+const SvgBase = ({ children, color, size = 18 }: { children: React.ReactNode, color: string, size?: number }) => (
+  <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+    <defs>
+      <linearGradient id={`grad-sec-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={color} stopOpacity="1" />
+        <stop offset="100%" stopColor={color} stopOpacity="0.3" />
+      </linearGradient>
+    </defs>
+    {children}
+  </motion.svg>
+);
+
+const IcoHighRisk = () => <SvgBase color="#ef4444"><AnimatedPath color="#ef4444" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01"/></SvgBase>;
+const IcoFlag = () => <SvgBase color="#f59e0b"><AnimatedPath color="#f59e0b" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z M4 22v-7"/></SvgBase>;
+const IcoLock = () => <SvgBase color="#6b7280"><AnimatedPath color="#6b7280" d="M7 11V7a5 5 0 0 1 10 0v4 M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/></SvgBase>;
+const IcoGlobe = () => <SvgBase color="#8b5cf6"><AnimatedPath color="#8b5cf6" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M2 12h20 M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></SvgBase>;
+const IcoGrid = () => <SvgBase color="#9ca3af" size={12}><AnimatedPath color="#9ca3af" d="M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z"/></SvgBase>;
+const IcoBan = () => <SvgBase color="#ef4444" size={12}><AnimatedPath color="#ef4444" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M4.93 4.93l14.14 14.14"/></SvgBase>;
+const IcoSearch = () => <SvgBase color="#8b5cf6" size={12}><AnimatedPath color="#8b5cf6" d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.35-4.35"/></SvgBase>;
+const IcoBar = () => <SvgBase color="#3b82f6" size={12}><AnimatedPath color="#3b82f6" d="M18 20V10 M12 20V4 M6 20v-6"/></SvgBase>;
 
 interface Props { tickets: any[]; preRegs: any[]; authKey: string; }
 

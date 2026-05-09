@@ -11,6 +11,28 @@ import AdminGateway from '@/components/AdminGateway';
 import GovernancePortal from '@/components/GovernancePortal';
 import DeveloperIdentity from '@/components/DeveloperIdentity';
 
+const AnimatedPath = ({ d, color }: { d: string, color: string }) => (
+  <>
+    <motion.path d={d} stroke={`url(#grad-home-${color.replace('#', '')})`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 1.2, ease: "easeInOut" }} />
+    <motion.path d={d} stroke={color} strokeWidth="3" opacity="0.2" filter="blur(3px)" strokeLinecap="round" strokeLinejoin="round"
+      initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 1.2, ease: "easeInOut" }} />
+  </>
+);
+
+const SvgBase = ({ children, color, size = 26 }: { children: React.ReactNode, color: string, size?: number }) => (
+  <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 0.5, ease: "easeOut" }}>
+    <defs>
+      <linearGradient id={`grad-home-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor={color} stopOpacity="1" />
+        <stop offset="100%" stopColor={color} stopOpacity="0.3" />
+      </linearGradient>
+    </defs>
+    {children}
+  </motion.svg>
+);
+
 // Lazy-load heavy 3D scene
 const NetworkGraph = dynamic(() => import('@/components/NetworkGraph'), {
   ssr: false,
@@ -467,32 +489,32 @@ export default function HomePage() {
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '72px' }}>
             {[
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+                icon: <SvgBase color="#6366f1"><AnimatedPath color="#6366f1" d="M7 11V7a5 5 0 0 1 10 0v4 M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/></SvgBase>,
                 title: 'Your messages stay private',
                 body: 'When you send a message on Verlyn, only you and the person you\'re talking to can read it. Nobody else — not even us. This is called end-to-end encryption, and it\'s the same technology banks use.'
               },
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+                icon: <SvgBase color="#8b5cf6"><AnimatedPath color="#8b5cf6" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></SvgBase>,
                 title: 'Real people only',
                 body: 'Verlyn is invite-only. You can\'t just sign up with a fake email and a made-up name. Every person on the platform is verified, which means less spam, no bots, and better conversations.'
               },
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>,
+                icon: <SvgBase color="#10b981"><AnimatedPath color="#10b981" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M4.93 4.93l14.14 14.14"/></SvgBase>,
                 title: 'No algorithm, no ads',
                 body: 'Verlyn does not track what you look at, sell your data to advertisers, or show you content designed to make you anxious. You see what matters to you, in the order it happened.'
               },
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+                icon: <SvgBase color="#0891b2"><AnimatedPath color="#0891b2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M2 12h20 M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></SvgBase>,
                 title: 'Built for everyone',
                 body: 'Whether you\'re a professional, a creator, or just someone who wants a quieter corner of the internet — Verlyn works for you. No technical knowledge required.'
               },
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+                icon: <SvgBase color="#f59e0b"><AnimatedPath color="#f59e0b" d="M13 2L3 14h9l-1 8 10-12h-9z"/></SvgBase>,
                 title: 'Fast and reliable',
                 body: 'Verlyn is engineered for speed. Messages arrive instantly. The platform stays online. There are no frustrating delays or unexpected outages during important conversations.'
               },
               {
-                icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+                icon: <SvgBase color="#ef4444"><AnimatedPath color="#ef4444" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></SvgBase>,
                 title: 'We can\'t sell what we don\'t have',
                 body: 'Most platforms make money by collecting everything about you. Verlyn is different — our architecture is designed so that we never store sensitive data in a form we can read or share.'
               },
