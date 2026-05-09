@@ -144,9 +144,9 @@ async function handleCallback(cb: any, supabase: any) {
     const { data: tickets } = await supabase
       .from('support_tickets')
       .select('*')
-      .neq('status', 'Resolved')
+      .not('status', 'in', '("Resolved","Completed","Closed")')
       .order('created_at', { ascending: false })
-      .limit(6);
+      .limit(10);
 
     let msg = `📋 *OPERATIONAL QUEUE*\n${THEME.divider}\n\n`;
     if (!tickets || tickets.length === 0) {

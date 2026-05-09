@@ -81,10 +81,32 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
   const subjectWords = wordCount(subject);
   const descWords = wordCount(description);
 
+  const [lookupCaseId, setLookupCaseId] = useState('');
+  const [lookupError, setLookupError] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [showLookup, setShowLookup] = useState(false);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('vrl_support_tickets');
-      if (stored) setTickets(JSON.parse(stored));
+      if (stored) {
+        const parsed: Ticket[] = JSON.parse(stored);
+        setTickets(parsed);
+        // Refresh statuses from live API
+        parsed.forEach(async (t) => {
+          try {
+            const res = await fetch(`/api/support/status?case_id=${t.case_id}`);
+            if (res.ok) {
+              const live = await res.json();
+              setTickets(prev => {
+                const updated = prev.map(p => p.case_id === t.case_id ? { ...p, status: live.status } : p);
+                localStorage.setItem('vrl_support_tickets', JSON.stringify(updated));
+                return updated;
+              });
+            }
+          } catch {}
+        });
+      }
     } catch (e) { }
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -198,6 +220,45 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLookupCase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lookupCaseId.trim()) return;
+    setLookupError('');
+    setLookupLoading(true);
+    try {
+      const cid = lookupCaseId.trim().toUpperCase();
+      const res = await fetch(`/api/support/status?case_id=${cid}`);
+      if (!res.ok) { setLookupError('Case not found. Please check your Case ID.'); return; }
+      const data = await res.json();
+      // Also fetch messages to get subject
+      const msgRes = await fetch(`/api/support/messages?case_id=${cid}`);
+      const msgData = msgRes.ok ? await msgRes.json() : { messages: [] };
+      const found: Ticket = {
+        case_id: cid,
+        subject: 'Recovered Case',
+        status: data.status,
+        date_filed: new Date().toISOString(),
+      };
+      // Save recovered ticket
+      const existing = tickets.some(t => t.case_id === cid);
+      if (!existing) {
+        const updated = [found, ...tickets];
+        setTickets(updated);
+        localStorage.setItem('vrl_support_tickets', JSON.stringify(updated));
+      }
+      // Open chat
+      setChatTicket(found);
+      setMessages(msgData.messages || []);
+      setShowLookup(false);
+      setLookupCaseId('');
+      setView('chat');
+    } catch {
+      setLookupError('Connection error. Please try again.');
+    } finally {
+      setLookupLoading(false);
     }
   };
 
@@ -441,29 +502,69 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                 </div>
 
                 {tickets.length > 0 && (
-                  <div>
-                    <h4 style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '16px', paddingLeft: '4px' }}>Active Cases</h4>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px', paddingLeft: '4px' }}>Your Cases</h4>
                     <div style={{ display: 'grid', gap: '8px' }}>
-                      {tickets.map((t) => (
-                        <div key={t.case_id} onClick={() => { setActiveTicket(t); setView('tracking'); }}
-                          style={{
-                            padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
-                            background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)',
-                            transition: 'all 0.2s'
-                          }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: t.status === 'Completed' ? 'rgba(255,255,255,0.3)' : '#fff', boxShadow: t.status === 'Completed' ? 'none' : '0 0 10px rgba(255,255,255,0.5)' }} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '13.5px', fontWeight: 500, color: '#fff', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.subject}</p>
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                              <p style={{ fontSize: '11px', fontWeight: 600, color: t.status === 'Completed' ? 'rgba(255,255,255,0.4)' : '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t.status}</p>
-                              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>{t.case_id}</p>
+                      {tickets.map((t) => {
+                        const isActive = !['Resolved', 'Completed', 'Closed'].includes(t.status);
+                        return (
+                          <div key={t.case_id} onClick={() => { setChatTicket(t); setView('chat'); }}
+                            style={{
+                              padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
+                              background: isActive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)',
+                              borderRadius: '12px',
+                              border: isActive ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(255,255,255,0.04)',
+                              transition: 'all 0.2s'
+                            }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0, background: isActive ? '#10b981' : 'rgba(255,255,255,0.2)', boxShadow: isActive ? '0 0 8px rgba(16,185,129,0.6)' : 'none' }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: '13px', fontWeight: 500, color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.subject}</p>
+                              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <span style={{ fontSize: '10px', fontWeight: 700, color: isActive ? '#10b981' : 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em', background: isActive ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>{t.status}</span>
+                                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace' }}>{t.case_id}</span>
+                              </div>
                             </div>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
+
+                {/* ── Case Lookup ── */}
+                <div style={{ marginTop: tickets.length > 0 ? '8px' : '0' }}>
+                  {!showLookup ? (
+                    <button onClick={() => setShowLookup(true)}
+                      style={{ width: '100%', padding: '14px', background: 'transparent', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.04em' }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+                    >
+                      🔎 Find existing case by ID
+                    </button>
+                  ) : (
+                    <form onSubmit={handleLookupCase} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
+                      <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Enter Your Case ID</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          autoFocus
+                          value={lookupCaseId}
+                          onChange={e => { setLookupCaseId(e.target.value); setLookupError(''); }}
+                          placeholder="CASE-XXXXXXXX-XXXX"
+                          style={{ flex: 1, padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '12px', fontFamily: 'monospace', outline: 'none', letterSpacing: '0.05em' }}
+                        />
+                        <button type="submit" disabled={lookupLoading || !lookupCaseId.trim()}
+                          style={{ padding: '12px 16px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', opacity: lookupLoading || !lookupCaseId.trim() ? 0.5 : 1 }}>
+                          {lookupLoading ? '...' : 'Find'}
+                        </button>
+                      </div>
+                      {lookupError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '8px' }}>{lookupError}</p>}
+                      <button type="button" onClick={() => { setShowLookup(false); setLookupCaseId(''); setLookupError(''); }}
+                        style={{ marginTop: '8px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '11px', cursor: 'pointer', padding: '0' }}>Cancel</button>
+                    </form>
+                  )}
+                </div>
+
               </motion.div>
             )}
 
