@@ -295,21 +295,20 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
 
   return (
     <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-      padding: '60px 16px', zIndex: 999999,
-      background: 'rgba(5,5,5,0.85)', backdropFilter: 'blur(20px)',
-      overflowY: 'auto',
+      position: 'fixed', inset: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px', zIndex: 999999,
+      background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(12px)',
+      overflow: 'hidden',
     }} onClick={onClose}>
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 10, scale: 0.98 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         style={{
           width: '100%', maxWidth: '440px',
-          maxHeight: 'min(85vh, 820px)',
-          margin: 'auto 0',
+          height: 'min(90dvh, 820px)',
           background: '#0a0a0a',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: '20px',
@@ -344,7 +343,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
         </div>
 
         {/* Content Area */}
-        <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, position: 'relative', zIndex: 10 }} className="scrollbar-hide">
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', zIndex: 10, overflow: view === 'chat' ? 'hidden' : 'auto' }} className={view !== 'chat' ? 'scrollbar-hide' : ''}>
           <AnimatePresence mode="wait">
 
             {/* ── MENU VIEW ── */}
@@ -695,9 +694,9 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             {/* ── CHAT VIEW ── */}
             {view === 'chat' && chatTicket && (
               <motion.div key="chat" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', padding: '24px', paddingBottom: '16px' }} className="scrollbar-hide" ref={chatScrollRef}>
+                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px', paddingBottom: '16px' }} className="scrollbar-hide" ref={chatScrollRef}>
 
                   <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                     <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(255,255,255,0.03)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>Session Secured · Case {chatTicket.case_id}</span>
