@@ -7,11 +7,14 @@ import { resolveRoleFromHeader, hasPermission } from '@/lib/roles';
 import { auditAdminLogin, auditTicketUpdate, auditUnauthorized } from '@/lib/audit';
 
 // ── Admin authentication ───────────────────────────────────────────────────────
-function checkAdminAuth(req: NextRequest): { ok: boolean; role?: ReturnType<typeof resolveRoleFromHeader> } {
+// For GET (login): full 2FA check is enforced.
+// For PATCH/writes: only password is required (TOTP expires in 30s, can't be reused for session writes).
+function checkAdminAuth(req: NextRequest, require2fa = false): { ok: boolean; role?: ReturnType<typeof resolveRoleFromHeader> } {
   const authHeader = req.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) return { ok: false };
 
   const tokenString = authHeader.slice(7);
+  // token format: password or password:totp
   const [password, token2fa] = tokenString.split(':');
 
   const adminPassword = process.env.ADMIN_PASSWORD;
@@ -19,7 +22,8 @@ function checkAdminAuth(req: NextRequest): { ok: boolean; role?: ReturnType<type
 
   if (!adminPassword || password !== adminPassword) return { ok: false };
 
-  if (secret2fa) {
+  // Only enforce 2FA on initial login (GET request to fetch tickets)
+  if (require2fa && secret2fa) {
     if (!token2fa) return { ok: false };
     const valid = speakeasy.totp.verify({
       secret:   secret2fa,
@@ -46,7 +50,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429, headers });
   }
 
-  const auth = checkAdminAuth(req);
+  const auth = checkAdminAuth(req, true); // require 2FA on login
   if (!auth.ok) {
     await auditUnauthorized(ipHash, '/api/admin/tickets GET');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });

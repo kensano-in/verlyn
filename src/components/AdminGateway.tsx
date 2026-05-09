@@ -142,7 +142,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Authentication failed');
       setTickets(data.tickets || []);
-      setAuthKey(authPayload);
+      // Store only password for subsequent session requests (TOTP expires in 30s)
+      setAuthKey(password);
 
       const prRes = await fetch('/api/admin/preregistrations', { headers: { 'Authorization': `Bearer ${authPayload}` } });
       if (prRes.ok) { const prData = await prRes.json(); setPreRegs(prData.registrations || []); }
