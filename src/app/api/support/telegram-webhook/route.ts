@@ -152,7 +152,7 @@ async function handleCallback(cb: any, supabase: any) {
     
     await editUI(msg, {
       inline_keyboard: [
-        ...(tickets || []).map(t => [{ text: `⚡ MANAGE ${t.case_id.split('-')[1]}`, callback_data: `manage_${t.case_id}` }]),
+        ...(tickets || []).map((t: any) => [{ text: `⚡ MANAGE ${t.case_id.split('-')[1]}`, callback_data: `manage_${t.case_id}` }]),
         [{ text: '⬅️ BACK TO DASHBOARD', callback_data: 'main_menu' }]
       ]
     });
