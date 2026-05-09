@@ -175,7 +175,7 @@ async function handleCallback(cb: any, supabase: any) {
 
     await editUI(`${THEME.header}\n${THEME.divider}\nOperational dashboard active. Select a module to continue.`, {
       inline_keyboard: [
-        [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/admin/dashboard' } }],
+        [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/tg-admin' } }],
         [{ text: '📋 PRIORITY QUEUE', callback_data: 'list_active' }, { text: '🛡️ SECURITY AUDIT', callback_data: 'audit' }],
         [{ text: '📊 LIVE STATS', callback_data: 'stats' }],
         [{ text: '🔴 TERMINATE SESSION', callback_data: 'logout' }]
@@ -197,7 +197,7 @@ async function handleCallback(cb: any, supabase: any) {
       
       await editUI(msg, {
         inline_keyboard: [
-          [{ text: '🖥️ OPEN IN WEB CONSOLE', web_app: { url: `https://verlyn.in/admin/dashboard` } }],
+          [{ text: '🖥️ OPEN IN WEB CONSOLE', web_app: { url: `https://verlyn.in/tg-admin?case_id=${cid}` } }],
           [{ text: '💬 SEND RESPONSE', callback_data: `reply_hint_${cid}` }],
           [{ text: '✅ RESOLVE', callback_data: `resolve_${cid}` }, { text: '🚫 BAN', callback_data: `ban_${cid}` }],
           [{ text: '⬅️ RETURN TO QUEUE', callback_data: 'list_active' }]
@@ -303,7 +303,7 @@ export async function POST(req: NextRequest) {
           {
             reply_markup: {
               inline_keyboard: [
-                [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/admin/dashboard' } }],
+                [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/tg-admin' } }],
                 [{ text: '📋 PRIORITY QUEUE', callback_data: 'list_active' }, { text: '🛡️ SECURITY AUDIT', callback_data: 'audit' }],
                 [{ text: '📊 LIVE STATS', callback_data: 'stats' }],
                 [{ text: '🔴 TERMINATE SESSION', callback_data: 'logout' }]

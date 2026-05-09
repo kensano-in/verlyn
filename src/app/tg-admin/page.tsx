@@ -2,49 +2,56 @@
 
 import React, { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // Raw SVGs
 const Icons = {
   Terminal: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
   Zap: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-  Shield: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   Send: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
-  Activity: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
   Archive: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
+  ArrowLeft: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
 };
 
 function TgAdminConsole() {
   const searchParams = useSearchParams();
-  const caseId = searchParams.get('case_id');
+  const initialCaseId = searchParams.get('case_id');
 
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(initialCaseId);
   const [dossier, setDossier] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  const [queue, setQueue] = useState<any[]>([]);
+  
   const [inputVal, setInputVal] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
-  // Authenticate & Fetch Data
-  const fetchCaseData = async () => {
-    if (!caseId) {
-      setError('No case ID provided.');
-      setLoading(false);
-      return;
-    }
-
+  // FETCH QUEUE
+  const fetchQueue = async () => {
     try {
-      // Fetch Ticket Details
-      const resTicket = await fetch(`/api/support/ticket?case_id=${caseId}`, {
+      const res = await fetch('/api/admin/dashboard/tickets', {
+        headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setQueue(data.tickets || []);
+      }
+    } catch (e) { console.error('Queue error', e); }
+  };
+
+  // FETCH SPECIFIC DOSSIER
+  const fetchCaseData = async () => {
+    if (!activeCaseId) return;
+    try {
+      const resTicket = await fetch(`/api/support/ticket?case_id=${activeCaseId}`, {
         headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
       });
       if (!resTicket.ok) throw new Error('Failed to retrieve dossier data.');
       const dataTicket = await resTicket.json();
       setDossier(dataTicket.ticket);
 
-      // Fetch Messages
-      const resMsgs = await fetch(`/api/support/messages?case_id=${caseId}`, {
+      const resMsgs = await fetch(`/api/support/messages?case_id=${activeCaseId}`, {
         headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
       });
       if (resMsgs.ok) {
@@ -53,8 +60,6 @@ function TgAdminConsole() {
       }
     } catch (err: any) {
       setError(err.message || 'Transmission failed.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -65,16 +70,29 @@ function TgAdminConsole() {
     script.async = true;
     document.body.appendChild(script);
 
-    fetchCaseData();
-    const interval = setInterval(fetchCaseData, 3000); // Poll for real-time messages
+    const init = async () => {
+      setLoading(true);
+      if (activeCaseId) {
+        await fetchCaseData();
+      } else {
+        await fetchQueue();
+      }
+      setLoading(false);
+    };
+    init();
+
+    const interval = setInterval(() => {
+      if (activeCaseId) fetchCaseData();
+      else fetchQueue();
+    }, 3000); // Poll for real-time updates
     return () => clearInterval(interval);
-  }, [caseId]);
+  }, [activeCaseId]);
 
   useEffect(() => {
-    if (chatScrollRef.current) {
+    if (chatScrollRef.current && activeCaseId) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [messages, dossier]);
+  }, [messages, dossier, activeCaseId]);
 
   const executeProtocol = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +129,6 @@ function TgAdminConsole() {
       if (!res.ok) throw new Error('Failed to send transmission.');
       await fetchCaseData();
     } catch (err) {
-      // Revert optimistic on fail
       setMessages(prev => prev.filter(m => m.id !== tempMsg.id));
       alert('Transmission failed. Retry.');
     } finally {
@@ -130,7 +147,7 @@ function TgAdminConsole() {
         },
         body: JSON.stringify({ case_id: dossier.case_id, status: 'Resolved' })
       });
-      fetchCaseData();
+      setActiveCaseId(null); // Go back to queue
     } catch (e) { alert('Failed to update status.'); }
   };
 
@@ -145,9 +162,57 @@ function TgAdminConsole() {
     );
   }
 
+  // QUEUE VIEW
+  if (!activeCaseId) {
+    return (
+      <div className="fixed inset-0 bg-[#050505] text-white font-sans flex flex-col overflow-hidden">
+        <header className="h-14 border-b border-white/[0.05] bg-[#0a0a0a] flex items-center px-4 shrink-0 z-20">
+          <div className="flex items-center gap-3">
+             <div className="w-6 h-6 bg-white text-black rounded-sm flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            </div>
+            <span className="text-[12px] font-semibold tracking-widest uppercase">VERLYN WEB CONSOLE</span>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+          {queue.length === 0 ? (
+            <div className="text-center mt-10 text-[10px] uppercase tracking-widest text-white/40 font-mono">
+              Queue is empty.
+            </div>
+          ) : (
+            queue.map(t => (
+              <button 
+                key={t.id} 
+                onClick={() => { setActiveCaseId(t.case_id); setDossier(null); setMessages([]); setError(''); }}
+                className="w-full text-left p-4 bg-[#0a0a0a] border border-white/[0.05] rounded-xl flex flex-col gap-2 hover:bg-[#111] transition-all"
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="font-mono text-[9px] text-white/40 uppercase tracking-widest">{t.case_id}</span>
+                  <span className={`text-[8px] font-mono uppercase tracking-widest px-1.5 py-0.5 rounded-sm ${
+                    t.status === 'In progress' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'
+                  }`}>
+                    {t.status}
+                  </span>
+                </div>
+                <div className="text-[13px] font-medium text-white truncate">{t.subject}</div>
+                <div className="flex justify-between items-center w-full text-[10px] text-white/30">
+                  <span>{t.full_name}</span>
+                  <span>{new Date(t.created_at).toLocaleDateString()}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ERROR DOSSIER VIEW
   if (error || !dossier) {
     return (
-      <div className="fixed inset-0 bg-[#050505] flex items-center justify-center p-6 text-white text-center font-mono">
+      <div className="fixed inset-0 bg-[#050505] flex items-center justify-center p-6 text-white text-center font-mono relative">
+        <button onClick={() => setActiveCaseId(null)} className="absolute top-4 left-4 p-2 text-white/40 hover:text-white bg-white/5 rounded-lg"><Icons.ArrowLeft /></button>
         <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl">
           <h2 className="text-[12px] uppercase tracking-widest text-red-500 mb-2 font-bold">Signal Lost</h2>
           <p className="text-[10px] text-white/40">{error || 'Dossier not found or encrypted.'}</p>
@@ -156,24 +221,30 @@ function TgAdminConsole() {
     );
   }
 
+  // DOSSIER VIEW
   return (
     <div className="fixed inset-0 bg-[#050505] text-white font-sans flex flex-col overflow-hidden selection:bg-indigo-500/30">
       
       {/* ── HEADER ── */}
-      <header className="h-14 border-b border-white/[0.05] bg-[#0a0a0a] flex items-center justify-between px-4 shrink-0 z-20">
-        <div className="flex flex-col justify-center">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold tracking-wide uppercase">{dossier.subject}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-[9px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest">
-              {dossier.report_type}
-            </span>
-            <span className="text-[8px] text-white/20 uppercase font-mono tracking-widest">{dossier.case_id}</span>
+      <header className="h-14 border-b border-white/[0.05] bg-[#0a0a0a] flex items-center justify-between px-2 shrink-0 z-20">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setActiveCaseId(null)} className="w-10 h-10 flex items-center justify-center text-white/40 hover:text-white transition-colors">
+            <Icons.ArrowLeft />
+          </button>
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold tracking-wide uppercase truncate max-w-[150px]">{dossier.subject}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-mono text-[8px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest">
+                {dossier.report_type}
+              </span>
+              <span className="text-[8px] text-white/20 uppercase font-mono tracking-widest truncate">{dossier.case_id}</span>
+            </div>
           </div>
         </div>
         
-        <button onClick={markResolved} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:bg-white/10 hover:text-white transition-all">
+        <button onClick={markResolved} className="w-8 h-8 mr-2 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:bg-emerald-400/20 hover:text-emerald-400 transition-all">
           <Icons.Archive />
         </button>
       </header>
