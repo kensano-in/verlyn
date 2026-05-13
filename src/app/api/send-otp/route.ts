@@ -75,9 +75,17 @@ export async function POST(req: NextRequest) {
     }
 
     /* ── 1. User-Agent fingerprint gate ─────────────────────────────── */
-    const ua = req.headers.get('user-agent') ?? '';
     if (!ua || isSuspiciousUA(ua)) {
       return NextResponse.json({ error: 'Service temporarily unavailable.' }, { status: 503 });
+    }
+
+    /* ── 1.5 Shadow Protocol (Perimeter) ────────────────────────────── */
+    const { data: shadowConfigs } = await supabaseAdmin.from('global_config').select('key, value').ilike('key', 'shadow_%');
+    const isShadowedIp = shadowConfigs?.some(c => c.key === `shadow_${ip}` && c.value === 'true');
+    
+    if (isShadowedIp) {
+      // Return a 200 Success but do nothing — mirroring the "Shadow Ban" effect
+      return NextResponse.json({ success: true }, { status: 200 });
     }
 
     /* ── 2. Payload size guard ───────────────────────────────────────── */
@@ -94,13 +102,36 @@ export async function POST(req: NextRequest) {
     }
     const email = result.sanitized!;
 
-    /* ── 3. Proof-of-Work gate ───────────────────────────────────────── */
+    /* ── 3. Dynamic Config & Proof-of-Work gate ─────────────────────── */
+    const { data: configData } = await supabaseAdmin.from('global_config').select('key, value');
+    const isMaintenance = configData?.find(d => d.key === 'maintenance_mode')?.value === 'true';
+    const isRegLocked   = configData?.find(d => d.key === 'registration_locked')?.value === 'true';
+    const diff          = parseInt(configData?.find(d => d.key === 'pow_difficulty')?.value || '4', 10);
+    const otpExpMins    = parseInt(configData?.find(d => d.key === 'otp_expiry_mins')?.value || '10', 10);
+
+    if (isMaintenance || isRegLocked) {
+      return NextResponse.json({ 
+        error: isMaintenance ? 'System undergoing maintenance.' : 'Registrations are temporarily paused.' 
+      }, { status: 503 });
+    }
+
     if (!body.pow_nonce || !body.pow_challenge) {
       const challenge = generateChallenge();
-      return NextResponse.json({ challenge, difficulty: 4 }, { status: 401 });
+      return NextResponse.json({ challenge, difficulty: diff }, { status: 401 });
     }
     if (!verifyWork(body.pow_challenge, body.pow_nonce)) {
       return NextResponse.json({ error: 'Security proof failed.' }, { status: 403 });
+    }
+
+    /* ── 3.5 Blacklist Enforcement ──────────────────────────────────── */
+    const { data: blacklistEntry } = await supabaseAdmin
+      .from('spam_blacklist')
+      .select('*')
+      .or(`ip_address.eq.${ip},ip_address.eq.email:${email}`)
+      .maybeSingle();
+
+    if (blacklistEntry) {
+      return NextResponse.json({ error: 'Access denied. Your identifier is blacklisted.' }, { status: 403 });
     }
 
     /* ── 4. IP-level OTP rate limit ─────────────────────────────────── */
@@ -130,70 +161,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /* ── 6. Supabase checks ──────────────────────────────────────────── */
+    /* ── 6 & 7. Supabase checks — Parallelize existing check and IP cap ─── */
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     );
 
-    // Check if email already registered
-    const { data: existing } = await supabaseAdmin
-      .from('preregistrations')
-      .select('email')
-      .eq('email', email)
-      .maybeSingle();
-    if (existing) {
+    const ipHash = hashIp(ip);
+    const cached = ipRegCache.get(ip);
+    const isCacheValid = cached && now - cached.cachedAt < IP_REG_CACHE_TTL;
+
+    const [existingRes, ipCountRes] = await Promise.all([
+      supabaseAdmin.from('preregistrations').select('email').eq('email', email).maybeSingle(),
+      isCacheValid ? Promise.resolve({ count: cached.count, error: null }) : 
+        supabaseAdmin.from('preregistrations').select('*', { count: 'exact', head: true }).eq('ip_hash', ipHash)
+    ]);
+
+    if (existingRes.data) {
       return NextResponse.json({ error: 'This email is already registered.' }, { status: 409 });
     }
 
-    /* ── 7. IP Registration Cap — max 3 per IP ───────────────────────── */
-    const ipHash = hashIp(ip);
-    const cached = ipRegCache.get(ip);
-    let ipRegCount = 0;
-
-    if (cached && now - cached.cachedAt < IP_REG_CACHE_TTL) {
-      ipRegCount = cached.count;
-    } else {
-      // Count existing registrations for this IP hash
-      const { count } = await supabaseAdmin
-        .from('preregistrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('ip_hash', ipHash);
-      ipRegCount = count ?? 0;
+    const ipRegCount = isCacheValid ? cached.count : (ipCountRes.count ?? 0);
+    if (!isCacheValid) {
       ipRegCache.set(ip, { count: ipRegCount, cachedAt: now });
     }
 
     if (ipRegCount >= IP_REG_MAX) {
-      // Return a special code so the frontend shows the premium modal
-      return NextResponse.json(
-        {
-          error: 'IP_REGISTRATION_LIMIT',
-          limit: IP_REG_MAX,
-        },
-        { status: 429 }
-      );
+      return NextResponse.json({ error: 'IP_REGISTRATION_LIMIT', limit: IP_REG_MAX }, { status: 429 });
     }
 
     /* ── 8. Bot timing check ─────────────────────────────────────────── */
     const interactionTime = Number(body.interaction_time) || 0;
     const shadowBan = interactionTime > 0 && interactionTime < 1500;
 
-    /* ── 9. Generate and store OTP ───────────────────────────────────── */
+    /* ── 9. Atomic OTP Operation — use upsert to save one DB round-trip ── */
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(now + 10 * 60_000).toISOString();
+    const expiresAt = new Date(now + otpExpMins * 60_000).toISOString();
 
-    await supabaseAdmin.from('otp_codes').delete().eq('email', email);
+    // Parallelize OTP storage and metadata preparation
+    const [dbResult] = await Promise.all([
+      supabaseAdmin
+        .from('otp_codes')
+        .upsert({ email, code, expires_at: expiresAt }, { onConflict: 'email' }),
+      // Pre-fetching metadata from headers is synchronous, no need to await
+    ]);
 
-    const { error: insertError } = await supabaseAdmin
-      .from('otp_codes')
-      .insert({ email, code, expires_at: expiresAt });
-
-    if (insertError) {
-      console.error('[Verlyn OTP] DB insert failed:', insertError.message);
-      return NextResponse.json(
-        { error: 'Verification service temporarily unavailable. Please try again.' },
-        { status: 503 }
-      );
+    if (dbResult.error) {
+      console.error('[Verlyn OTP] Atomic upsert failed:', dbResult.error.message);
+      return NextResponse.json({ error: 'Verification service temporarily unavailable.' }, { status: 503 });
     }
 
     EMAIL_OTP_MAP.set(email, now);
@@ -208,15 +224,18 @@ export async function POST(req: NextRequest) {
     else if (/mac os x/i.test(rawUA))    device = 'macOS Desktop';
     else if (/iphone|ipad/i.test(rawUA)) device = 'iOS Device';
     else if (/android/i.test(rawUA))     device = 'Android Device';
-    const requestTime = new Intl.DateTimeFormat('en-US', {
+    const requestTime = new Intl.DateTimeFormat('en-IN', {
       year: 'numeric', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
-      timeZoneName: 'short', timeZone: 'Asia/Kolkata',
+      timeZone: 'Asia/Kolkata',
     }).format(new Date());
 
     /* ── 11. Send verification email ─────────────────────────────────── */
-    if (!shadowBan) {
+    const isShadowedEmail = shadowConfigs?.some(c => c.key === `shadow_${email}` && c.value === 'true');
+
+    if (!shadowBan && !isShadowedEmail) {
       const resend = new Resend(process.env.RESEND_API_KEY);
+      // Constructing HTML string is expensive but synchronous, we've already parallelized the DB work
       const emailResult = await resend.emails.send({
         from: 'Verlyn Security <admin@verlyn.in>',
         replyTo: 'support@verlyn.in',
@@ -268,20 +287,18 @@ export async function POST(req: NextRequest) {
       });
 
       if (emailResult.error) {
-        console.error('[Verlyn OTP] Email send failed:', emailResult.error);
+        console.error('[Verlyn OTP] Email dispatch failed:', emailResult.error);
         await supabaseAdmin.from('otp_codes').delete().eq('email', email);
         EMAIL_OTP_MAP.delete(email);
-        return NextResponse.json(
-          { error: 'Failed to dispatch verification email. Please try again.' },
-          { status: 502 }
-        );
+        return NextResponse.json({ error: 'Email dispatch failed. Service busy.' }, { status: 502 });
       }
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
 
   } catch (err: any) {
-    console.error('[Verlyn OTP] Unhandled error:', err?.message);
+    console.error('[Verlyn OTP] Fatal transmission error:', err?.message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
 }

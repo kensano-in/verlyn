@@ -14,7 +14,17 @@ const SESSION_KEY      = 'vrl_otp_session';
 type Stage  = 'form' | 'pow' | 'otp' | 'success';
 type Gender = 'Male' | 'Female' | 'Prefer not to say' | null;
 
-const BAD_WORDS = ['admin','root','verlyn','fuck','shit','bitch','ass','cunt','dick','pussy','whore','slut'];
+const BAD_WORDS = [
+  'admin','root','verlyn','fuck','shit','bitch','asshole','cunt','dick','pussy','whore','slut',
+  'bastard','motherfucker','cock','faggot','nigger','nigga',
+  'bhenchod','madarchod','chutiya','bhosdike','gandu','raand','randi','kamina','suar','bhadwa',
+  'laude','loda','lode','muthiya','jhantu','chut','choot','gand','gaand','lund','bhosdi','behenchod'
+];
+
+const checkAbusiveLanguage = (text: string) => {
+  const words = text.toLowerCase().split(/[\s.]+/);
+  return BAD_WORDS.some(bad => words.some(w => w === bad));
+};
 
 export default function PreRegisterForm() {
   const [stage,         setStage]         = useState<Stage>('form');
@@ -35,6 +45,7 @@ export default function PreRegisterForm() {
   const [agreementTs,   setAgreementTs]   = useState<string | null>(null);
   const [showAgreement,  setShowAgreement]  = useState(false);
   const [showIpModal,    setShowIpModal]    = useState(false);
+  const [showAbuseModal, setShowAbuseModal] = useState(false);
 
   const honeypotId       = useId();
   const honeypotRef      = useRef<HTMLInputElement>(null);
@@ -82,6 +93,43 @@ export default function PreRegisterForm() {
     if (stage === 'otp') setTimeout(() => otpInputRef.current?.focus(), 300);
   }, [stage]);
 
+  /* ── Interaction tracker & Helpers ───────────────────────────────── */
+  useEffect(() => {
+    if ((fullName || email) && !interactionStart.current)
+      interactionStart.current = Date.now();
+  }, [fullName, email]);
+
+  const checkNameWithAPI = async (nameToCheck: string) => {
+    if (!nameToCheck.trim() || nameToCheck.length < 2) return false;
+    try {
+      const res = await fetch('/api/moderate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: nameToCheck }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.isAbusive) {
+          setShowAbuseModal(true);
+          setFullName('');
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error('Moderation API failed', e);
+    }
+    return false;
+  };
+
+  const handleNameChange = (val: string) => {
+    setFullName(val);
+    setFormError('');
+    if (checkAbusiveLanguage(val)) {
+      setShowAbuseModal(true);
+      setFullName(''); // Clear the offensive text instantly
+    }
+  };
+
   const blockUser = () => {
     setIsBlocked(true);
     localStorage.setItem('vrl_ban_time', Date.now().toString());
@@ -91,31 +139,51 @@ export default function PreRegisterForm() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    if (isBlocked) { setFormError('Access blocked for 1 hour.'); return; }
+    if (isBlocked) { setFormError('Access is temporarily restricted. Please try again later.'); return; }
 
     const name = fullName.trim();
-    if (!name || name.length < 2) { setFormError('Please enter your full name.'); return; }
-    if (!/^[a-zA-Z]+(?:[\s.][a-zA-Z]+)*\.?$/.test(name)) {
-      setFormError('Name may only contain letters, a space, or a dot.'); return;
-    }
-    if (BAD_WORDS.some(w => name.toLowerCase().includes(w))) {
-      setFormError('Please enter an appropriate name.'); return;
-    }
-    if (!gender) { setFormError('Please select your identity.'); return; }
+    const mail = email.trim();
 
-    const domain = email.trim().split('@')[1]?.toLowerCase();
+    if (!name || !gender || !mail) {
+      setFormError('Kindly fill in all the details (Name, Identity, and Email) to proceed with your registration. We appreciate your cooperation.');
+      return;
+    }
+
+    if (name.length < 2) { 
+      setFormError('Please provide your complete name so we can properly identify you.'); 
+      return; 
+    }
+    if (!/^[a-zA-Z]+(?:[\s.][a-zA-Z]+)*\.?$/.test(name)) {
+      setFormError('For clarity, please use only letters and spaces in your name.'); 
+      return;
+    }
+    if (checkAbusiveLanguage(name)) {
+      setFormError('Kindly use an appropriate and professional name.'); 
+      setShowAbuseModal(true);
+      return;
+    }
+
+    const domain = mail.split('@')[1]?.toLowerCase();
     if (!ALLOWED_DOMAINS.has(domain)) {
       const next = invalidDomains + 1;
       setInvalidDomains(next);
       if (next >= MAX_STRIKES) blockUser();
       setFormError(next >= MAX_STRIKES
-        ? 'Too many invalid attempts. Blocked for 1 hour.'
-        : 'Email domain not recognized.');
+        ? 'Too many invalid attempts. For your security, access is temporarily paused.'
+        : 'We do not recognize this email provider. Please use a standard email like Gmail or Outlook.');
       return;
     }
 
     setFormLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
+
+    // AI Check for smart bypasses
+    const isAbusive = await checkNameWithAPI(name);
+    if (isAbusive) {
+      setFormLoading(false);
+      return;
+    }
+    
+    // Artificial delay removed to satisfy high-velocity registration requirements
     setFormLoading(false);
     setShowAgreement(true);
   };
@@ -153,7 +221,8 @@ export default function PreRegisterForm() {
         const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
         if (hex.startsWith(target)) break;
         nonce++;
-        if (nonce % 2000 === 0) await new Promise(r => setTimeout(r, 0));
+        // Increased batch size for high-velocity computation
+        if (nonce % 8000 === 0) await new Promise(r => setTimeout(r, 0));
       }
 
       // 3. Send OTP
@@ -338,6 +407,46 @@ export default function PreRegisterForm() {
           }}
         >
           Understood
+        </button>
+      </motion.div>
+    </div>
+  );
+
+  if (showAbuseModal) return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px 0', minHeight: '360px',
+    }}>
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        style={{
+          width: '100%', background: 'rgba(8,8,8,0.6)', border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '16px', padding: '40px 32px', textAlign: 'center',
+        }}
+      >
+        <div style={{
+          width: '52px', height: '52px', borderRadius: '50%',
+          border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 24px', background: 'rgba(239,68,68,0.06)',
+        }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M11 2L4 5.5V10.5C4 14.5 7 18.1 11 19C15 18.1 18 14.5 18 10.5V5.5L11 2Z" stroke="rgba(239,68,68,0.6)" strokeWidth="1.3" strokeLinejoin="round"/>
+            <path d="M7 7l8 8M15 7l-8 8" stroke="rgba(239,68,68,0.6)" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>Professional Conduct Required</h3>
+        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, marginBottom: '24px' }}>
+          Verlyn maintains a strict policy against profanity and abusive language to ensure a respectful environment for all users. Please use your real, appropriate name to proceed.
+        </p>
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', marginBottom: '24px' }} />
+        <button onClick={() => setShowAbuseModal(false)}
+          style={{
+            width: '100%', padding: '13px', background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', color: 'rgba(255,255,255,0.6)',
+            fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
+          }}>
+          I Understand
         </button>
       </motion.div>
     </div>
@@ -643,7 +752,8 @@ export default function PreRegisterForm() {
               <div style={{ marginBottom: '4px' }}>
                 <label style={lbl}>Full Name</label>
                 <input type="text" value={fullName}
-                  onChange={e => { setFullName(e.target.value); setFormError(''); }}
+                  onChange={e => handleNameChange(e.target.value)}
+                  onBlur={() => checkNameWithAPI(fullName)}
                   placeholder="Your name" required style={inp} />
               </div>
 

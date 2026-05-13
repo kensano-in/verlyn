@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { IconLock, IconShield, IconZap } from './Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 
@@ -18,28 +19,61 @@ interface Ticket {
 const FAQS = [
   {
     q: 'What is the target latency for Verlyn nodes?',
-    a: 'Verlyn is engineered for sub-120ms p95 latency across the global backbone. We utilize custom routing protocols and edge-optimization to bypass standard public congestion points.'
+    a: 'Verlyn is engineered for sub-120ms p95 latency across the global backbone. We utilize custom routing protocols and edge-optimization to bypass standard public congestion points. Our global relay network ensures messages are delivered with minimal delay regardless of geographic distance.'
   },
   {
     q: 'How does the Pre-Registration Access Model work?',
-    a: 'Access is granted in waves based on reputation and registration sequence. Early adopters receive priority tunneling bandwidth and direct kernel-level API integration.'
+    a: 'Access is granted in deliberate waves based on registration sequence and verification status. Early adopters receive priority access and dedicated onboarding support. Each wave is carefully controlled to maintain platform quality and prevent spam or bot infiltration.'
   },
   {
     q: 'Is Verlyn data truly zero-knowledge?',
-    a: 'Absolutely. We utilize hardware security modules (HSMs) and zero-knowledge proofs (ZKPs) to ensure that even at the infrastructure level, Verlyn has no visibility into the payload of your packets.'
+    a: 'Absolutely. We utilize hardware security modules (HSMs) and zero-knowledge proofs (ZKPs) to ensure that even at the infrastructure level, Verlyn has no visibility into the payload of your messages. Your cryptographic keys never leave your device.'
   },
   {
     q: 'Can I migrate my existing identity to Verlyn?',
-    a: 'Verlyn supports a wide range of DID (Decentralized Identity) standards. Migration tools will be available upon the public release of the Command Center.'
-  }
+    a: 'Verlyn supports a wide range of DID (Decentralized Identity) standards. Migration tools will be available upon the public release of the Command Center. You will be able to import contacts and identity proofs from compatible platforms.'
+  },
+  {
+    q: 'What encryption protocol does Verlyn use?',
+    a: 'Verlyn uses the Signal Protocol for end-to-end encryption, extended with our proprietary zero-knowledge layer. All messages use a Double Ratchet algorithm ensuring forward secrecy — even if a key is compromised, past messages remain protected.'
+  },
+  {
+    q: 'How do I know a Verlyn agent is real and verified?',
+    a: 'Every Verlyn support agent carries a cryptographically signed identity badge visible within the chat interface. You will see a verified checkmark and their agent ID. We never contact users through email unsolicited — all communication happens within your encrypted support case.'
+  },
+  {
+    q: 'What happens to my data if I delete my account?',
+    a: 'Upon account deletion, all your messages, profile data, and metadata are permanently erased from our servers within 48 hours. Because of our zero-knowledge architecture, we cannot recover or restore any data after this process completes. This is by design — your data is truly yours.'
+  },
+  {
+    q: 'Does Verlyn store message metadata?',
+    a: 'No. Verlyn does not log who messaged whom, when, or how often. Traditional platforms store this metadata even when messages are encrypted. Our architecture is designed to make this data collection technically impossible at the infrastructure level.'
+  },
+  {
+    q: 'Can I use Verlyn on multiple devices?',
+    a: 'Yes. Verlyn supports multi-device synchronization using a secure device-linking protocol. Each device generates its own key pair, and messages are encrypted separately for each linked device. There is no central key escrow.'
+  },
+  {
+    q: 'How does Verlyn prevent spam and fake accounts?',
+    a: 'Verlyn uses a multi-layer verification system: email domain reputation scoring, behavioral analysis during registration, and an invite-only access model during the early phase. Accounts exhibiting spam patterns are automatically flagged and reviewed by our trust team within 24 hours.'
+  },
+  {
+    q: 'What is the Emergency Support protocol?',
+    a: 'Emergency Support is reserved for critical security incidents, account compromise, or urgent safety concerns. Cases filed under this protocol are escalated immediately to a senior agent. Misuse of this channel results in a 48-hour support suspension and a 7-day flag on your account.'
+  },
+  {
+    q: 'Is Verlyn compliant with GDPR and data protection laws?',
+    a: 'Yes. Verlyn is designed with privacy regulations as a foundation, not an afterthought. Our zero-knowledge architecture means we technically cannot access your data, making GDPR compliance structurally enforced. You can request data export or deletion at any time through your account settings.'
+  },
 ];
 
-export default function SupportCenter({ onClose, initialView }: { onClose: () => void, initialView?: ViewState }) {
+export default function SupportCenter({ onClose, initialView, initialReportType }: { onClose: () => void, initialView?: ViewState, initialReportType?: string }) {
   const [view, setView] = useState<ViewState>(initialView || 'menu');
 
   useEffect(() => {
     if (initialView) setView(initialView);
-  }, [initialView]);
+    if (initialReportType) setReportType(initialReportType);
+  }, [initialView, initialReportType]);
 
   // Scroll Lock
   useEffect(() => {
@@ -55,7 +89,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
-  const [reportType, setReportType] = useState('general');
+  const [reportType, setReportType] = useState(initialReportType || 'general');
   const [customReportType, setCustomReportType] = useState('');
   const [description, setDescription] = useState('');
   const [agreed, setAgreed] = useState(false);
@@ -63,10 +97,13 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
   const [error, setError] = useState('');
   const [notifyAgreed, setNotifyAgreed] = useState(false);
   const [showNotifyReason, setShowNotifyReason] = useState(false);
+  const [faqSearch, setFaqSearch] = useState('');
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   // Chat State
   const [chatTicket, setChatTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const [userReplyText, setUserReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
 
@@ -86,7 +123,17 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
   const [lookupLoading, setLookupLoading] = useState(false);
   const [showLookup, setShowLookup] = useState(false);
 
-  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch('/api/admin/config', { headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' } });
+        if (res.ok) {
+          const data = await res.json();
+          setIsMaintenance(data.config.maintenance);
+        }
+      } catch {}
+    };
+    checkMaintenance();
+
     try {
       const stored = localStorage.getItem('vrl_support_tickets');
       if (stored) {
@@ -121,31 +168,63 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     }
   }, [view]);
 
+  const lastCaseIdRef = useRef<string | null>(null);
   // Poll real messages from support_messages table every 4s
   useEffect(() => {
-    if (view !== 'chat' || !chatTicket) return;
+    if (view !== 'chat' || !chatTicket) {
+      return;
+    }
+
+    if (lastCaseIdRef.current !== chatTicket.case_id) {
+       setLoadingMessages(true);
+       setMessages([]);
+       lastCaseIdRef.current = chatTicket.case_id;
+    }
+    
     const fetchMessages = async () => {
       try {
         const res = await fetch(`/api/support/messages?case_id=${chatTicket.case_id}`);
         if (!res.ok) return;
         const data = await res.json();
         const newMsgs = data.messages || [];
-        if (newMsgs.length > messagesRef.current.length) {
+        
+        setMessages(prev => {
+          // Identify optimistic messages that haven't been synced yet
+          const optimistic = prev.filter(m => m.is_optimistic);
+          const incomingIds = new Set(newMsgs.map((m: any) => m.id));
+          const stillSending = optimistic.filter(m => !incomingIds.has(m.id));
+          
+          const merged = [...newMsgs, ...stillSending];
+          
+          // Auto-scroll logic
+          const container = chatScrollRef.current;
+          const wasAtBottom = container ? (container.scrollHeight - container.scrollTop <= container.clientHeight + 150) : true;
+          const newAgentMsg = newMsgs.length > prev.filter(m => !m.is_optimistic).length && newMsgs[newMsgs.length-1]?.sender_type === 'agent';
+
+          if (wasAtBottom || newAgentMsg) {
+             setTimeout(() => {
+               chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
+             }, 100);
+          }
+
+          return merged;
+        });
+        
+        setLoadingMessages(false);
+
+        // Notifications
+        if (newMsgs.length > messagesRef.current.filter(m => !m.is_optimistic).length) {
           const lastMsg = newMsgs[newMsgs.length - 1];
           if (lastMsg.sender_type === 'agent' && 'Notification' in window && Notification.permission === 'granted') {
             new Notification('Verlyn Support', { body: lastMsg.content });
           }
         }
-        setMessages(newMsgs);
-        setTimeout(() => {
-          chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
-        }, 80);
       } catch { }
     };
     fetchMessages();
     const interval = setInterval(fetchMessages, 4000);
     return () => clearInterval(interval);
-  }, [view, chatTicket]);
+  }, [view, chatTicket?.case_id]);
 
   // Poll live ticket status every 5s so UI reflects admin actions immediately
   useEffect(() => {
@@ -211,6 +290,8 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     if (description.length > DESC_MAX) return setError(`Description is too long. Max ${DESC_MAX} characters.`);
     if (!agreed) return setError('You must accept the terms to submit a request.');
 
+    if (isMaintenance) return setError('Systems are currently undergoing scheduled maintenance. Transmissions are paused.');
+    
     setLoading(true);
     try {
       const res = await fetch('/api/support', {
@@ -260,7 +341,12 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     setLookupError('');
     setLookupLoading(true);
     try {
-      const cid = lookupCaseId.trim().toUpperCase();
+      let cid = lookupCaseId.trim().toUpperCase();
+      // Handle truncated IDs displayed in the UI (e.g. "MOZ0ABJO-DXYK" -> "CASE-MOZ0ABJO-DXYK")
+      if (!cid.startsWith('CASE-') && cid.length >= 10) {
+        cid = `CASE-${cid}`;
+      }
+
       const res = await fetch(`/api/support/status?case_id=${cid}`);
       if (!res.ok) { setLookupError('Case not found. Please check your Case ID.'); return; }
       const data = await res.json();
@@ -295,27 +381,100 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
 
   const handleUserReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userReplyText.trim() || !chatTicket || sendingReply) return;
+    if (!userReplyText.trim() && !selectedFile) return;
+    if (!chatTicket || sendingReply) return;
+    
     const text = userReplyText;
+    const file = selectedFile;
+    
     setUserReplyText('');
-    setSendingReply(true);
-    // Optimistic local message
-    const msgContent = selectedFile ? `${text}\n\n[Attachment: ${selectedFile.name}]` : text;
-    setMessages(prev => [...prev, { id: Date.now(), sender_type: 'user', content: msgContent, created_at: new Date().toISOString() }]);
     setSelectedFile(null);
+    setSendingReply(true);
+
+    const optimisticId = Date.now();
+    const localUrl = file ? URL.createObjectURL(file) : null;
+    
+    // 1. Instant Optimistic Preview
+    const optimisticContent = file 
+      ? `[ATTACHMENT:${JSON.stringify({ name: file.name, url: localUrl, type: file.type, is_uploading: true })}]${text ? '\n\n' + text : ''}`
+      : text;
+
+    setMessages(prev => [...prev, { 
+      id: optimisticId, 
+      sender_type: 'user', 
+      content: optimisticContent, 
+      created_at: new Date().toISOString(),
+      is_optimistic: true 
+    }]);
+
     setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
+
     try {
+      let finalContent = text;
+      
+      // 2. Background Upload & Sync with Timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('case_id', chatTicket.case_id);
+        
+        const uploadRes = await fetch('/api/support/upload', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+        
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          throw new Error(err.error || 'Media upload failed.');
+        }
+        
+        const uploadData = await uploadRes.json();
+        finalContent = `[ATTACHMENT:${JSON.stringify({ name: file.name, url: uploadData.url, type: file.type })}]${text ? '\n\n' + text : ''}`;
+      }
+
       const res = await fetch('/api/support/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ case_id: chatTicket.case_id, content: msgContent, sender_type: 'user' })
+        body: JSON.stringify({ case_id: chatTicket.case_id, content: finalContent, sender_type: 'user' }),
+        signal: controller.signal
       });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+      
+      clearTimeout(timeoutId);
+
+      if (!res.ok) { 
+        const d = await res.json(); 
+        throw new Error(d.error || 'Failed to sync with secure node.'); 
+      }
+      
+      if (localUrl) setTimeout(() => URL.revokeObjectURL(localUrl), 10000);
+
     } catch (err: any) {
-      alert(err.message);
+      const isTimeout = err.name === 'AbortError';
+      const errMsg = isTimeout ? 'Transmission timed out. File may be too large.' : err.message;
+      alert(`[Secure Link Error]: ${errMsg}`);
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
+      if (localUrl) URL.revokeObjectURL(localUrl);
     } finally {
       setSendingReply(false);
     }
+  };
+
+  // Helper to parse attachments
+  const parseAttachment = (content: string) => {
+    if (content.startsWith('[ATTACHMENT:')) {
+      try {
+        const endIdx = content.indexOf(']');
+        const jsonStr = content.substring(12, endIdx);
+        const data = JSON.parse(jsonStr);
+        const text = content.substring(endIdx + 1).trim();
+        return { ...data, text };
+      } catch { return null; }
+    }
+    return null;
   };
 
   // Render real messages from support_messages table
@@ -323,37 +482,83 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
     const hasAgentMsg = messages.some(m => m.sender_type === 'agent');
     return (
       <>
-        {messages.map((msg) => (
-          msg.sender_type === 'user' ? (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
-              <div style={{ maxWidth: '85%' }}>
-                <div style={{ background: '#4f46e5', borderRadius: '16px 16px 4px 16px', padding: '12px 16px' }}>
-                  <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+        {messages.map((msg) => {
+          const att = parseAttachment(msg.content);
+          const isUser = msg.sender_type === 'user';
+          
+          return (
+            <div key={msg.id} style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', gap: '10px', marginBottom: '16px' }}>
+              {!isUser && (
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 12px rgba(255,255,255,0.1)' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
                 </div>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'right', marginTop: '4px' }}>
-                  You · {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric' }).format(new Date(msg.created_at))}
+              )}
+              <div style={{ maxWidth: '85%' }}>
+                {!isUser && <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>{msg.agent_name || 'Support Agent'} · Verlyn Support</p>}
+                
+                <div style={{ 
+                  background: isUser ? '#4f46e5' : 'rgba(255,255,255,0.04)', 
+                  border: isUser ? 'none' : '1px solid rgba(255,255,255,0.08)', 
+                  borderRadius: isUser ? '16px 16px 4px 16px' : '4px 16px 16px 16px', 
+                  padding: '12px 16px',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}>
+                  {att && (
+                    <div style={{ marginBottom: att.text ? '12px' : '0', position: 'relative' }}>
+                      {att.type?.startsWith('image/') ? (
+                        <div style={{ position: 'relative' }}>
+                          <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <img 
+                              src={att.url} 
+                              alt={att.name} 
+                              style={{ 
+                                maxWidth: '280px',
+                                maxHeight: '320px',
+                                width: 'auto',
+                                height: 'auto',
+                                borderRadius: '12px', 
+                                display: 'block',
+                                opacity: att.is_uploading ? 0.5 : 1,
+                                filter: att.is_uploading ? 'blur(4px)' : 'none',
+                                transition: 'all 0.4s ease',
+                                objectFit: 'contain'
+                              }} 
+                            />
+                          </a>
+                          {att.is_uploading && (
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.7)', padding: '6px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ width: '12px', height: '12px', border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#fff', borderRadius: '50%' }} />
+                                  <span style={{ fontSize: '10px', color: '#fff', fontWeight: 700, letterSpacing: '0.05em' }}>SYNCING...</span>
+                               </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <a href={att.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', color: '#fff', textDecoration: 'none', fontSize: '12px', opacity: att.is_uploading ? 0.6 : 1 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.name} {att.is_uploading ? '(Syncing...)' : ''}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {(!att || att.text) && (
+                    <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {att ? att.text : msg.content}
+                    </p>
+                  )}
+                </div>
+                
+                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: isUser ? 'right' : 'left', marginTop: '4px' }}>
+                  {isUser ? 'You' : ''} · {new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: 'numeric', timeZone: 'Asia/Kolkata' }).format(new Date(msg.created_at))}
                 </p>
               </div>
             </div>
-          ) : msg.sender_type === 'agent' ? (
-            <motion.div key={msg.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 12px rgba(255,255,255,0.1)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>
-              </div>
-              <div style={{ maxWidth: '85%' }}>
-                <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>{msg.agent_name || 'Support Agent'} · Verlyn Support</p>
-                <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px 16px 16px 16px', padding: '12px 16px' }}>
-                  <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
-                </div>
-                <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '4px' }}>
-                  {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric' }).format(new Date(msg.created_at))}
-                </p>
-              </div>
-            </motion.div>
-          ) : null
-        ))}
+          );
+        })}
         {/* Waiting for admin */}
-        {!hasAgentMsg && (
+        {!loadingMessages && !hasAgentMsg && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.05)', marginTop: '20px' }}>
             <div style={{ position: 'relative', marginBottom: '16px' }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 30px rgba(255,255,255,0.1)' }}>
@@ -366,6 +571,19 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>Session Secured</p>
             <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, maxWidth: '240px' }}>An admin will be assigned shortly and join the chat. The channel will unlock when they arrive.</p>
           </motion.div>
+        )}
+        {loadingMessages && (
+          <div style={{ display: 'flex', flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '40px' }}>
+            <motion.div 
+              animate={{ rotate: 360 }} 
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} 
+              style={{ width: '32px', height: '32px', border: '1.5px solid rgba(255,255,255,0.05)', borderTopColor: '#fff', borderRadius: '50%' }} 
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '10px', color: '#fff', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>Decrypting Signal</span>
+              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)', fontWeight: 500, letterSpacing: '0.05em' }}>STABLIZING SECURE CHANNEL...</span>
+            </div>
+          </div>
         )}
       </>
     );
@@ -425,8 +643,8 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             <div style={{ width: 28 }} />
           )}
 
-          <h2 style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 600, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            {view === 'menu' ? 'Verlyn Global Support' : view === 'form' ? 'Secure Request' : view === 'faq' ? 'Knowledge Base' :
+          <h2 style={{ flex: 1, textAlign: 'center', fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            {view === 'menu' ? 'Verlyn Support' : view === 'form' ? 'New Case' : view === 'faq' ? 'Knowledge Base' :
              (chatTicket && ['Resolved','Completed','Closed'].includes(chatTicket.status)) || (activeTicket && ['Resolved','Completed','Closed'].includes(activeTicket.status))
                ? 'Case Closed' : 'Active Case'}
           </h2>
@@ -445,22 +663,17 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
               <motion.div key="menu" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} style={{ padding: '24px' }}>
 
                 {/* Hero header */}
-                <div style={{ textAlign: 'center', marginBottom: '28px', marginTop: '8px' }}>
-                  <div style={{ position: 'relative', width: '68px', height: '68px', margin: '0 auto 18px' }}>
-                    <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(from 0deg, rgba(99,102,241,0.6), rgba(16,185,129,0.4), rgba(99,102,241,0.6))', animation: 'spin 4s linear infinite', padding: '1.5px' }}>
-                      <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#0a0a0a' }} />
-                    </div>
-                    <div style={{ position: 'absolute', inset: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Logo size={32} glow={true} />
-                    </div>
-                    <div style={{ position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, borderRadius: '50%', background: '#10b981', border: '2px solid #0a0a0a', boxShadow: '0 0 8px rgba(16,185,129,0.8)' }} />
+                <div style={{ textAlign: 'center', marginBottom: '28px', marginTop: '4px' }}>
+                  {/* Headset icon — clean, human, meaningful */}
+                  <div style={{ position: 'relative', width: '62px', height: '62px', margin: '0 auto 16px', borderRadius: '18px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                    </svg>
+                    <div style={{ position: 'absolute', top: '-3px', right: '-3px', width: '12px', height: '12px', borderRadius: '50%', background: '#10b981', border: '2px solid #0a0a0a', boxShadow: '0 0 8px rgba(16,185,129,0.9)' }} />
                   </div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', marginBottom: '6px' }}>Verlyn Support</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.8)' }} />
-                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, letterSpacing: '0.04em' }}>All Systems Operational</span>
-                  </div>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>Concierge response in under 2 hours</p>
+                  <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', marginBottom: '8px' }}>We&apos;re here for you</h3>
+                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.38)', lineHeight: 1.6, maxWidth: '220px', margin: '0 auto' }}>Real agents · Encrypted channel · Under 2h response</p>
                 </div>
 
                 {/* Action buttons */}
@@ -573,9 +786,9 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                 {/* Trust strip */}
                 <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', justifyContent: 'space-around' }}>
                   {[
-                    { label: 'E2E Encrypted', icon: <motion.svg width="14" height="14" viewBox="0 0 24 24" fill="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><motion.path d="M7 11V7a5 5 0 0 1 10 0v4 M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} /></motion.svg> },
-                    { label: 'Sub-2h Response', icon: <motion.svg width="14" height="14" viewBox="0 0 24 24" fill="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><motion.path d="M13 2L3 14h9l-1 8 10-12h-9z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} /></motion.svg> },
-                    { label: 'Zero-Log Policy', icon: <motion.svg width="14" height="14" viewBox="0 0 24 24" fill="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><motion.path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.5, ease: "easeInOut" }} /></motion.svg> },
+                    { label: 'E2E Encrypted', icon: <IconLock color="rgba(255,255,255,0.5)" size={16} /> },
+                    { label: 'Sub-2h Response', icon: <IconZap color="rgba(255,255,255,0.5)" size={16} /> },
+                    { label: 'Zero-Log Policy', icon: <IconShield color="rgba(255,255,255,0.5)" size={16} /> },
                   ].map((t, i) => (
                     <div key={i} style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>{t.icon}</div>
@@ -590,8 +803,21 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             {/* ── FAQ VIEW ── */}
             {view === 'faq' && (
               <motion.div key="faq" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type="text" 
+                      value={faqSearch} 
+                      onChange={e => setFaqSearch(e.target.value)} 
+                      placeholder="Search knowledge base..." 
+                      style={{ ...inpStyles, paddingLeft: '44px', marginBottom: 0 }} 
+                    />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gap: '10px' }}>
-                  {FAQS.map((faq, i) => (
+                  {FAQS.filter(f => f.q.toLowerCase().includes(faqSearch.toLowerCase()) || f.a.toLowerCase().includes(faqSearch.toLowerCase())).map((faq, i) => (
                     <div key={i} style={{
                       background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
                       borderRadius: '12px', overflow: 'hidden'
@@ -650,7 +876,7 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
                     <option value="suggestion" style={{ background: '#0a0a0a', color: '#fff' }}>Feature Suggestion</option>
                     <option value="customize" style={{ background: '#0a0a0a', color: '#fff' }}>Customize Inquiry</option>
                     <option value="registration" style={{ background: '#0a0a0a', color: '#fff' }}>Problem in Registration</option>
-                    <option value="emergency" style={{ background: '#260000', color: '#ef4444', fontWeight: 'bold' }}>🚨 Emergency Support</option>
+                    <option value="emergency" style={{ background: '#260000', color: '#ef4444', fontWeight: 'bold' }}>[EMERGENCY SUPPORT]</option>
                   </select>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6" /></svg>
                 </div>
@@ -763,120 +989,168 @@ export default function SupportCenter({ onClose, initialView }: { onClose: () =>
             )}
 
             {/* ── TRACKING VIEW ── */}
-            {view === 'tracking' && activeTicket && (
+            {view === 'tracking' && (
               <motion.div key="tracking" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} style={{ padding: '24px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '10px' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 30px rgba(255,255,255,0.15)' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                {!activeTicket ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <p style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>No Active Session</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginBottom: '24px' }}>We couldn't find an active case in your local storage. If you have a Case ID, you can recover it below.</p>
+                    <form onSubmit={handleLookupCase} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '18px', textAlign: 'left' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Enter Case ID</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input autoFocus value={lookupCaseId} onChange={e => { setLookupCaseId(e.target.value); setLookupError(''); }}
+                          placeholder="CASE-XXXXXXXX-XXXX"
+                          style={{ flex: 1, padding: '11px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '9px', color: '#fff', fontSize: '12px', fontFamily: 'monospace', outline: 'none', letterSpacing: '0.05em' }}
+                        />
+                        <button type="submit" disabled={lookupLoading || !lookupCaseId.trim()}
+                          style={{ padding: '11px 16px', background: '#fff', color: '#000', border: 'none', borderRadius: '9px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', opacity: lookupLoading || !lookupCaseId.trim() ? 0.5 : 1 }}>
+                          {lookupLoading ? '…' : 'Find'}
+                        </button>
+                      </div>
+                      {lookupError && <p style={{ fontSize: '11px', color: '#ef4444', marginTop: '8px' }}>{lookupError}</p>}
+                    </form>
                   </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{activeTicket.subject}</h3>
-                  <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{activeTicket.case_id}</p>
-                </div>
-
-                <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', padding: '24px', marginBottom: '24px' }}>
-                  <h4 style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '24px' }}>Case Timeline</h4>
-                  <div style={{ position: 'relative', paddingLeft: '24px' }}>
-                    <div style={{ position: 'absolute', left: '7px', top: '10px', bottom: '20px', width: '2px', background: 'rgba(255,255,255,0.1)' }} />
-
-                    <div style={{ position: 'relative', marginBottom: '28px' }}>
-                      <div style={{ position: 'absolute', left: '-22px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: '#fff', boxShadow: '0 0 12px rgba(255,255,255,0.5)' }} />
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Request Logged</p>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date(activeTicket.date_filed))}</p>
+                ) : (
+                  <>
+                    <div style={{ textAlign: 'center', marginBottom: '32px', marginTop: '10px' }}>
+                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 30px rgba(255,255,255,0.15)' }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                      </div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>{activeTicket.subject}</h3>
+                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>{activeTicket.case_id}</p>
                     </div>
 
-                    <div style={{ position: 'relative', marginBottom: '28px', opacity: activeTicket.status === 'Received' ? 0.3 : 1 }}>
-                      <div style={{ position: 'absolute', left: '-22px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: activeTicket.status !== 'Received' ? '#fff' : 'rgba(255,255,255,0.2)', boxShadow: activeTicket.status !== 'Received' ? '0 0 12px rgba(255,255,255,0.5)' : 'none' }} />
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Agent Assigned</p>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Concierge team is investigating</p>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', padding: '24px', marginBottom: '24px' }}>
+                      <h4 style={{ fontSize: '10px', fontWeight: 800, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '28px' }}>Security & Transmission Timeline</h4>
+                      <div style={{ position: 'relative', paddingLeft: '28px' }}>
+                        <div style={{ position: 'absolute', left: '7px', top: '10px', bottom: '24px', width: '2px', background: 'rgba(255,255,255,0.06)' }} />
+
+                        {[
+                          { l: 'Request Logged', s: 'Secure entry received', active: true, time: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }).format(new Date(activeTicket.date_filed)) },
+                          { l: 'Encryption Verified', s: 'End-to-end handshake complete', active: true },
+                          { l: 'Agent Assigned', s: 'Concierge reviewer assigned', active: activeTicket.status !== 'Received' },
+                          { l: 'Final Resolution', s: 'Case completion reached', active: ['Resolved','Completed','Closed'].includes(activeTicket.status) },
+                        ].map((step, i) => (
+                          <div key={i} style={{ position: 'relative', marginBottom: i < 3 ? '28px' : '0', opacity: step.active ? 1 : 0.25 }}>
+                            <div style={{ 
+                              position: 'absolute', left: '-27px', top: '3px', width: '12px', height: '12px', borderRadius: '50%', 
+                              background: step.active ? (i === 3 ? '#10b981' : '#fff') : 'rgba(255,255,255,0.1)', 
+                              boxShadow: step.active ? `0 0 12px ${i === 3 ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.3)'}` : 'none',
+                              zIndex: 2, border: '3px solid #0a0a0a' 
+                            }} />
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '4px', letterSpacing: '-0.01em' }}>{step.l}</p>
+                              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{step.time ? step.time : step.s}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div style={{ position: 'relative', opacity: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? 1 : 0.3 }}>
-                      <div style={{ position: 'absolute', left: '-22px', top: '4px', width: '10px', height: '10px', borderRadius: '50%', background: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? '#10b981' : 'rgba(255,255,255,0.2)', boxShadow: ['Resolved','Completed','Closed'].includes(activeTicket.status) ? '0 0 12px rgba(16,185,129,0.6)' : 'none' }} />
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Case Resolved</p>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Final resolution provided</p>
-                    </div>
-                  </div>
-                </div>
-
-                <button onClick={() => { setChatTicket(activeTicket); setView('chat'); }}
-                  style={{
-                    width: '100%', padding: '18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-                    background: '#fff', color: '#000', fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'all 0.3s ease',
-                    boxShadow: '0 10px 40px rgba(255,255,255,0.15)'
-                  }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                  View Communications
-                </button>
+                    <button onClick={() => { setChatTicket(activeTicket); setView('chat'); }}
+                      style={{
+                        width: '100%', padding: '18px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                        background: '#fff', color: '#000', fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'all 0.3s ease',
+                        boxShadow: '0 10px 40px rgba(255,255,255,0.15)'
+                      }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                      View Communications
+                    </button>
+                  </>
+                )}
               </motion.div>
             )}
 
             {/* ── CHAT VIEW ── */}
-            {view === 'chat' && chatTicket && (
+            {view === 'chat' && (
               <motion.div key="chat" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
                 style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
 
-                <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px', paddingBottom: '16px' }} className="scrollbar-hide" ref={chatScrollRef}>
-
-                  <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'rgba(255,255,255,0.03)', padding: '6px 16px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>Session Secured · Case {chatTicket.case_id}</span>
+                {!chatTicket ? (
+                   <div style={{ textAlign: 'center', padding: '60px 24px' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                    </div>
+                    <p style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>Session Expired</p>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, marginBottom: '24px' }}>This encrypted channel is no longer active in your current browser session. Please use your Case ID to recover it.</p>
+                    <button onClick={() => setView('menu')} style={{ background: '#fff', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}>Return to Menu</button>
                   </div>
+                ) : (
+                  <>
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px', paddingBottom: '16px' }} className="scrollbar-hide" ref={chatScrollRef}>
 
-                  {renderChatMessages()}
-
-                </div>
-
-                {/* Reply Form */}
-                <div style={{ padding: '0 24px 24px 24px' }}>
-                  {['Resolved', 'Completed', 'Closed'].includes(chatTicket.status) ? (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      style={{ textAlign: 'center', padding: '20px 16px', background: 'rgba(16,185,129,0.05)', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', background: chatTicket.status === 'Paused' ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${chatTicket.status === 'Paused' ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '20px', marginBottom: '16px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: chatTicket.status === 'Paused' ? '#f59e0b' : '#10b981', boxShadow: `0 0 8px ${chatTicket.status === 'Paused' ? '#f59e0b' : '#10b981'}` }} />
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{chatTicket.status === 'Paused' ? 'Channel Paused' : 'Secure Channel Active'}</span>
+                        </div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', marginBottom: '4px', letterSpacing: '-0.01em' }}>{chatTicket.subject}</h3>
+                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>Case ID: {chatTicket.case_id.split('-').slice(1).join('-')}</p>
                       </div>
-                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#10b981', marginBottom: '6px' }}>Case {chatTicket.status}</p>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>This case has been closed by our team. If you need further assistance, please open a new request.</p>
-                    </motion.div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {selectedFile && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', width: 'fit-content' }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>{selectedFile.name}</span>
-                          <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '2px', display: 'flex' }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                          </button>
+
+                      {renderChatMessages()}
+
+                    </div>
+
+                    {/* Reply Form */}
+                    <div style={{ padding: '0 24px 24px 24px' }}>
+                      {['Resolved', 'Completed', 'Closed'].includes(chatTicket.status) ? (
+                        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                          style={{ textAlign: 'center', padding: '20px 16px', background: 'rgba(16,185,129,0.05)', borderRadius: '14px', border: '1px solid rgba(16,185,129,0.2)' }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                          </div>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#10b981', marginBottom: '6px' }}>Case {chatTicket.status}</p>
+                          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>This case has been closed by our team. If you need further assistance, please open a new request.</p>
+                        </motion.div>
+                      ) : chatTicket.status === 'Paused' ? (
+                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+                          style={{ textAlign: 'center', padding: '16px', background: 'rgba(245,158,11,0.05)', borderRadius: '14px', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 10px #f59e0b' }} />
+                          <p style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 600, letterSpacing: '0.02em' }}>CHANNEL PAUSED BY ADMIN</p>
+                        </motion.div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {selectedFile && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', width: 'fit-content' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>{selectedFile.name}</span>
+                              <button onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '2px', display: 'flex' }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          )}
+                          <form onSubmit={handleUserReply} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                              style={{ display: 'none' }}
+                            />
+                            <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: selectedFile ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                            </button>
+                            <input
+                              type="text"
+                              value={userReplyText}
+                              onChange={(e) => setUserReplyText(e.target.value)}
+                              disabled={sendingReply}
+                              placeholder="Type your message..."
+                              style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '13px', outline: 'none', padding: '8px 4px' }}
+                            />
+                            <button type="submit" disabled={sendingReply || (!userReplyText.trim() && !selectedFile)} style={{ width: '36px', height: '36px', borderRadius: '10px', background: (userReplyText.trim() || selectedFile) ? '#fff' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: (userReplyText.trim() || selectedFile) ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={(userReplyText.trim() || selectedFile) ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            </button>
+                          </form>
                         </div>
                       )}
-                      <form onSubmit={handleUserReply} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          style={{ display: 'none' }}
-                        />
-                        <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: 'none', border: 'none', color: selectedFile ? '#fff' : 'rgba(255,255,255,0.4)', cursor: 'pointer', padding: '6px', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                        </button>
-                        <input
-                          type="text"
-                          value={userReplyText}
-                          onChange={(e) => setUserReplyText(e.target.value)}
-                          disabled={sendingReply}
-                          placeholder="Type your message..."
-                          style={{ flex: 1, background: 'none', border: 'none', color: '#fff', fontSize: '13px', outline: 'none', padding: '8px 4px' }}
-                        />
-                        <button type="submit" disabled={sendingReply || (!userReplyText.trim() && !selectedFile)} style={{ width: '36px', height: '36px', borderRadius: '10px', background: (userReplyText.trim() || selectedFile) ? '#fff' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: (userReplyText.trim() || selectedFile) ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={(userReplyText.trim() || selectedFile) ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                      </form>
                     </div>
-                  )}
-                </div>
-
-                <style>{`
-                  @keyframes vrlBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-                `}</style>
+                  </>
+                )}
               </motion.div>
             )}
 

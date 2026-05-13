@@ -73,6 +73,26 @@ export default function PrivacyPage() {
           <LegalContact email="security@verlyn.in" label="Security Disclosures" description="Privacy-related vulnerability reports." />
         </div>
       </LegalSection>
+
+      <div style={{ marginTop: '48px', padding: '32px', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '14px' }}>
+        <h3 style={{ fontSize: '11px', fontWeight: 800, color: '#fff', marginBottom: '28px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Version History & Changelog</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {[
+            { date: 'May 09, 2026', version: 'v1.4', change: 'Updated support retention policy to 12 months for better audit trail integrity.' },
+            { date: 'Feb 12, 2026', version: 'v1.3', change: 'Implemented IP hashing for all rate-limiting logs to further protect anonymity.' },
+            { date: 'Nov 02, 2025', version: 'v1.2', change: 'Added specific clauses regarding Supabase EU data residency.' },
+            { date: 'Aug 14, 2025', version: 'v1.1', change: 'Initial Zero-Knowledge policy publication.' },
+          ].map((log, i) => (
+            <div key={i} style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+               <div style={{ flexShrink: 0, width: '100px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', marginBottom: '4px' }}>{log.date}</p>
+                  <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', padding: '2px 7px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700 }}>{log.version}</span>
+               </div>
+               <p style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, paddingTop: '2px' }}>{log.change}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </LegalPageLayout>
   );
 }

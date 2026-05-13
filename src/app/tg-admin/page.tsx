@@ -10,10 +10,19 @@ const Icons = {
   Zap: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   Send: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   Archive: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>,
-  ArrowLeft: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+  ArrowLeft: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
   Lock: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-  Check: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+  Check: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
+  Shield: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  Settings: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Activity: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+  Search: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+  Pause: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
+  Play: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  Ghost: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>,
 };
+const X = ({ size = 20 }: { size?: number }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+const Shield = ({ size = 14 }: { size?: number }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
 // Haptic feedback helper
 const triggerHaptic = (style: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' = 'light') => {
@@ -36,10 +45,22 @@ function TgAdminConsole() {
   const [messages, setMessages] = useState<any[]>([]);
   const [queue, setQueue] = useState<any[]>([]);
   
-  const [inputVal, setInputVal] = useState('');
+  const [reply, setReply] = useState('');
+  const [whisperMode, setWhisperMode] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sysConfig, setSysConfig] = useState<any>({ 
+    maintenance: false, 
+    presence: 'online', 
+    agent_name: 'Verlyn Command',
+    registration_locked: false,
+    site_announcement: ''
+  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isEmergency, setIsEmergency] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // FETCH QUEUE
@@ -51,6 +72,22 @@ function TgAdminConsole() {
       if (res.ok) {
         const data = await res.json();
         setQueue(data.tickets || []);
+      }
+      
+      const resAudit = await fetch('/api/admin/audit', {
+        headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
+      });
+      if (resAudit.ok) {
+        const auditData = await resAudit.json();
+        setAuditLogs(auditData.logs || []);
+      }
+
+      const resConfig = await fetch('/api/admin/config', {
+        headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
+      });
+      if (resConfig.ok) {
+        const configData = await resConfig.json();
+        setSysConfig(configData.config || sysConfig);
       }
     } catch (e) { console.error('Queue error', e); }
   };
@@ -79,7 +116,6 @@ function TgAdminConsole() {
   };
 
   useEffect(() => {
-    // Inject Telegram Web App script and set ready
     const script = document.createElement('script');
     script.src = 'https://telegram.org/js/telegram-web-app.js';
     script.async = true;
@@ -108,7 +144,7 @@ function TgAdminConsole() {
     const interval = setInterval(() => {
       if (activeCaseId) fetchCaseData();
       else fetchQueue();
-    }, 3000); // Poll for real-time updates
+    }, 3000);
     return () => clearInterval(interval);
   }, [activeCaseId]);
 
@@ -118,29 +154,23 @@ function TgAdminConsole() {
     }
   }, [messages, dossier, activeCaseId]);
 
-  const executeProtocol = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputVal.trim() || !dossier || sending) return;
+  const handleSendReply = async () => {
+    if (!reply.trim() || !dossier || sending) return;
     
     triggerHaptic('medium');
-    const text = inputVal.trim();
+    const text = whisperMode ? `[INTERNAL] ${reply.trim()}` : reply.trim();
     setSending(true);
-    setInputVal('');
+    setReply('');
 
-    // Optimistic UI
     const tempMsg = {
       id: Date.now(),
       sender_type: 'agent',
       agent_name: 'Verlyn Command',
       content: text,
+      is_internal: whisperMode,
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempMsg]);
-    setTimeout(() => {
-      if (chatScrollRef.current) {
-        chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-      }
-    }, 50);
 
     try {
       const res = await fetch('/api/support/messages', {
@@ -153,11 +183,11 @@ function TgAdminConsole() {
           case_id: dossier.case_id, 
           content: text, 
           sender_type: 'agent', 
-          agent_name: 'Verlyn Command' 
+          agent_name: 'Verlyn Command',
+          is_internal: whisperMode
         })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to send transmission.');
+      if (!res.ok) throw new Error('Transmission failed.');
       triggerHaptic('success');
       await fetchCaseData();
     } catch (err: any) {
@@ -182,9 +212,32 @@ function TgAdminConsole() {
         body: JSON.stringify({ case_id: dossier.case_id, status: 'Resolved' })
       });
       triggerHaptic('success');
-      setActiveCaseId(null); // Go back to queue
+      setActiveCaseId(null);
     } catch (e) { alert('Failed to update status.'); }
   };
+
+  const togglePause = async () => {
+    if (!dossier) return;
+    triggerHaptic('medium');
+    const newStatus = dossier.status === 'Paused' ? 'In progress' : 'Paused';
+    try {
+      await fetch('/api/support/ticket', {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer VERLYN-ADMIN-99'
+        },
+        body: JSON.stringify({ case_id: dossier.case_id, status: newStatus })
+      });
+      await fetchCaseData();
+    } catch (e) { alert('Failed to toggle pause status.'); }
+  };
+
+  const filteredTickets = queue.filter(t => 
+    t.case_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -201,7 +254,6 @@ function TgAdminConsole() {
     );
   }
 
-  // ERROR DOSSIER VIEW
   if (error || (activeCaseId && !dossier && !loading)) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center p-6 text-white text-center font-mono relative">
@@ -223,11 +275,48 @@ function TgAdminConsole() {
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] text-white font-sans overflow-hidden selection:bg-indigo-500/30">
+      {/* ── SETTINGS OVERLAY ── */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl">
+            <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} className="w-full max-w-xl bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl space-y-8">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold tracking-tighter">MISSION CONFIGURATION</h3>
+                  <p className="text-[10px] text-white/30 uppercase tracking-[0.2em]">Platform Sovereignty Controls</p>
+                </div>
+                <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-white/30 uppercase tracking-widest block">Agent Presence</label>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={async () => {
+                          setSysConfig(prev => ({ ...prev, presence: 'online' }));
+                          await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer VERLYN-ADMIN-99' }, body: JSON.stringify({ key: 'agent_presence', value: 'online' }) });
+                        }}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${sysConfig.presence === 'online' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'bg-white/5 border-transparent text-white/40'}`}
+                      >
+                        AVAILABLE
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          setSysConfig(prev => ({ ...prev, presence: 'away' }));
+                          await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer VERLYN-ADMIN-99' }, body: JSON.stringify({ key: 'agent_presence', value: 'away' }) });
+                        }}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${sysConfig.presence === 'away' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-white/5 border-transparent text-white/40'}`}
+                      >
+                        AWAY
+                      </button>
+                    </div>
+                  </div>
       <AnimatePresence mode="wait">
         
-        {/* ========================================================= */}
-        {/* QUEUE VIEW */}
-        {/* ========================================================= */}
         {!activeCaseId ? (
           <motion.div 
             key="queue"
@@ -237,7 +326,6 @@ function TgAdminConsole() {
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             className="absolute inset-0 flex flex-col"
           >
-            {/* Header */}
             <header className="h-[60px] bg-[#050505]/80 backdrop-blur-xl border-b border-white/[0.04] flex items-center justify-between px-5 shrink-0 z-20">
               <div className="flex items-center gap-3.5">
                 <div className="w-7 h-7 bg-white text-black rounded flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.2)]">
@@ -248,225 +336,229 @@ function TgAdminConsole() {
                   <span className="text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest">Active Link</span>
                 </div>
               </div>
+              <button 
+                onClick={() => { triggerHaptic('light'); setShowConfig(!showConfig); }}
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${showConfig ? 'bg-white text-black border-white' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
+              >
+                <Icons.Settings />
+              </button>
             </header>
 
-            {/* Queue List */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pb-safe scrollbar-hide">
-              <div className="px-2 pt-2 pb-1 flex justify-between items-center">
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Priority Queue</span>
-                <span className="text-[10px] font-mono text-white/20 uppercase tracking-widest">{queue.length} Active</span>
-              </div>
-              
-              {queue.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-center mt-10">
-                  <div className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center text-white/10 mb-4">
-                    <Icons.Check />
+            <AnimatePresence>
+              {showConfig && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-white/[0.02] border-b border-white/[0.04] overflow-hidden"
+                >
+                  <div className="p-5 grid grid-cols-2 gap-4">
+                    <div className="col-span-2 grid grid-cols-3 gap-2">
+                      <div className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.05] text-center">
+                        <div className="text-[10px] text-white/30 uppercase tracking-widest">Tickets</div>
+                        <div className="text-[14px] font-bold mt-1">{sysConfig.total_tickets}</div>
+                      </div>
+                      <div className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.05] text-center">
+                        <div className="text-[10px] text-white/30 uppercase tracking-widest">Users</div>
+                        <div className="text-[14px] font-bold mt-1">{sysConfig.total_registrations}</div>
+                      </div>
+                      <div className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.05] text-center">
+                        <div className="text-[10px] text-white/30 uppercase tracking-widest">Banned</div>
+                        <div className="text-[14px] font-bold mt-1 text-red-400">{sysConfig.banned_count}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="col-span-2 space-y-2">
+                      <label className="text-[10px] text-white/30 uppercase tracking-widest block">Global Announcement</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          placeholder="Broadcast message..."
+                          defaultValue={sysConfig.announcement || ''}
+                          onBlur={async (e) => {
+                            await fetch('/api/admin/config', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer VERLYN-ADMIN-99' },
+                              body: JSON.stringify({ key: 'site_announcement', value: e.target.value })
+                            });
+                          }}
+                          className="flex-1 bg-white/[0.03] border border-white/[0.05] rounded-lg py-2 px-3 text-[10px] outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={async () => {
+                        if (!confirm("ACTIVATE EMERGENCY LOCKDOWN? This seals all gateways.")) return;
+                        setIsEmergency(true);
+                      }}
+                      className="col-span-2 w-full py-3 rounded-xl text-[10px] font-bold uppercase tracking-[0.3em] bg-red-600/20 text-red-500 border border-red-500/40 hover:bg-red-600/30 transition-all animate-pulse"
+                    >
+                      🚨 EMERGENCY LOCKDOWN
+                    </button>
                   </div>
-                  <span className="text-[10px] uppercase tracking-widest text-white/30 font-mono">
-                    All clear. No pending operations.
-                  </span>
-                </div>
-              ) : (
-                queue.map((t, i) => (
-                  <motion.button 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    key={t.id} 
-                    onClick={() => { 
-                      triggerHaptic('light');
-                      setActiveCaseId(t.case_id); 
-                      setDossier(null); 
-                      setMessages([]); 
-                      setError(''); 
-                    }}
-                    className="w-full text-left p-4 bg-white/[0.02] border border-white/[0.04] rounded-2xl flex flex-col gap-3 active:scale-[0.98] active:bg-white/[0.04] transition-all"
-                  >
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-mono text-[10px] text-white/50 uppercase tracking-[0.2em]">{t.case_id}</span>
-                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${
-                        t.status === 'Received' ? 'bg-indigo-500/10 text-indigo-400' : 
-                        t.status === 'In progress' ? 'bg-emerald-500/10 text-emerald-400' :
-                        'bg-amber-500/10 text-amber-400'
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="p-4 border-b border-white/[0.04]">
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="SEARCH CASE / AGENT..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/[0.02] border border-white/[0.05] rounded-xl py-3 pl-11 pr-4 text-[10px] uppercase tracking-widest outline-none focus:border-indigo-500/30 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {filteredTickets.map((t) => (
+                <motion.div 
+                  key={t.case_id}
+                  onClick={() => { triggerHaptic('medium'); setActiveCaseId(t.case_id); }}
+                  whileHover={{ x: 4 }}
+                  className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-4 cursor-pointer hover:bg-white/[0.04] transition-all group relative overflow-hidden"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-mono text-white/30 tracking-tighter">#{t.case_id}</span>
+                      <h4 className="text-[13px] font-bold tracking-tight">{t.full_name}</h4>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest border ${
+                        t.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                        t.status === 'Paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
                       }`}>
                         {t.status}
+                      </div>
+                      <span className="text-[9px] text-white/20 font-mono">
+                        {new Date(t.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                    <div className="text-[14px] font-medium text-white/90 leading-snug">{t.subject}</div>
-                    <div className="flex justify-between items-center w-full mt-1 border-t border-white/[0.02] pt-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center text-[9px] font-medium text-white/50 uppercase">
-                          {t.full_name.charAt(0)}
-                        </div>
-                        <span className="text-[11px] text-white/40 font-medium">{t.full_name}</span>
-                      </div>
-                      <span className="text-[10px] font-mono text-white/20">{new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                  </motion.button>
-                ))
-              )}
+                  </div>
+                  <p className="text-[11px] text-white/40 line-clamp-1">{t.subject}</p>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         ) : (
-
-        /* ========================================================= */
-        /* DOSSIER VIEW */
-        /* ========================================================= */
           <motion.div 
             key="dossier"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 flex flex-col bg-[#0a0a0a]"
+            className="absolute inset-0 flex flex-col bg-[#050505]"
           >
-            {/* Header */}
-            <header className="h-[64px] bg-[#0a0a0a]/90 backdrop-blur-2xl border-b border-white/[0.04] flex items-center justify-between px-3 shrink-0 z-20">
+            <header className="h-[60px] border-b border-white/[0.04] flex items-center justify-between px-4 shrink-0">
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => { triggerHaptic('light'); setActiveCaseId(null); }} 
-                  className="w-10 h-10 flex items-center justify-center text-white/40 hover:text-white active:bg-white/5 rounded-full transition-colors"
+                  onClick={() => { triggerHaptic('light'); setActiveCaseId(null); }}
+                  className="p-2 text-white/40 hover:text-white bg-white/[0.03] border border-white/[0.05] rounded-xl transition-all"
                 >
-                  <Icons.ArrowLeft />
+                  <Icons.ArrowLeft size={18} />
                 </button>
-                <div className="flex flex-col justify-center">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12px] font-semibold tracking-wide uppercase truncate max-w-[180px] text-white/90">
-                      {dossier?.subject || 'Encrypted File'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-mono text-[9px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded uppercase tracking-widest">
-                      {dossier?.report_type || 'Unknown'}
-                    </span>
-                    <span className="text-[9px] text-white/30 uppercase font-mono tracking-widest truncate">{dossier?.case_id}</span>
-                  </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-mono text-indigo-400 tracking-tighter">#{dossier?.case_id}</span>
+                  <h4 className="text-[12px] font-bold uppercase tracking-widest">{dossier?.full_name}</h4>
                 </div>
               </div>
               
-              <button 
-                onClick={markResolved} 
-                className="w-9 h-9 mr-1 rounded-full bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-white/40 active:scale-95 active:bg-emerald-500/20 active:text-emerald-400 active:border-emerald-500/30 transition-all"
-              >
-                <Icons.Archive />
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={togglePause}
+                  className={`p-2 rounded-xl border transition-all ${dossier?.status === 'Paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
+                >
+                  {dossier?.status === 'Paused' ? <Icons.Play size={16} /> : <Icons.Pause size={16} />}
+                </button>
+                <button className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl">
+                  <Icons.Check size={16} />
+                </button>
+              </div>
             </header>
 
-            {/* Dossier Meta */}
-            <div className="bg-gradient-to-b from-[#0a0a0a] to-transparent pt-4 pb-2 px-5 shrink-0 flex flex-col gap-2 z-10">
-              <div className="flex justify-between items-center text-[12px] font-medium text-white/80">
-                <span>{dossier?.full_name}</span>
-                <span className="text-white/40 font-mono text-[10px]">{dossier ? new Date(dossier.created_at).toLocaleDateString() : ''}</span>
-              </div>
-              <div className="text-[10px] text-white/30 font-mono flex items-center gap-2 bg-white/[0.02] w-fit px-2 py-1 rounded border border-white/[0.02]">
-                <Icons.Lock /> {dossier?.ip_address || 'ENCRYPTED IP'}
-              </div>
-            </div>
-
-            {/* Chat Stream */}
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 pb-6 pt-2 scrollbar-hide flex flex-col gap-5 relative z-0">
-              
-              {/* Initial Report Bubble */}
-              <div className="self-start w-full max-w-[90%] mt-2">
-                <div className="bg-[#111] border border-white/[0.04] rounded-2xl rounded-tl-sm p-4 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-white/10" />
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.2em] mb-3 block flex items-center gap-2">
-                    <Icons.Zap /> Initial Signal
-                  </span>
-                  <p className="text-[14px] leading-relaxed text-white/80 whitespace-pre-wrap font-medium">
-                    {dossier?.description}
-                  </p>
-                </div>
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-5 custom-scrollbar">
+              <div className="text-[13px] leading-relaxed text-white/60 bg-white/[0.02] border border-white/[0.04] p-4 rounded-2xl italic">
+                {dossier?.description}
               </div>
 
-              {messages.length === 0 && (
-                <div className="text-center py-8 font-mono text-[10px] uppercase tracking-[0.2em] text-white/20 flex items-center justify-center gap-3">
-                  <div className="w-8 h-[1px] bg-white/10" />
-                  No Transmissions
-                  <div className="w-8 h-[1px] bg-white/10" />
-                </div>
-              )}
-
-              {/* Dynamic Messages */}
-              <div className="w-full flex flex-col gap-1.5">
-                {messages.map((m, index) => {
-                  const isAgent = m.sender_type === 'agent' || m.sender_type === 'system';
-                  const prevMsg = index > 0 ? messages[index - 1] : null;
-                  const nextMsg = index < messages.length - 1 ? messages[index + 1] : null;
-                  
-                  const isFirstInGroup = !prevMsg || prevMsg.sender_type !== m.sender_type;
-                  const isLastInGroup = !nextMsg || nextMsg.sender_type !== m.sender_type;
-
-                  return (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      key={m.id} 
-                      className={`flex flex-col max-w-[85%] ${isAgent ? 'self-end' : 'self-start'} ${isFirstInGroup ? 'mt-4' : 'mt-0'}`}
-                    >
-                      <div className={`px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap shadow-sm
-                        ${isAgent 
-                          ? 'bg-white text-black font-medium border border-transparent' 
-                          : 'bg-[#161616] border border-white/[0.04] text-white/90'
-                        }
-                        ${isFirstInGroup ? (isAgent ? 'rounded-tr-2xl rounded-tl-2xl rounded-bl-2xl rounded-br-sm' : 'rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-sm') : 'rounded-2xl'}
-                        ${!isFirstInGroup && !isLastInGroup ? (isAgent ? 'rounded-r-sm' : 'rounded-l-sm') : ''}
-                        ${isLastInGroup && !isFirstInGroup ? (isAgent ? 'rounded-br-2xl rounded-tr-sm' : 'rounded-bl-2xl rounded-tl-sm') : ''}
-                      `}>
-                        {m.content}
-                      </div>
-                      {isLastInGroup && (
-                        <div className={`flex gap-1.5 items-center mt-1.5 px-1 ${isAgent ? 'justify-end' : 'justify-start'}`}>
-                          <span className="font-mono text-[9px] text-white/30 uppercase tracking-widest">
-                            {isAgent ? m.agent_name || 'Command' : dossier?.full_name}
-                          </span>
-                          <span className="font-mono text-[9px] text-white/10 uppercase tracking-widest">
-                            {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Input Bar */}
-            <div className="p-3 bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-white/[0.04] shrink-0 pb-safe z-20">
-              {dossier?.status === 'Resolved' ? (
-                <div className="w-full bg-white/[0.02] border border-white/[0.05] rounded-full py-3.5 text-[12px] font-mono uppercase tracking-widest text-center text-emerald-500/50">
-                  <Icons.Check /> <span className="ml-2 inline-block relative top-[-2px]">Case Resolved</span>
-                </div>
-              ) : (
-                <form onSubmit={executeProtocol} className="w-full relative flex items-center">
-                  <div className="absolute left-4 text-white/30 pointer-events-none">
-                    <Icons.Terminal />
+              {messages.map((m) => {
+                const isInternal = m.is_internal || m.content.startsWith('[INTERNAL]');
+                return (
+                  <div key={m.id} className={`flex flex-col max-w-[85%] ${
+                    m.sender_type === 'user' ? 'self-start' : 'self-end'
+                  } ${isInternal ? 'bg-purple-900/20 border border-purple-500/30' : 
+                    m.sender_type === 'user' ? 'bg-zinc-900 border border-zinc-800' : 'bg-emerald-950/20 border border-emerald-500/30'} rounded-2xl p-4 shadow-xl`}>
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                        m.sender_type === 'user' ? 'text-blue-400' : 
+                        isInternal ? 'text-purple-400' : 'text-emerald-400'
+                      }`}>
+                        {m.sender_type === 'user' ? 'Client' : m.agent_name}
+                        {isInternal && ' (Whisper)'}
+                      </span>
+                      <span className="text-[9px] text-zinc-600 font-mono">
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className={`text-[13px] leading-relaxed ${isInternal ? 'italic opacity-90' : ''}`}>
+                      {m.content.replace('[INTERNAL] ', '')}
+                    </div>
                   </div>
-                  <input 
-                    type="text" 
-                    value={inputVal}
-                    onChange={e => setInputVal(e.target.value)}
-                    placeholder="Execute protocol..."
-                    disabled={sending}
-                    className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full pl-11 pr-12 py-3.5 text-[14px] text-white outline-none focus:border-white/[0.15] focus:bg-white/[0.05] transition-all placeholder:text-white/20 shadow-inner"
-                  />
-                  <button 
-                    disabled={!inputVal.trim() || sending}
-                    className={`absolute right-1.5 w-10 h-10 flex items-center justify-center rounded-full transition-all 
-                      ${inputVal.trim() && !sending 
-                        ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-90' 
-                        : 'bg-transparent text-white/20'}`}
-                  >
-                    {sending ? (
-                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full" />
-                    ) : (
-                      <Icons.Send />
-                    )}
-                  </button>
-                </form>
-              )}
+                );
+              })}
+
+              {dossier?.device_proof && (
+                <button type="submit" className="absolute right-2"><Icons.Send /></button>
+              </form>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {lookupTarget && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+                          <span className="text-xs font-mono text-white/70">{lookupData.reg.raw_ip}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <span className="text-[10px] font-mono text-white/30 uppercase tracking-widest">Case History</span>
+                      <div className="space-y-2">
+                        {lookupData.tix?.length > 0 ? lookupData.tix.map((t: any) => (
+                          <div key={t.case_id} className="bg-white/[0.02] p-3 rounded-lg border border-white/[0.04] flex justify-between items-center">
+                            <span className="text-[10px] font-mono text-white/60">{t.case_id}</span>
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${t.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                              {t.status}
+                            </span>
+                          </div>
+                        )) : (
+                          <p className="text-[10px] text-white/20 italic">No previous cases found.</p>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="py-12 flex justify-center">
+                    <div className="w-6 h-6 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="p-6 bg-white/[0.01] border-t border-white/10">
+                <button 
+                  onClick={() => { setLookupTarget(null); setLookupData(null); }}
+                  className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/60 transition-all"
+                >
+                  Terminate Dossier
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

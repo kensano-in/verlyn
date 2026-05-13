@@ -10,29 +10,7 @@ import SupportCenter from '@/components/SupportCenter';
 import AdminGateway from '@/components/AdminGateway';
 import GovernancePortal from '@/components/GovernancePortal';
 import DeveloperIdentity from '@/components/DeveloperIdentity';
-
-const AnimatedPath = ({ d, color }: { d: string, color: string }) => (
-  <>
-    <motion.path d={d} stroke={`url(#grad-home-${color.replace('#', '')})`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-    <motion.path d={d} stroke={color} strokeWidth="3" opacity="0.2" filter="blur(3px)" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-  </>
-);
-
-const SvgBase = ({ children, color, size = 26 }: { children: React.ReactNode, color: string, size?: number }) => (
-  <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true, margin: '-20px' }} transition={{ duration: 0.5, ease: "easeOut" }}>
-    <defs>
-      <linearGradient id={`grad-home-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor={color} stopOpacity="1" />
-        <stop offset="100%" stopColor={color} stopOpacity="0.3" />
-      </linearGradient>
-    </defs>
-    {children}
-  </motion.svg>
-);
-
+import { IconBan, IconGlobe, IconZap, IconShield, IconLock, IconUsers } from '@/components/Icons';
 // Lazy-load heavy 3D scene
 const NetworkGraph = dynamic(() => import('@/components/NetworkGraph'), {
   ssr: false,
@@ -129,10 +107,9 @@ function StepRow({ step, i, total }: { step: { title: string; desc: string }; i:
 }
 
 export default function HomePage() {
-  const [transparencyMode, setTransparencyMode] = React.useState(false);
-  // Always start false (avoids SSR/client hydration mismatch)
-  // useEffect reads sessionStorage after mount - safe from hydration errors
   const [introComplete, setIntroComplete] = React.useState(false);
+  const [announcement, setAnnouncement] = React.useState('');
+  const [isMaint, setIsMaint] = React.useState(false);
   const [showSupport, setShowSupport] = React.useState(false);
   const [supportView, setSupportView] = React.useState<any>('menu');
   const [showGov, setShowGov]         = React.useState(false);
@@ -158,6 +135,22 @@ export default function HomePage() {
     if (adminClickTimeout.current) clearTimeout(adminClickTimeout.current);
     adminClickTimeout.current = setTimeout(() => setAdminClicks(0), 2000);
   };
+
+  React.useEffect(() => {
+    const init = async () => {
+      try {
+        const res = await fetch('/api/public-config');
+        const data = await res.json();
+        if (data.announcement) setAnnouncement(data.announcement);
+        else setAnnouncement('');
+        if (data.maintenance) setIsMaint(data.maintenance);
+        else setIsMaint(false);
+      } catch (e) {}
+    };
+    init();
+    const interval = setInterval(init, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleIntroComplete = () => {
     sessionStorage.setItem('vrl_intro_done', '1');
@@ -196,6 +189,39 @@ export default function HomePage() {
     }}>
       {/* ── CINEMATIC INTRO ── only shows if not seen this session */}
       {!introComplete && <IntroScreen onComplete={handleIntroComplete} />}
+
+      {/* ── GLOBAL ANNOUNCEMENT BANNER ── */}
+      <AnimatePresence>
+        {(announcement || isMaint) && introComplete && (
+          <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
+              background: isMaint ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.12)',
+              backdropFilter: 'blur(20px)',
+              borderBottom: `1px solid ${isMaint ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.2)'}`,
+              padding: '10px 24px',
+              textAlign: 'center',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
+            }}
+          >
+            <div style={{ 
+              width: '6px', height: '6px', borderRadius: '50%', 
+              background: isMaint ? '#ef4444' : '#6366f1',
+              boxShadow: `0 0 10px ${isMaint ? '#ef4444' : '#6366f1'}`,
+              animation: 'pulse 2s infinite'
+            }} />
+            <span style={{ 
+              fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', 
+              textTransform: 'uppercase', color: isMaint ? '#f87171' : '#a5b4fc' 
+            }}>
+              {isMaint ? 'SYSTEM ALERT: GLOBAL MAINTENANCE IN PROGRESS' : announcement}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── MAIN CONTENT ── */}
       <motion.div
@@ -489,32 +515,32 @@ export default function HomePage() {
           <div style={{ maxWidth: '960px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '72px' }}>
             {[
               {
-                icon: <SvgBase color="#6366f1"><AnimatedPath color="#6366f1" d="M7 11V7a5 5 0 0 1 10 0v4 M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/></SvgBase>,
+                icon: <IconLock color="#6366f1" size={28} />,
                 title: 'Your messages stay private',
                 body: 'When you send a message on Verlyn, only you and the person you\'re talking to can read it. Nobody else — not even us. This is called end-to-end encryption, and it\'s the same technology banks use.'
               },
               {
-                icon: <SvgBase color="#8b5cf6"><AnimatedPath color="#8b5cf6" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></SvgBase>,
+                icon: <IconUsers color="#8b5cf6" size={28} />,
                 title: 'Real people only',
                 body: 'Verlyn is invite-only. You can\'t just sign up with a fake email and a made-up name. Every person on the platform is verified, which means less spam, no bots, and better conversations.'
               },
               {
-                icon: <SvgBase color="#10b981"><AnimatedPath color="#10b981" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M4.93 4.93l14.14 14.14"/></SvgBase>,
+                icon: <IconBan color="#10b981" size={28} />,
                 title: 'No algorithm, no ads',
                 body: 'Verlyn does not track what you look at, sell your data to advertisers, or show you content designed to make you anxious. You see what matters to you, in the order it happened.'
               },
               {
-                icon: <SvgBase color="#0891b2"><AnimatedPath color="#0891b2" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M2 12h20 M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></SvgBase>,
+                icon: <IconGlobe color="#0891b2" size={28} />,
                 title: 'Built for everyone',
                 body: 'Whether you\'re a professional, a creator, or just someone who wants a quieter corner of the internet — Verlyn works for you. No technical knowledge required.'
               },
               {
-                icon: <SvgBase color="#f59e0b"><AnimatedPath color="#f59e0b" d="M13 2L3 14h9l-1 8 10-12h-9z"/></SvgBase>,
+                icon: <IconZap color="#f59e0b" size={28} />,
                 title: 'Fast and reliable',
                 body: 'Verlyn is engineered for speed. Messages arrive instantly. The platform stays online. There are no frustrating delays or unexpected outages during important conversations.'
               },
               {
-                icon: <SvgBase color="#ef4444"><AnimatedPath color="#ef4444" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></SvgBase>,
+                icon: <IconShield color="#ef4444" size={28} />,
                 title: 'We can\'t sell what we don\'t have',
                 body: 'Most platforms make money by collecting everything about you. Verlyn is different — our architecture is designed so that we never store sensitive data in a form we can read or share.'
               },
@@ -540,6 +566,78 @@ export default function HomePage() {
               </motion.div>
             ))}
           </div>
+          
+          {/* WHAT IS VERLYN EXPLAINER */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-30px' }}
+            transition={{ duration: 0.8 }}
+            style={{
+              maxWidth: '860px', margin: '120px auto 120px',
+              padding: '60px',
+              background: 'linear-gradient(180deg, rgba(20,20,20,0.4) 0%, rgba(10,10,10,0.8) 100%)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '24px',
+              boxShadow: '0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Background Glows */}
+            <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: 'rgba(99,102,241,0.15)', filter: 'blur(100px)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: '-100px', left: '-100px', width: '300px', height: '300px', background: 'rgba(16,185,129,0.1)', filter: 'blur(100px)', borderRadius: '50%', pointerEvents: 'none' }} />
+            
+            <p style={{ fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '24px', height: '1px', background: 'rgba(255,255,255,0.2)' }} />
+              The Verlyn Protocol
+            </p>
+            <h2 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: '32px', color: '#fff' }}>
+              What exactly is <span style={{ background: 'linear-gradient(90deg, #fff, #a1a1aa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Verlyn?</span>
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, fontWeight: 500 }}>
+                In simple terms, Verlyn is a secure digital infrastructure designed for human connection, entirely stripped of the corporate surveillance that powers the modern web.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', marginTop: '16px' }}>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#6366f1', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '4px', height: '4px', background: '#6366f1', borderRadius: '50%' }}/> How it works
+                  </h4>
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                    When you communicate through Verlyn, your device creates a cryptographic lock and key. The message is locked before it leaves your phone or computer. Only the person you are sending it to has the key to unlock it. Our servers simply pass the locked box along. We cannot look inside.
+                  </p>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#10b981', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '4px', height: '4px', background: '#10b981', borderRadius: '50%' }}/> Who it is for
+                  </h4>
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+                    Verlyn is built for everyone. You don't need to understand cryptography or networks to use it. It is for families who want private photo sharing, for businesses discussing confidential strategy, and for anyone exhausted by algorithms dictating their digital life.
+                  </p>
+                </div>
+              </div>
+              
+              <div style={{ marginTop: '24px', padding: '24px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '12px' }}>The Three Pillars of Verlyn:</h4>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#8b5cf6', fontWeight: 800 }}>01.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Radical Privacy:</b> No ads, no trackers, no algorithmic feeds. Your data is not the product.</span>
+                  </li>
+                  <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#8b5cf6', fontWeight: 800 }}>02.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Absolute Ownership:</b> What you create on Verlyn remains yours. You have the right to permanently delete your history at any time.</span>
+                  </li>
+                  <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#8b5cf6', fontWeight: 800 }}>03.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Enterprise Performance:</b> Built on edge networking, meaning messages are routed instantly around the globe without lag.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Q&A strip */}
           <motion.div
@@ -654,7 +752,7 @@ export default function HomePage() {
                     {l.label}
                   </button>
                 ))}
-                <button onClick={() => { setSupportView('menu'); setShowSupport(true); }} style={{
+                <button onClick={() => window.location.href = '/support'} style={{
                   fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
                   color: 'rgba(255,255,255,0.25)', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   transition: 'color 0.2s'

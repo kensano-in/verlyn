@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   description:
     'Experience the next generation of private communication. Built on zero-knowledge architecture and end-to-end encryption. Join the elite network.',
   keywords: ['privacy', 'zero-knowledge', 'secure messaging', 'encrypted social network', 'verlyn'],
+  icons: {
+    icon: [
+      { url: '/icon.png' },
+      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png' },
+    ],
+  },
   openGraph: {
     title: 'Verlyn | The Future of Privacy',
     description:
@@ -33,13 +42,15 @@ export const viewport = {
   themeColor: '#000000',
 };
 
+import CommandPalette from '@/components/CommandPalette';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${inter.variable} ${bebas.variable} ${inter.className}`}>
-      <head>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><path d=%22M17 14 L32 52%22 stroke=%22white%22 stroke-width=%225%22 stroke-linecap=%22round%22/><path d=%22M47 14 L32 52%22 stroke=%22rgba(255,255,255,0.4)%22 stroke-width=%225%22 stroke-linecap=%22round%22/></svg>" />
-      </head>
-      <body className="bg-black text-white antialiased">{children}</body>
+      <body className="bg-black text-white antialiased" suppressHydrationWarning>
+        {children}
+        <CommandPalette />
+      </body>
     </html>
   );
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supportTicketLimiter } from '@/lib/rateLimit';
 import { analyzeSpam } from '@/lib/spam';
-import { getClientIp, hashIp, securityHeaders, deepSanitize, buildSessionFingerprint } from '@/lib/secureComm';
+import { getClientIp, hashIp, securityHeaders, deepSanitize, buildSessionFingerprint, isMaintenanceMode, calculatePriority } from '@/lib/secureComm';
 import { auditTicketCreate, auditRateLimit, auditSpamDetect } from '@/lib/audit';
 
 // ── Validation constants ───────────────────────────────────────────────────────
@@ -24,6 +24,15 @@ export async function POST(req: NextRequest) {
     const ip = getClientIp(req);
     const ipHash = hashIp(ip);
     const sessionFp = buildSessionFingerprint(req);
+
+    // ── Global Maintenance Mode Check ─────────────────────────────────────────
+    const maintenance = await isMaintenanceMode();
+    if (maintenance) {
+      return NextResponse.json(
+        { error: 'Systems are currently undergoing scheduled maintenance. New requests are temporarily paused.' },
+        { status: 503, headers }
+      );
+    }
 
     // ── Rate limit ─────────────────────────────────────────────────────────────
     const rl = supportTicketLimiter(ipHash);
@@ -115,7 +124,7 @@ export async function POST(req: NextRequest) {
     }
 
     const caseId = `CASE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const priority = (reportType === 'emergency' || reportType === 'security') ? 'high' : riskScore > 30 ? 'normal' : 'normal';
+    const priority = calculatePriority(reportType, riskScore);
     const userAgent = req.headers.get('user-agent') ?? 'unknown';
 
     const { error: dbError } = await supabaseAdmin
@@ -128,6 +137,7 @@ export async function POST(req: NextRequest) {
         report_type:  reportType,
         description,
         status:       'Received',
+        priority:     priority,
         ip_address:   ip,
         user_agent:   userAgent,
       });

@@ -5,27 +5,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'qrcode';
 
-const AnimatedPath = ({ d, color }: { d: string, color: string }) => (
-  <>
-    <motion.path d={d} stroke={`url(#grad-admin-${color.replace('#', '')})`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-    <motion.path d={d} stroke={color} strokeWidth="3" opacity="0.2" filter="blur(3px)" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-  </>
-);
-
-const SvgBase = ({ children, color, size = 16 }: { children: React.ReactNode, color: string, size?: number }) => (
-  <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
-    <defs>
-      <linearGradient id={`grad-admin-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor={color} stopOpacity="1" />
-        <stop offset="100%" stopColor={color} stopOpacity="0.3" />
-      </linearGradient>
-    </defs>
-    {children}
-  </motion.svg>
-);
+import { IconActivity, IconCheckCircle, IconRisk, IconShield } from './Icons';
 
 type GatewayStep = 'pin' | 'setup' | 'login' | 'dashboard';
 
@@ -269,6 +249,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
       case 'In progress': return '#3b82f6';
       case 'In review': return '#f59e0b';
       case 'Completed': return '#8b5cf6';
+      case 'Resolved': return '#8b5cf6';
+      case 'Closed': return '#6b7280';
       default: return '#888';
     }
   };
@@ -642,10 +624,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Active Cases', value: tickets.filter(t => !['Resolved','Completed','Closed'].includes(t.status)).length, total: tickets.length, color: '#6366f1', trend: '+2', icon: <SvgBase color="#6366f1"><AnimatedPath color="#6366f1" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"/></SvgBase> },
-                        { label: 'Resolved Today', value: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, total: null, color: '#10b981', trend: '+5', icon: <SvgBase color="#10b981"><AnimatedPath color="#10b981" d="M20 6L9 17l-5-5"/></SvgBase> },
-                        { label: 'Avg Response', value: '1.4m', total: null, color: '#f59e0b', trend: '-0.3m', icon: <SvgBase color="#f59e0b"><AnimatedPath color="#f59e0b" d="M13 2L3 14h9l-1 8 10-12h-9z"/></SvgBase> },
-                        { label: 'Threat Level', value: 'LOW', total: null, color: '#8b5cf6', trend: 'STABLE', icon: <SvgBase color="#8b5cf6"><AnimatedPath color="#8b5cf6" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></SvgBase> }
+                        { label: 'Active Cases', value: tickets.filter(t => !['Resolved','Completed','Closed'].includes(t.status)).length, total: tickets.length, color: '#6366f1', trend: '+2', icon: <IconActivity color="#6366f1" size={20} /> },
+                        { label: 'Resolved Today', value: tickets.filter(t => ['Resolved','Completed','Closed'].includes(t.status)).length, total: null, color: '#10b981', trend: '+5', icon: <IconCheckCircle color="#10b981" size={20} /> },
+                        { label: 'Avg Response', value: '1.4m', total: null, color: '#f59e0b', trend: '-0.3m', icon: <IconRisk color="#f59e0b" size={20} /> },
+                        { label: 'Threat Level', value: 'LOW', total: null, color: '#8b5cf6', trend: 'STABLE', icon: <IconShield color="#8b5cf6" size={20} /> }
                       ].map((stat, i) => (
                         <div key={i} style={{ background: 'rgba(255,255,255,0.025)', padding: '22px 20px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.07)', position: 'relative', overflow: 'hidden' }}>
                           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${stat.color}60, transparent)` }} />
@@ -765,6 +747,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                         <option value="In progress" style={{ background: '#0a0a0a' }}>In progress</option>
                         <option value="In review" style={{ background: '#0a0a0a' }}>In review</option>
                         <option value="Completed" style={{ background: '#0a0a0a' }}>Completed</option>
+                        <option value="Resolved" style={{ background: '#0a0a0a' }}>Resolved</option>
+                        <option value="Closed" style={{ background: '#0a0a0a' }}>Closed</option>
                       </select>
                     </div>
 

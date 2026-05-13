@@ -1,7 +1,10 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const metadata = {
   title: 'Access Model — Verlyn',
   description: 'How moderation works, how support operates, how data flows, and how Verlyn protects users at every layer.',
 };
@@ -29,6 +32,65 @@ const MODERATION_LAYERS = [
   { layer: 'Human', title: 'Admin Oversight', desc: 'Admins have visibility into risk scores, spam signals, and session fingerprints for every ticket. Nothing is hidden from the audit trail.' },
   { layer: 'System', title: 'Audit Logging', desc: 'Every moderation action by every human is logged with actor, timestamp, target, and metadata. Logs are append-only and immutable.' },
 ];
+
+function InteractiveEncryption() {
+  const [step, setStep] = useState(0);
+  const stages = [
+    { label: 'Origin', desc: 'Message exists in browser memory only. Completely accessible to you, but no one else.', color: '#fff' },
+    { label: 'Encryption', desc: 'AES-256-GCM applied with your local key. The text becomes an encrypted blob.', color: '#6366f1' },
+    { label: 'Transmission', desc: 'Secure ciphertext leaves your browser. Verlyn servers never see the key.', color: '#10b981' },
+  ];
+
+  useEffect(() => {
+    const iv = setInterval(() => setStep(s => (s + 1) % 3), 4000);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <section style={{ marginBottom: '64px' }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: '20px' }}>Interactive Privacy Logic</h2>
+      <div style={{ background: '#050505', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '48px 24px', textAlign: 'center', minHeight: '360px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.03, background: 'radial-gradient(circle at center, #6366f1 0%, transparent 70%)', pointerEvents: 'none' }} />
+        
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center', marginBottom: '40px', position: 'relative' }}>
+          {stages.map((_, i) => (
+            <React.Fragment key={i}>
+              <motion.div
+                animate={{ 
+                  scale: step === i ? 1.15 : 1,
+                  background: step === i ? stages[i].color : 'rgba(255,255,255,0.03)',
+                  borderColor: step === i ? stages[i].color : 'rgba(255,255,255,0.1)'
+                }}
+                transition={{ duration: 0.5 }}
+                style={{ width: '60px', height: '60px', borderRadius: '14px', border: '1px solid', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+              >
+                {i === 0 && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={step === 0 ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>}
+                {i === 1 && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={step === 1 ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>}
+                {i === 2 && <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={step === 2 ? '#000' : 'rgba(255,255,255,0.3)'} strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" /></svg>}
+              </motion.div>
+              {i < 2 && (
+                <div style={{ width: '40px', height: '1px', background: 'rgba(255,255,255,0.08)', position: 'relative' }}>
+                   <motion.div 
+                     animate={{ left: step === i ? '100%' : '0%', opacity: step === i ? [0, 1, 0] : 0 }}
+                     transition={{ duration: 1.5, repeat: Infinity }}
+                     style={{ position: 'absolute', top: '-1px', width: '10px', height: '3px', background: '#6366f1', borderRadius: '2px', filter: 'blur(2px)' }} 
+                   />
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+        
+        <AnimatePresence mode="wait">
+          <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.4 }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#fff', marginBottom: '8px', letterSpacing: '-0.02em' }}>{stages[step].label}</h3>
+            <p style={{ fontSize: '13.5px', color: 'rgba(255,255,255,0.45)', maxWidth: '340px', margin: '0 auto', lineHeight: 1.6 }}>{stages[step].desc}</p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
 
 export default function AccessModelPage() {
   return (
@@ -140,6 +202,8 @@ export default function AccessModelPage() {
             ))}
           </div>
         </section>
+
+        <InteractiveEncryption />
 
         <div style={{padding:'24px',background:'rgba(99,102,241,0.05)',border:'1px solid rgba(99,102,241,0.15)',borderRadius:'10px',marginBottom:'48px'}}>
           <p style={{fontSize:'14px',color:'#a78bfa',fontWeight:500,marginBottom:'4px'}}>Registration does not guarantee access.</p>

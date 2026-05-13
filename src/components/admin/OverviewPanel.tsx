@@ -1,28 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { AuditEvent, LiveActivity } from './types';
-
-const AnimatedPath = ({ d, color }: { d: string, color: string }) => (
-  <>
-    <motion.path d={d} stroke={`url(#grad-${color.replace('#', '')})`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-    <motion.path d={d} stroke={color} strokeWidth="3" opacity="0.2" filter="blur(3px)" strokeLinecap="round" strokeLinejoin="round"
-      initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: "easeInOut" }} />
-  </>
-);
-
-const SvgBase = ({ children, color, size = 18 }: { children: React.ReactNode, color: string, size?: number }) => (
-  <motion.svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}>
-    <defs>
-      <linearGradient id={`grad-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor={color} stopOpacity="1" />
-        <stop offset="100%" stopColor={color} stopOpacity="0.3" />
-      </linearGradient>
-    </defs>
-    {children}
-  </motion.svg>
-);
+import { IconActivity, IconAlertTri, IconCheckCircle, IconGlobe, IconRisk, IconUsers } from '../Icons';
 
 const MOCK_AGENTS = [
   { id: '1', name: 'Zara Chen', role: 'Senior Support', status: 'online' as const, tickets_open: 4, tickets_resolved: 127, avg_response_time: '8m', avatar_color: '#7c3aed' },
@@ -33,7 +11,7 @@ const MOCK_AGENTS = [
 interface Props {
   tickets: any[];
   preRegs: any[];
-  auditEvents: AuditEvent[];
+  auditEvents: any[];
 }
 
 export default function OverviewPanel({ tickets, preRegs, auditEvents }: Props) {
@@ -44,15 +22,15 @@ export default function OverviewPanel({ tickets, preRegs, auditEvents }: Props) 
 
   const rRiskColor = avgRisk > 60 ? '#ef4444' : avgRisk > 30 ? '#f59e0b' : '#10b981';
   const stats = [
-    { label: 'Active Tickets',     value: open,            color: '#7c3aed', icon: <SvgBase color="#7c3aed"><AnimatedPath color="#7c3aed" d="M13 2L3 14h9l-1 8 10-12h-9z"/></SvgBase> },
-    { label: 'Critical Cases',     value: critical,        color: '#ef4444', icon: <SvgBase color="#ef4444"><AnimatedPath color="#ef4444" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z M12 9v4 M12 17h.01"/></SvgBase> },
-    { label: 'Resolved (Total)',   value: resolved,        color: '#10b981', icon: <SvgBase color="#10b981"><AnimatedPath color="#10b981" d="M20 6L9 17l-5-5"/></SvgBase> },
-    { label: 'Pre-Registrations', value: preRegs.length,  color: '#0891b2', icon: <SvgBase color="#0891b2"><AnimatedPath color="#0891b2" d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M20 8v6 M23 11h-6"/></SvgBase> },
-    { label: 'Avg Risk Score',    value: `${avgRisk}%`,   color: rRiskColor, icon: <SvgBase color={rRiskColor}><AnimatedPath color={rRiskColor} d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></SvgBase> },
-    { label: 'Online Agents',     value: MOCK_AGENTS.filter(a => a.status === 'online').length, color: '#10b981', icon: <SvgBase color="#10b981"><AnimatedPath color="#10b981" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M20 17.13A4 4 0 0 1 16 21v-2a4 4 0 0 1 2.5-3.87 M16 3.13a4 4 0 0 1 0 7.75"/></SvgBase> },
+    { label: 'Active Tickets',     value: open,            color: '#7c3aed', icon: <IconActivity color="#7c3aed" size={18} /> },
+    { label: 'Critical Cases',     value: critical,        color: '#ef4444', icon: <IconAlertTri color="#ef4444" size={18} /> },
+    { label: 'Resolved (Total)',   value: resolved,        color: '#10b981', icon: <IconCheckCircle color="#10b981" size={18} /> },
+    { label: 'Pre-Registrations', value: preRegs.length,  color: '#0891b2', icon: <IconGlobe color="#0891b2" size={18} /> },
+    { label: 'Avg Risk Score',    value: `${avgRisk}%`,   color: rRiskColor, icon: <IconRisk color={rRiskColor} size={18} /> },
+    { label: 'Online Agents',     value: MOCK_AGENTS.filter(a => a.status === 'online').length, color: '#10b981', icon: <IconUsers color="#10b981" size={18} /> },
   ];
 
-  const recentActivity: LiveActivity[] = [
+  const recentActivity: any[] = [
     ...tickets.slice(0, 3).map((t, i) => ({
       id: t.id + '-act',
       type: 'new_ticket' as const,

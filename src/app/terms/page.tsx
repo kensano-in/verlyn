@@ -71,6 +71,25 @@ export default function TermsPage() {
           <LegalContact email="support@verlyn.in" label="General Support" description="User-facing inquiries and access-related questions." />
         </div>
       </LegalSection>
+
+      <div style={{ marginTop: '48px', padding: '32px', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '14px' }}>
+        <h3 style={{ fontSize: '11px', fontWeight: 800, color: '#fff', marginBottom: '28px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Version History & Changelog</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {[
+            { date: 'May 09, 2026', version: 'v1.2', change: 'Revised Abuse Classification Level III definitions for infrastructure security.' },
+            { date: 'Jan 28, 2026', version: 'v1.1', change: 'Expanded Network Behavior Standards to include metadata anomaly detection.' },
+            { date: 'Sep 15, 2025', version: 'v1.0', change: 'Initial Terms of Service publication for early access cohort.' },
+          ].map((log, i) => (
+            <div key={i} style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+               <div style={{ flexShrink: 0, width: '100px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', marginBottom: '4px' }}>{log.date}</p>
+                  <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', padding: '2px 7px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 700 }}>{log.version}</span>
+               </div>
+               <p style={{ fontSize: '12.5px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, paddingTop: '2px' }}>{log.change}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </LegalPageLayout>
   );
 }

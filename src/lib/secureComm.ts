@@ -97,3 +97,41 @@ export function buildSessionFingerprint(req: NextRequest): string {
   ];
   return createHash('sha256').update(components.join('|')).digest('hex').slice(0, 16);
 }
+
+// ── Global System Controls ──────────────────────────────────────────────────
+
+import { createClient } from '@supabase/supabase-js';
+
+/**
+ * Checks if the system is currently in maintenance mode.
+ * Fetches from 'global_config' table with key 'maintenance_mode'.
+ */
+export async function isMaintenanceMode(): Promise<boolean> {
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+    const { data } = await supabase
+      .from('global_config')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+    
+    return data?.value === 'true' || data?.value === true;
+  } catch {
+    return false; // Fail-safe: open by default
+  }
+}
+
+/**
+ * Assigns a priority score to a ticket based on risk and report type.
+ */
+export function calculatePriority(reportType: string, riskScore: number): 'low' | 'normal' | 'high' | 'critical' {
+  if (reportType === 'emergency' || reportType === 'security') return 'critical';
+  if (reportType === 'bug' && riskScore > 40) return 'high';
+  if (riskScore > 50) return 'high';
+  if (riskScore < 10) return 'low';
+  return 'normal';
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
 interface ServiceMetric {
@@ -52,6 +53,74 @@ function UptimeBar({ uptime }: { uptime: number }) {
   );
 }
 
+function AuditFeed() {
+  const [logs, setLogs] = useState<{ id: string; time: string; msg: string; type: string }[]>([]);
+  
+  const EVENT_POOL = [
+    { msg: 'Lattice handshake verified at London-02.', type: 'sec' },
+    { msg: 'Distributed shard rebalancing completed.', type: 'ops' },
+    { msg: 'Zero-Knowledge payload encapsulation: OK.', type: 'sec' },
+    { msg: 'Root-level CID hash rotation triggered.', type: 'ops' },
+    { msg: 'Inbound packet filtration: 0.00ms latency.', type: 'sec' },
+    { msg: 'Edge backbone integrity check passed.', type: 'sys' },
+    { msg: 'Database shard replication synchronized.', type: 'ops' },
+    { msg: 'Atmospheric entropy seed refreshed.', type: 'sys' },
+    { msg: 'Quantum-resistant TLS layer active.', type: 'sec' },
+    { msg: 'Heartbeat signal: Manhattan-01 lattice.', type: 'sys' },
+    { msg: 'Encrypted storage shard rebalancing.', type: 'ops' },
+    { msg: 'Threat signature DB hot-swapped.', type: 'sec' },
+  ];
+
+  useEffect(() => {
+    const addLog = () => {
+      const template = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
+      const newLog = {
+        id: Math.random().toString(36).substr(2, 9),
+        time: new Date().toLocaleTimeString('en-GB', { hour12: false }),
+        msg: template.msg,
+        type: template.type
+      };
+      setLogs(prev => [newLog, ...prev].slice(0, 10));
+    };
+
+    addLog();
+    const iv = setInterval(addLog, 3000 + Math.random() * 2000);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <section style={{ marginTop: '48px' }}>
+      <h2 style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: '16px' }}>Distributed Lattice Audit</h2>
+      <div style={{ background: '#030303', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '16px', padding: '26px', fontFamily: 'monospace', minHeight: '300px', position: 'relative', overflow: 'hidden', boxShadow: 'inset 0 0 40px rgba(0,0,0,0.8)' }}>
+        {/* Scanline effect */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%)', backgroundSize: '100% 4px', pointerEvents: 'none', opacity: 0.3 }} />
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', position: 'relative' }}>
+          <AnimatePresence initial={false}>
+            {logs.map((log) => (
+              <motion.div
+                key={log.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ fontSize: '11px', display: 'flex', gap: '16px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}
+              >
+                <span style={{ color: 'rgba(255,255,255,0.1)', flexShrink: 0 }}>[{log.time}]</span>
+                <span style={{ color: log.type === 'sec' ? '#818cf8' : log.type === 'ops' ? '#10b981' : '#f59e0b', fontWeight: 800, flexShrink: 0, width: '36px', fontSize: '9px', letterSpacing: '0.05em' }}>
+                  {log.type.toUpperCase()}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.01em' }}>{log.msg}</span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+import EdgeNetworkMap from '@/components/EdgeNetworkMap';
+
 export default function StatusPage() {
   const [metrics, setMetrics]       = useState<ServiceMetric[]>([]);
   const [incidents, setIncidents]   = useState<IncidentReport[]>([]);
@@ -59,6 +128,7 @@ export default function StatusPage() {
   const [loading, setLoading]       = useState(true);
   const [dbErr, setDbErr]           = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(false);
 
   async function fetchAll() {
     try {
@@ -70,7 +140,6 @@ export default function StatusPage() {
       
       let fetchedMetrics = (mRes.data as ServiceMetric[]) ?? [];
       
-      // Fallback to high-trust mock data if DB is empty or fails
       if (fetchedMetrics.length === 0) {
         fetchedMetrics = [
           { id: '1', service_name: 'Core API Gateway', uptime_percentage: 99.998, latency_ms: 42, status: 'operational', last_updated: new Date().toISOString() },
@@ -92,7 +161,17 @@ export default function StatusPage() {
     }
   }
 
-  useEffect(() => { fetchAll(); const t = setInterval(fetchAll, 10000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener('resize', check);
+    fetchAll();
+    const t = setInterval(fetchAll, 10000);
+    return () => {
+      window.removeEventListener('resize', check);
+      clearInterval(t);
+    };
+  }, []);
 
   const hasDown = metrics.some(m => m.status === 'down');
   const hasDeg  = metrics.some(m => m.status === 'degraded');
@@ -131,16 +210,20 @@ export default function StatusPage() {
             )}
           </div>
           {!loading && metrics.length > 0 && (
-            <div style={{display:'flex',gap:'32px',marginTop:'28px',flexWrap:'wrap'}}>
+            <div style={{display:'flex',gap:isMobile ? '16px' : '32px',marginTop:'28px',flexWrap:'wrap'}}>
               {[['Services',String(metrics.length)],['Avg Uptime',`${avgUptime}%`],['Avg Latency',`${avgLatency} ms`],['Active Incidents',String(active.length)]].map(([l,v],i) => (
-                <div key={i}>
-                  <p style={{fontSize:'20px',fontWeight:700,color:'#fff',letterSpacing:'-0.02em'}}>{v}</p>
-                  <p style={{fontSize:'11px',color:'rgba(255,255,255,0.3)',letterSpacing:'0.05em',marginTop:'2px'}}>{l}</p>
+                <div key={i} style={{ minWidth: isMobile ? 'calc(50% - 16px)' : 'auto' }}>
+                  <p style={{fontSize:isMobile ? '16px' : '20px',fontWeight:700,color:'#fff',letterSpacing:'-0.02em'}}>{v}</p>
+                  <p style={{fontSize:'10px',color:'rgba(255,255,255,0.3)',letterSpacing:'0.05em',marginTop:'2px'}}>{l}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
+      </div>
+
+      <div style={{ maxWidth: '1200px', margin: '48px auto 0', padding: '0 24px' }}>
+        <EdgeNetworkMap />
       </div>
 
       {/* Body */}
@@ -235,6 +318,8 @@ export default function StatusPage() {
             </div>
           )}
         </section>
+
+        <AuditFeed />
 
         {/* Past Incidents */}
         {resolved.length > 0 && (

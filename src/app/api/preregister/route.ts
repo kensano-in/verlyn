@@ -127,7 +127,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid security signature.' }, { status: 403 });
   }
 
-  // ── 5. Agreement gate ───────────────────────────────────────────────────────
+  // ── 5. Administrative Lock & Global Configuration ───────────────────────
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+
+  const { data: configData } = await supabaseAdmin.from('global_config').select('*');
+  const regLocked = configData?.find(d => d.key === 'registration_locked')?.value === 'true';
+
+  if (regLocked) {
+    return NextResponse.json(
+      { error: 'Registration is temporarily paused for maintenance.' },
+      { status: 403 }
+    );
+  }
+
   if (body.agreement_accepted !== true) {
     return NextResponse.json(
       { error: 'You must accept the terms of service before registering.' },
@@ -192,10 +208,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Security protocol violation. Your IP is blacklisted for ${remainingMins} more minutes.` }, { status: 403 });
     }
 
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // We already initialized supabaseAdmin above for the lock check
 
     // IP Registration Cap — DB check (if not cached)
     if (!cachedReg || Date.now() - cachedReg.cachedAt >= IP_REG_CACHE_TTL) {
