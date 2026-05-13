@@ -595,13 +595,12 @@ export async function POST(req: NextRequest) {
 
     await trackMessageId(supabase, chatId, messageId);
 
-    // ADVANCED MOBILE COMMANDS
-    if (text.startsWith('/')) {
-      const parts = text.split(' ');
-      const cmd = parts[0].toLowerCase();
-      const targetCase = parts[1]?.toUpperCase();
+      // ADVANCED MOBILE COMMANDS
+      if (text.startsWith('/')) {
+        const parts = text.split(' ');
+        const cmd = parts[0].toLowerCase();
+        const targetCase = parts[1]?.toUpperCase();
 
-      if (['/ban', '/resolve', '/purge', '/trace', '/escalate', '/quarantine', '/reply', '/status', '/queue', '/help', '/pause', '/unpause'].includes(cmd)) {
         await deleteTelegramMessage(chatId, messageId);
 
         if (cmd === '/help') {
@@ -936,7 +935,7 @@ export async function POST(req: NextRequest) {
           const { data: regs } = await supabase.from('preregistrations').select('full_name, email, created_at').order('created_at', { ascending: false }).limit(6);
           let msg = `👤 *RECENT REGISTRATIONS*\n${THEME.divider}\n`;
           const buttons = regs?.map((r: any) => ([{ text: `✅ APPROVE: ${r.email.substring(0, 15)}...`, callback_data: `approve_${r.email}` }])) || [];
-          await sendTelegramMessage(chatId, msg, { inline_keyboard: buttons }, supabase);
+          await sendTelegramMessage(chatId, msg, { reply_markup: { inline_keyboard: buttons } }, supabase);
         }
         else if (cmd === '/sentinel') {
           const { data: cluster } = await supabase.rpc('detect_ip_clusters'); // I'll fallback to manual scan if RPC fails
@@ -1938,8 +1937,6 @@ export async function POST(req: NextRequest) {
         else if (cmd === '/deploy_friday') { await sendTelegramMessage(chatId, `📅 *DEPLOY FRIDAY*\nAre you insane? Deployment blocked.`, {}, supabase); }
         else if (cmd === '/blame') { await sendTelegramMessage(chatId, `👉 *BLAME*\nIt was DNS. It's always DNS.`, {}, supabase); }
         else if (cmd === '/shrug') { await sendTelegramMessage(chatId, `🤷 *SHRUG*\n¯\\_(ツ)_/¯`, {}, supabase); }
-
-
         return NextResponse.json({ ok: true });
       }
     }
