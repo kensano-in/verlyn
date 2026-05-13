@@ -123,6 +123,7 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
   const [lookupLoading, setLookupLoading] = useState(false);
   const [showLookup, setShowLookup] = useState(false);
 
+  useEffect(() => {
     const checkMaintenance = async () => {
       try {
         const res = await fetch('/api/admin/config', { headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' } });

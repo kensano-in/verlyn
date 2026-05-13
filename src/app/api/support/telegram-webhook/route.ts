@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from '@/lib/secureComm';
+import { TOP_100_COMMANDS } from '@/lib/telegram-commands';
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '7814788493';
@@ -185,6 +186,7 @@ async function handleCallback(cb: any, supabase: any) {
   }
 
   if (data === 'sys_config') {
+    const { data: configRows } = await supabase.from('system_config').select('*');
     const maintenance = configRows?.find((r: any) => r.key === 'maintenance_mode')?.value === 'true';
     const regLocked = configRows?.find((r: any) => r.key === 'registration_locked')?.value === 'true';
     const stealth = configRows?.find((r: any) => r.key === 'stealth_mode')?.value === 'true';
@@ -307,7 +309,7 @@ async function handleCallback(cb: any, supabase: any) {
 
   if (data.startsWith('approve_')) {
     const email = data.replace('approve_', '');
-    await supabase.from('audit_logs').insert({ action: 'USER_ADMITTED', metadata: { email }, admin_id: userId.toString() });
+    await supabase.from('audit_logs').insert({ action: 'USER_ADMITTED', metadata: { email }, admin_id: chatId.toString() });
     await supabase.from('global_config').upsert({ key: `admit_${email}`, value: 'true' });
     await sendTelegramMessage(chatId, `✅ *ADMISSION GRANTED:* \`${email}\` is now authorized for platform entry.`, {}, supabase);
   }
@@ -634,13 +636,20 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        if (cmd === '/status' && targetCase) {
-          const { data: t } = await supabase.from('support_tickets').select('status, full_name, subject, created_at').eq('case_id', targetCase).single();
-          if (t) {
-            const istTime = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: 'numeric', timeZone: 'Asia/Kolkata', hour12: true }).format(new Date(t.created_at));
-            await sendTelegramMessage(chatId, `📊 *STATUS: ${targetCase}*\n${THEME.divider}\n*Status:* ${t.status}\n*Client:* ${t.full_name}\n*Subject:* ${t.subject}\n*Filed:* ${istTime} IST`, {}, supabase);
+        if (cmd === '/status') {
+          if (targetCase) {
+            const { data: t } = await supabase.from('support_tickets').select('status, full_name, subject, created_at').eq('case_id', targetCase).single();
+            if (t) {
+              const istTime = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: 'numeric', timeZone: 'Asia/Kolkata', hour12: true }).format(new Date(t.created_at));
+              await sendTelegramMessage(chatId, `📊 *STATUS: ${targetCase}*\n${THEME.divider}\n*Status:* ${t.status}\n*Client:* ${t.full_name}\n*Subject:* ${t.subject}\n*Filed:* ${istTime} IST`, {}, supabase);
+            } else {
+              await sendTelegramMessage(chatId, `[ERROR] Case \`${targetCase}\` not found.`, {}, supabase);
+            }
           } else {
-            await sendTelegramMessage(chatId, `[ERROR] Case \`${targetCase}\` not found.`, {}, supabase);
+            // General Status
+            const { count: ticketCount } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true });
+            const { count: regCount } = await supabase.from('preregistrations').select('*', { count: 'exact', head: true });
+            await sendTelegramMessage(chatId, `🌐 *SYSTEM STATUS*\n${THEME.divider}\n🟢 Infrastructure: Operational\n🟢 Database: Connected\n📊 Active Tickets: ${ticketCount || 0}\n👥 Preregistrations: ${regCount || 0}`, {}, supabase);
           }
           return NextResponse.json({ ok: true });
         }
@@ -867,8 +876,9 @@ export async function POST(req: NextRequest) {
           }
         }
         else if (cmd === '/me') {
-          const { count } = await supabase.from('support_messages').select('*', { count: 'exact', head: true }).eq('agent_name', user.first_name);
-          await sendTelegramMessage(chatId, `👤 *AGENT DOSSIER: ${user.first_name}*\n${THEME.divider}\nTotal Transmissions: \`${count}\`\nClearance: \`LEVEL 5 / OVERWATCH\`\nAuthority: \`ABSOLUTE\``, {}, supabase);
+          const name = message.from?.first_name || 'Admin';
+          const { count } = await supabase.from('support_messages').select('*', { count: 'exact', head: true }).eq('agent_name', name);
+          await sendTelegramMessage(chatId, `👤 *AGENT DOSSIER: ${name}*\n${THEME.divider}\nTotal Transmissions: \`${count}\`\nClearance: \`LEVEL 5 / OVERWATCH\`\nAuthority: \`ABSOLUTE\``, {}, supabase);
         }
         else if (cmd === '/time') {
           const ist = new Intl.DateTimeFormat('en-IN', { dateStyle: 'full', timeStyle: 'long', timeZone: 'Asia/Kolkata' }).format(new Date());
@@ -1208,6 +1218,23 @@ export async function POST(req: NextRequest) {
         else if (cmd === '/version') {
           await sendTelegramMessage(chatId,`🛰️ *VERLYN COMMAND CENTER*\n${THEME.divider}\n📦 *Version:* \`v4.2.0-GODMODE\`\n🔧 *Runtime:* Next.js Edge\n🗄️ *DB:* Supabase PostgreSQL\n🤖 *AI:* Gemini 2.0 Flash\n🔒 *Auth:* Session-based 60min TTL`,{},supabase);
         }
+        else if (cmd === '/register_ui') {
+          if (!BOT_TOKEN) {
+            await sendTelegramMessage(chatId, `❌ Error: BOT_TOKEN missing.`, {}, supabase);
+          } else {
+            const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ commands: TOP_100_COMMANDS })
+            });
+            const data = await resp.json();
+            if (data.ok) {
+              await sendTelegramMessage(chatId, `✅ *COMMAND MENU REGISTERED!* \n\nType \`/\` to see the new professional menu.`, {}, supabase);
+            } else {
+              await sendTelegramMessage(chatId, `❌ *FAILED:* \`${JSON.stringify(data)}\``, {}, supabase);
+            }
+          }
+        }
         else if (cmd === '/audit') {
           const { data: logs } = await supabase.from('audit_log').select('*').order('created_at',{ascending:false}).limit(8);
           let msg = `🛡️ *AUDIT LOG*\n${THEME.divider}\n`;
@@ -1314,7 +1341,8 @@ export async function POST(req: NextRequest) {
         }
         else if (cmd === '/dbcheck') {
            const start = Date.now();
-           const res = await supabase.rpc('get_db_size').catch(() => null);
+           let res = null;
+           try { const r = await supabase.rpc('get_db_size'); res = r.data; } catch(e) {}
            const ms = Date.now() - start;
            await sendTelegramMessage(chatId, `🗄️ *DB DIAGNOSTICS*\n${THEME.divider}\nLatency: ${ms}ms\nResponse: ${res ? 'OK' : 'RPC Missing, but connected.'}`, {}, supabase);
         }
@@ -1325,7 +1353,7 @@ export async function POST(req: NextRequest) {
           await sendTelegramMessage(chatId, `🔐 *ACTIVE TG SESSIONS:* ${count || 1}`, {}, supabase);
         }
         else if (cmd === '/killsessions_all') {
-          await supabase.from('audit_log').delete().eq('action', 'tg_auth_success').neq('ip_address', \`tg:\${chatId}\`);
+          await supabase.from('audit_log').delete().eq('action', 'tg_auth_success').neq('ip_address', `tg:${chatId}`);
           await sendTelegramMessage(chatId, `💥 *SESSIONS PURGED:* All other admin sessions terminated.`, {}, supabase);
         }
 

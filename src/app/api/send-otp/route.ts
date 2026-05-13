@@ -67,6 +67,13 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
       req.headers.get('x-real-ip') ??
       'unknown';
+    const ua = req.headers.get('user-agent');
+    
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
 
     if (checkBurst(ip)) {
       // Silently delay + reject — don't reveal we detected them
@@ -162,11 +169,7 @@ export async function POST(req: NextRequest) {
     }
 
     /* ── 6 & 7. Supabase checks — Parallelize existing check and IP cap ─── */
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
+
 
     const ipHash = hashIp(ip);
     const cached = ipRegCache.get(ip);
@@ -300,5 +303,4 @@ export async function POST(req: NextRequest) {
     console.error('[Verlyn OTP] Fatal transmission error:', err?.message);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
 }

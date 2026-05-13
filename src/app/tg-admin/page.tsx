@@ -61,6 +61,10 @@ function TgAdminConsole() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isEmergency, setIsEmergency] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [lookupTarget, setLookupTarget] = useState('');
+  const [lookupData, setLookupData] = useState<any>(null);
+  const [inputVal, setInputVal] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // FETCH QUEUE
@@ -239,6 +243,57 @@ function TgAdminConsole() {
     t.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const executeProtocol = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputVal.trim() || sending) return;
+    
+    setSending(true);
+    triggerHaptic('medium');
+    
+    try {
+      const res = await fetch('/api/support/reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer VERLYN-ADMIN-99'
+        },
+        body: JSON.stringify({
+          case_id: activeCaseId,
+          message: inputVal,
+          is_internal: whisperMode
+        })
+      });
+      
+      if (!res.ok) throw new Error('Transmission failed');
+      
+      setInputVal('');
+      await fetchCaseData();
+      triggerHaptic('success');
+    } catch (err: any) {
+      setError(err.message || 'Error executing protocol');
+      triggerHaptic('error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const performLookup = async (target: string) => {
+    setLookupTarget(target);
+    try {
+      const res = await fetch(`/api/admin/dashboard/lookup?target=${encodeURIComponent(target)}`, {
+        headers: { 'Authorization': 'Bearer VERLYN-ADMIN-99' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLookupData(data);
+      } else {
+        setLookupData({ error: 'Lookup failed' });
+      }
+    } catch (e) {
+      setLookupData({ error: 'Network error' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center p-6 text-white font-mono uppercase tracking-[0.2em] text-[10px]">
@@ -297,7 +352,7 @@ function TgAdminConsole() {
                     <div className="flex gap-2">
                       <button 
                         onClick={async () => {
-                          setSysConfig(prev => ({ ...prev, presence: 'online' }));
+                          setSysConfig((prev: any) => ({ ...prev, presence: 'online' }));
                           await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer VERLYN-ADMIN-99' }, body: JSON.stringify({ key: 'agent_presence', value: 'online' }) });
                         }}
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${sysConfig.presence === 'online' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'bg-white/5 border-transparent text-white/40'}`}
@@ -306,7 +361,7 @@ function TgAdminConsole() {
                       </button>
                       <button 
                         onClick={async () => {
-                          setSysConfig(prev => ({ ...prev, presence: 'away' }));
+                          setSysConfig((prev: any) => ({ ...prev, presence: 'away' }));
                           await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer VERLYN-ADMIN-99' }, body: JSON.stringify({ key: 'agent_presence', value: 'away' }) });
                         }}
                         className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all border ${sysConfig.presence === 'away' ? 'bg-amber-500/20 border-amber-500/50 text-amber-400' : 'bg-white/5 border-transparent text-white/40'}`}
@@ -315,6 +370,13 @@ function TgAdminConsole() {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         
         {!activeCaseId ? (
@@ -337,15 +399,15 @@ function TgAdminConsole() {
                 </div>
               </div>
               <button 
-                onClick={() => { triggerHaptic('light'); setShowConfig(!showConfig); }}
-                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${showConfig ? 'bg-white text-black border-white' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
+                onClick={() => { triggerHaptic('light'); setShowSettings(!showSettings); }}
+                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all ${showSettings ? 'bg-white text-black border-white' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
               >
                 <Icons.Settings />
               </button>
             </header>
 
             <AnimatePresence>
-              {showConfig && (
+              {showSettings && (
                 <motion.div 
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -512,8 +574,47 @@ function TgAdminConsole() {
               })}
 
               {dossier?.device_proof && (
-                <button type="submit" className="absolute right-2"><Icons.Send /></button>
-              </form>
+                <div className="mt-4 p-4 border border-zinc-800 rounded-xl bg-black/50 text-[11px] font-mono break-all text-white/50">
+                  <div className="text-zinc-500 mb-2 font-bold uppercase tracking-widest text-[9px]">Hardware Fingerprint</div>
+                  {dossier.device_proof}
+                </div>
+              )}
+            </div>
+
+            {/* Input Bar */}
+            <div className="p-3 bg-[#0a0a0a]/90 backdrop-blur-2xl border-t border-white/[0.04] shrink-0 pb-safe z-20">
+              {dossier?.status === 'Resolved' ? (
+                <div className="w-full bg-white/[0.02] border border-white/[0.05] rounded-full py-3.5 text-[12px] font-mono uppercase tracking-widest text-center text-emerald-500/50">
+                  <Icons.Check /> <span className="ml-2 inline-block relative top-[-2px]">Case Resolved</span>
+                </div>
+              ) : (
+                <form onSubmit={executeProtocol} className="w-full relative flex items-center">
+                  <div className="absolute left-4 text-white/30 pointer-events-none">
+                    <Icons.Terminal />
+                  </div>
+                  <input 
+                    type="text" 
+                    value={inputVal}
+                    onChange={e => setInputVal(e.target.value)}
+                    placeholder="Execute protocol..."
+                    disabled={sending}
+                    className="w-full bg-white/[0.03] border border-white/[0.05] rounded-full pl-11 pr-12 py-3.5 text-[14px] text-white outline-none focus:border-white/[0.15] focus:bg-white/[0.05] transition-all placeholder:text-white/20 shadow-inner"
+                  />
+                  <button 
+                    disabled={!inputVal.trim() || sending}
+                    className={`absolute right-1.5 w-10 h-10 flex items-center justify-center rounded-full transition-all 
+                      ${inputVal.trim() && !sending 
+                        ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)] active:scale-90' 
+                        : 'bg-transparent text-white/20'}`}
+                  >
+                    {sending ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full" />
+                    ) : (
+                      <Icons.Send />
+                    )}
+                  </button>
+                </form>
+              )}
             </div>
           </motion.div>
         )}
@@ -522,6 +623,22 @@ function TgAdminConsole() {
       <AnimatePresence>
         {lookupTarget && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0a0a0a] border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+            >
+              <div className="p-6 border-b border-white/10">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-white/90">Dossier: {lookupTarget}</h3>
+              </div>
+              <div className="p-6">
+                {lookupData ? (
+                  <>
+                    {lookupData.reg && (
+                      <div className="space-y-4 mb-6">
+                        <div className="flex justify-between items-center bg-white/[0.02] p-3 rounded-lg border border-white/[0.04]">
+                          <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Network Origin</span>
                           <span className="text-xs font-mono text-white/70">{lookupData.reg.raw_ip}</span>
                         </div>
                       </div>
@@ -551,7 +668,7 @@ function TgAdminConsole() {
               </div>
               <div className="p-6 bg-white/[0.01] border-t border-white/10">
                 <button 
-                  onClick={() => { setLookupTarget(null); setLookupData(null); }}
+                  onClick={() => { setLookupTarget(''); setLookupData(null); }}
                   className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-white/60 transition-all"
                 >
                   Terminate Dossier

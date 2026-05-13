@@ -117,6 +117,7 @@ export default function HomePage() {
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
   const [showIdentity, setShowIdentity]         = React.useState(false);
+  const [transparencyMode, setTransparencyMode] = React.useState(false);
   const adminClickTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   // After mount, check if intro was already seen this session
