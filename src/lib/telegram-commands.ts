@@ -84,9 +84,6 @@ export const TOP_100_COMMANDS = [
   { command: 'audit', description: 'Fetch latest 5 platform audit events' },
   { command: 'audit_user', description: 'Track all actions by specific user' },
   { command: 'audit_ip', description: 'Track all actions from specific IP' },
-  { command: 'gdpr_wipe', description: 'Hard-delete all user data (Permanent)' },
-  { command: 'privacy_status', description: 'Check platform compliance status' },
-  { command: 'compliance_scan', description: 'Scan DB for unencrypted PII' },
   { command: 'tos_update', description: 'Force all users to re-accept Terms' },
 
   // ── COMMUNICATION ─────────────────────────────────────────────────
@@ -94,24 +91,13 @@ export const TOP_100_COMMANDS = [
   { command: 'broadcast', description: 'Send global push notification' },
   { command: 'notify_vips', description: 'Message all VIP users specifically' },
   { command: 'alert', description: 'Trigger visual alert on frontend' },
-  { command: 'motd', description: 'Update Message of the Day' },
-  { command: 'tweet_publish', description: 'Publish alert to Twitter/X' },
 
   // ── KNOWLEDGE & TASKS ─────────────────────────────────────────────
   { command: 'kb_search', description: 'Search Internal Knowledge Base' },
-  { command: 'kb_list', description: 'List all KB documentation entries' },
   { command: 'todo_list', description: 'View Admin Team task board' },
-  { command: 'todo_add', description: 'Add task to the Admin Board' },
-  { command: 'todo_done', description: 'Mark admin task as completed' },
 
-  // ── UTILITY & FUN (ROOT LEVEL) ────────────────────────────────────
-  { command: 'sudo', description: 'Execute as superuser' },
-  { command: 'rm_rf', description: 'Fatal destruction protocol' },
-  { command: 'matrix', description: 'Enter the Simulation' },
-  { command: 'hack', description: 'Bypass the mainframe' },
+  // ── UTILITY ───────────────────────────────────────────────────────
   { command: 'shrug', description: '¯\\_(ツ)_/¯' },
-  { command: 'coffee', description: 'Request digital caffeine' },
-  { command: 'dice', description: 'Roll a D6' },
-  { command: 'quote', description: 'Get a random tech quote' },
-  { command: 'blame', description: 'Identify the DNS failure' }
+  { command: 'ping', description: 'Verify bot-to-server latency' },
+  { command: 'version', description: 'View current system build version' }
 ];

@@ -554,6 +554,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (text === '/whoami') {
+      await sendTelegramMessage(chatId, `🆔 *YOUR IDENTITY*\n${THEME.divider}\nChat ID: \`${chatId}\`\nAuthorized ID: \`${ADMIN_CHAT_ID}\``, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text === '/register_ui') {
+      try {
+        const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ commands: TOP_100_COMMANDS })
+        });
+        const data = await resp.json();
+        if (data.ok) {
+          await sendTelegramMessage(chatId, `✅ *COMMAND MENU REGISTERED!*\n\nType \`/\` to see the new professional menu.`, {}, supabase);
+        } else {
+          await sendTelegramMessage(chatId, `❌ *REGISTRATION FAILED*\nError: \`${data.description}\``, {}, supabase);
+        }
+      } catch (err: any) {
+        await sendTelegramMessage(chatId, `💥 *CRITICAL FAILURE*\n${err.message}`, {}, supabase);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text === '/ping') {
+      const start = Date.now();
+      await sendTelegramMessage(chatId, `🏓 *PONG!*\nLatency: \`${Date.now() - start}ms\``, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
     if (text.toLowerCase().startsWith('/auth')) {
       const pass = text.substring(5).trim();
       const targetPass = process.env.MASTER_PASSWORD || 'VERLYN-ADMIN-99';
