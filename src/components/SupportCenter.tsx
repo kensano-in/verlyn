@@ -193,7 +193,20 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
           // Identify optimistic messages that haven't been synced yet
           const optimistic = prev.filter(m => m.is_optimistic);
           const incomingIds = new Set(newMsgs.map((m: any) => m.id));
-          const stillSending = optimistic.filter(m => !incomingIds.has(m.id));
+          
+          const stillSending = optimistic.filter(m => {
+            // Already synced by ID (unlikely due to type diff)
+            if (incomingIds.has(m.id)) return false;
+            
+            // Check if this optimistic message's content already exists in the incoming messages
+            // This is the primary fix for the "double message" glitch.
+            const alreadyInIncoming = newMsgs.some(nm => 
+              nm.sender_type === m.sender_type && 
+              nm.content === m.content
+            );
+            
+            return !alreadyInIncoming;
+          });
           
           const merged = [...newMsgs, ...stillSending];
           
@@ -452,6 +465,10 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
       }
       
       if (localUrl) setTimeout(() => URL.revokeObjectURL(localUrl), 10000);
+      
+      // Clean up the optimistic message now that we know it's synced
+      // The next poll will pick it up as a real message
+      setMessages(prev => prev.filter(m => m.id !== optimisticId));
 
     } catch (err: any) {
       const isTimeout = err.name === 'AbortError';
