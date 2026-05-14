@@ -1969,7 +1969,6 @@ export async function POST(req: NextRequest) {
         else if (cmd === '/shrug') { await sendTelegramMessage(chatId, `🤷 *SHRUG*\n¯\\_(ツ)_/¯`, {}, supabase); }
         return NextResponse.json({ ok: true });
       }
-    }
 
     if (message.reply_to_message) {
       const originalText = message.reply_to_message.text || message.reply_to_message.caption || '';
