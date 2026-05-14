@@ -584,6 +584,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    if (text === '/logout') {
+      await purgeSessionMessages(supabase, chatId);
+      await supabase.from('audit_log').delete().eq('ip_address', `tg:${chatId}`).eq('action', 'tg_auth_success');
+      await sendTelegramMessage(chatId, "🔒 *SESSION TERMINATED*\n" + THEME.divider + "\n\nAll administrative messages purged.\nAccess has been revoked.", {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
     if (text.toLowerCase().startsWith('/auth')) {
       const pass = text.substring(5).trim();
       const targetPass = process.env.MASTER_PASSWORD || 'VERLYN-ADMIN-99';
