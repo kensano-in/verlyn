@@ -199,11 +199,26 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
             if (incomingIds.has(m.id)) return false;
             
             // Check if this optimistic message's content already exists in the incoming messages
-            // This is the primary fix for the "double message" glitch.
-            const alreadyInIncoming = newMsgs.some(nm => 
-              nm.sender_type === m.sender_type && 
-              nm.content === m.content
-            );
+            // We use a "loose" match for attachments to ignore the temporary local URL
+            const alreadyInIncoming = newMsgs.some(nm => {
+              if (nm.sender_type !== m.sender_type) return false;
+              
+              // If it's an attachment, compare the core parts (name and text)
+              if (m.content.startsWith('[ATTACHMENT:') && nm.content.startsWith('[ATTACHMENT:')) {
+                try {
+                  const mEnd = m.content.indexOf(']');
+                  const nmEnd = nm.content.indexOf(']');
+                  const mData = JSON.parse(m.content.substring(12, mEnd));
+                  const nmData = JSON.parse(nm.content.substring(12, nmEnd));
+                  const mText = m.content.substring(mEnd + 1).trim();
+                  const nmText = nm.content.substring(nmEnd + 1).trim();
+                  
+                  return mData.name === nmData.name && mText === nmText;
+                } catch { return m.content === nm.content; }
+              }
+              
+              return nm.content === m.content;
+            });
             
             return !alreadyInIncoming;
           });
