@@ -179,6 +179,7 @@ export default function HomePage() {
     { label: 'Transparency', href: '/transparency' },
     { label: 'Status',       href: '/status' },
     { label: 'Whitepaper',   href: '/whitepaper' },
+
     { label: 'Developer',    onClick: 'showIdentity' }
   ];
 

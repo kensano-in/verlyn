@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 const ITEMS = [
   { id: 'home', title: 'Home', desc: 'Return to landing', category: 'Navigation', href: '/' },
   { id: 'support', title: 'Support Center', desc: 'Get help or open a case', category: 'Support', href: '/support' },
+
   { id: 'status', title: 'System Status', desc: 'Live infrastructure telemetry', category: 'Infrastructure', href: '/status' },
   { id: 'access', title: 'Access Model', desc: 'Zero-knowledge architecture', category: 'Infrastructure', href: '/access-model' },
   { id: 'privacy', title: 'Privacy Policy', desc: 'Data handling standards', category: 'Legal', href: '/privacy' },
