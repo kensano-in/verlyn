@@ -132,14 +132,14 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
             </defs>
             <path 
               d="M17 14 L32 52" 
-              stroke="url(#grad-e1)" 
+              stroke="white" 
               strokeWidth="5" 
               strokeLinecap="round"
               style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s' }}
             />
             <path 
               d="M47 14 L32 52" 
-              stroke="url(#grad-e2)" 
+              stroke="white" 
               strokeWidth="5" 
               strokeLinecap="round"
               style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}

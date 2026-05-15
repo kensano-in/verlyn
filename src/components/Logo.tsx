@@ -27,8 +27,8 @@ const Logo: React.FC<LogoProps> = ({ size = 64, className = '', glow = true }) =
             <stop offset="100%" stopColor="white" stopOpacity="0.6"/>
           </linearGradient>
         </defs>
-        <path d="M17 14 L32 52" stroke="url(#grad-e1)" strokeWidth="5" strokeLinecap="round"/>
-        <path d="M47 14 L32 52" stroke="url(#grad-e2)" strokeWidth="5" strokeLinecap="round"/>
+        <path d="M17 14 L32 52" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+        <path d="M47 14 L32 52" stroke="white" strokeWidth="5" strokeLinecap="round"/>
       </svg>
     </div>
   );
