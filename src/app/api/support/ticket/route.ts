@@ -37,7 +37,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ ticket }, { status: 200 });
+    // Check Shadow Status
+    const ipKey = ticket.ip_address ? `shadow_${ticket.ip_address}` : null;
+    const emailKey = ticket.email ? `shadow_${ticket.email}` : null;
+    
+    const { data: shadowData } = await supabaseAdmin
+      .from('global_config')
+      .select('value')
+      .or(`key.eq.${ipKey},key.eq.${emailKey}`)
+      .eq('value', 'true')
+      .maybeSingle();
+
+    return NextResponse.json({ 
+      ticket: { ...ticket, is_shadowed: !!shadowData } 
+    }, { status: 200 });
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

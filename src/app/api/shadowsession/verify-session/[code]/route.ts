@@ -14,8 +14,9 @@ function getSupabase() {
  * GET /api/shadowsession/verify-session/[code]
  * Hydrates the room UI by verifying the httpOnly session cookie.
  */
-export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
-  const code = params.code?.toUpperCase();
+export async function GET(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  const { code: rawCode } = await params;
+  const code = rawCode?.toUpperCase();
   if (!code) return NextResponse.json({ error: 'Missing code' }, { status: 400 });
 
   const ctx = getShadowContext(req, code);

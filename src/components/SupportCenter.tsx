@@ -191,33 +191,30 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
         
         setMessages(prev => {
           // Identify optimistic messages that haven't been synced yet
-          const optimistic = prev.filter(m => m.is_optimistic);
+          const optimistic = prev.filter((m: any) => m.is_optimistic);
           const incomingIds = new Set(newMsgs.map((m: any) => m.id));
           
           const stillSending = optimistic.filter(m => {
-            // Already synced by ID (unlikely due to type diff)
+            // Already synced by ID
             if (incomingIds.has(m.id)) return false;
             
             // Check if this optimistic message's content already exists in the incoming messages
-            // We use a "loose" match for attachments to ignore the temporary local URL
-            const alreadyInIncoming = newMsgs.some(nm => {
+            const alreadyInIncoming = newMsgs.some((nm: any) => {
               if (nm.sender_type !== m.sender_type) return false;
               
-              // If it's an attachment, compare the core parts (name and text)
-              if (m.content.startsWith('[ATTACHMENT:') && nm.content.startsWith('[ATTACHMENT:')) {
+              const mContent = m.content.trim().toLowerCase();
+              const nmContent = nm.content.trim().toLowerCase();
+
+              // If it's an attachment, compare the core parts
+              if (mContent.includes('[attachment:') && nmContent.includes('[attachment:')) {
                 try {
-                  const mEnd = m.content.indexOf(']');
-                  const nmEnd = nm.content.indexOf(']');
-                  const mData = JSON.parse(m.content.substring(12, mEnd));
-                  const nmData = JSON.parse(nm.content.substring(12, nmEnd));
-                  const mText = m.content.substring(mEnd + 1).trim();
-                  const nmText = nm.content.substring(nmEnd + 1).trim();
-                  
-                  return mData.name === nmData.name && mText === nmText;
-                } catch { return m.content === nm.content; }
+                  const mFile = mContent.split('\"name\":\"')[1]?.split('\"')[0];
+                  const nmFile = nmContent.split('\"name\":\"')[1]?.split('\"')[0];
+                  return mFile === nmFile && mFile !== undefined;
+                } catch { return mContent === nmContent; }
               }
               
-              return nm.content === m.content;
+              return nmContent === mContent;
             });
             
             return !alreadyInIncoming;
@@ -228,7 +225,7 @@ export default function SupportCenter({ onClose, initialView, initialReportType 
           // Auto-scroll logic
           const container = chatScrollRef.current;
           const wasAtBottom = container ? (container.scrollHeight - container.scrollTop <= container.clientHeight + 150) : true;
-          const newAgentMsg = newMsgs.length > prev.filter(m => !m.is_optimistic).length && newMsgs[newMsgs.length-1]?.sender_type === 'agent';
+          const newAgentMsg = newMsgs.length > prev.filter((m: any) => !m.is_optimistic).length && newMsgs[newMsgs.length-1]?.sender_type === 'agent';
 
           if (wasAtBottom || newAgentMsg) {
              setTimeout(() => {

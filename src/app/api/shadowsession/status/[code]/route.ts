@@ -9,9 +9,9 @@ function getSupabase() {
 }
 
 // GET /api/shadowsession/status/[code] — Poll session state
-export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
-    const { code } = params;
+    const { code } = await params;
     const supabase = getSupabase();
 
     const { data: session, error } = await supabase
@@ -63,9 +63,9 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
 }
 
 // DELETE /api/shadowsession/status/[code] — Destroy session
-export async function DELETE(req: NextRequest, { params }: { params: { code: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
-    const { code } = params;
+    const { code } = await params;
     const supabase = getSupabase();
 
     const { data: session } = await supabase

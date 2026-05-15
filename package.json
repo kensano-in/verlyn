@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.3",
     "libsodium-wrappers": "^0.8.4",
     "lottie-react": "^2.4.1",
+    "lucide-react": "^1.16.0",
     "nanoid": "^5.1.11",
     "next": "16.2.4",
     "postprocessing": "^6.39.1",

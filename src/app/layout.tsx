@@ -13,13 +13,14 @@ export const metadata: Metadata = {
   keywords: ['privacy', 'zero-knowledge', 'secure messaging', 'encrypted social network', 'verlyn'],
   icons: {
     icon: [
-      { url: '/icon.png' },
-      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo.svg' },
+      { url: '/logo.svg', sizes: '32x32', type: 'image/svg+xml' },
     ],
     apple: [
-      { url: '/apple-icon.png' },
+      { url: '/logo.svg' },
     ],
   },
+
   openGraph: {
     title: 'Verlyn | The Future of Privacy',
     description:

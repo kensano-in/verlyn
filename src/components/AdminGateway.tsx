@@ -32,6 +32,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   const [authKey, setAuthKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isGhostMode, setIsGhostMode] = useState(false);
+  const [ghostToken, setGhostToken] = useState<string | null>(null);
 
   // Setup State
   const [secret, setSecret] = useState('');
@@ -56,6 +58,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isWhisper, setIsWhisper] = useState(false);
 
   // 1. Check PIN
   useEffect(() => {
@@ -138,6 +141,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setIsGhostMode(false);
     try {
       const authPayload = token2FA ? `${password}:${token2FA}` : password;
       const res = await fetch('/api/admin/tickets', {
@@ -166,8 +170,40 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // 3.5 Ghost Mode Action
+  const handleGhostMode = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/ghost-session', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Shadow Access Denied');
+      
+      setGhostToken(data.token);
+      setIsGhostMode(true);
+      setAuthKey(data.token); // Ghost token as authKey
+      
+      // Fetch data for ghost view
+      const authHeader = `Ghost ${data.token}`;
+      const [tkRes, prRes] = await Promise.all([
+        fetch('/api/admin/tickets', { headers: { 'Authorization': authHeader } }),
+        fetch('/api/admin/preregistrations', { headers: { 'Authorization': authHeader } })
+      ]);
+      
+      if (tkRes.ok) { const tkData = await tkRes.json(); setTickets(tkData.tickets || []); }
+      if (prRes.ok) { const prData = await prRes.json(); setPreRegs(prData.registrations || []); }
+      
+      setStep('dashboard');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 4. Update Ticket Status
   const updateStatus = async (id: string, status: string) => {
+    if (isGhostMode) return;
     try {
       const res = await fetch('/api/admin/tickets', {
         method: 'PATCH',
@@ -188,8 +224,9 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
     if (joinStep !== 'chat' || !selectedTicket) return;
     const load = async () => {
       try {
+        const authHeader = isGhostMode ? `Ghost ${ghostToken}` : `Bearer ${authKey}`;
         const res = await fetch(`/api/support/messages?ticket_id=${selectedTicket.id}`, {
-          headers: { 'Authorization': `Bearer ${authKey}` }
+          headers: { 'Authorization': authHeader }
         });
         if (!res.ok) return;
         const data = await res.json();
@@ -203,27 +240,46 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   }, [joinStep, selectedTicket, authKey]);
 
   // 6. Admin send message
-  const sendAdminMsg = async (overrideText?: string, overrideName?: string) => {
+  const sendAdminMsg = async (overrideText?: string, overrideName?: string, overrideInternal?: boolean) => {
+    if (isGhostMode) return; // Prevent any modifications in ghost mode
     const text = overrideText || chatInput;
     const name = overrideName || adminName;
+    const isInternal = overrideInternal !== undefined ? overrideInternal : isWhisper;
+    
     if (!text.trim() || !selectedTicket || chatSending) return;
     if (!overrideText) setChatInput('');
     setChatSending(true);
-    setChatMessages(prev => [...prev, { id: Date.now(), sender_type: 'agent', agent_name: name, content: text, created_at: new Date().toISOString() }]);
+    setChatMessages(prev => [...prev, { 
+      id: Date.now(), 
+      sender_type: 'agent', 
+      agent_name: name, 
+      content: text, 
+      is_internal: isInternal,
+      created_at: new Date().toISOString() 
+    }]);
     setTimeout(() => { chatScrollRef.current?.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' }); }, 80);
     try {
       await fetch('/api/support/messages', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: selectedTicket.id, content: text, sender_type: 'agent', agent_name: name })
+        body: JSON.stringify({ 
+          ticket_id: selectedTicket.id, 
+          content: text, 
+          sender_type: 'agent', 
+          agent_name: name,
+          is_internal: isInternal
+        })
       });
-      // Update ticket status to In progress
-      await fetch('/api/admin/tickets', {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedTicket.id, status: 'In progress' })
-      });
-      setTickets(ts => ts.map(t => t.id === selectedTicket.id ? { ...t, status: 'In progress' } : t));
+      
+      // Update ticket status to In progress only if not internal
+      if (!isInternal) {
+        await fetch('/api/admin/tickets', {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${authKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: selectedTicket.id, status: 'In progress' })
+        });
+        setTickets(ts => ts.map(t => t.id === selectedTicket.id ? { ...t, status: 'In progress' } : t));
+      }
     } catch { } finally { setChatSending(false); }
   };
 
@@ -457,9 +513,18 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                 width: '100%', padding: '20px', background: '#fff', color: '#000', fontWeight: 800, 
                 border: 'none', borderRadius: '14px', cursor: loading ? 'wait' : 'pointer', 
                 textTransform: 'uppercase', letterSpacing: '0.15em', transition: 'all 0.3s ease',
-                boxShadow: '0 10px 40px rgba(255,255,255,0.15)'
+                boxShadow: '0 10px 40px rgba(255,255,255,0.15)', marginBottom: '16px'
               }}>
                 {loading ? 'Authenticating...' : 'Access Command'}
+              </button>
+
+              <button type="button" onClick={handleGhostMode} disabled={loading} style={{ 
+                width: '100%', padding: '16px', background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.4)', 
+                fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', 
+                cursor: loading ? 'wait' : 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em',
+                fontSize: '11px', transition: 'all 0.2s ease'
+              }}>
+                Request Shadow Access (Trial)
               </button>
             </form>
           </motion.div>
@@ -480,8 +545,10 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 12px rgba(16,185,129,0.5)', animation: 'vrlBlink 2s infinite' }} />
-                  <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.15em', color: '#fff', textTransform: 'uppercase' }}>Command</span>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isGhostMode ? '#f59e0b' : '#10b981', boxShadow: `0 0 12px ${isGhostMode ? 'rgba(245,158,11,0.5)' : 'rgba(16,185,129,0.5)'}`, animation: 'vrlBlink 2s infinite' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.15em', color: '#fff', textTransform: 'uppercase' }}>
+                    {isGhostMode ? 'Shadow' : 'Command'}
+                  </span>
                 </div>
                 
                 {/* TABS */}
@@ -856,32 +923,46 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                             ) : (
                               <div key={msg.id} style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', alignItems: 'flex-start' }}>
                                 <div style={{ textAlign: 'right' }}>
-                                  <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>{msg.agent_name || adminName}</p>
-                                  <div style={{ background: '#4f46e5', borderRadius: '12px 4px 12px 12px', padding: '10px 14px' }}>
-                                    <p style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                                  <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>{msg.agent_name || adminName} {msg.is_internal && <span style={{ color: '#f59e0b', marginLeft: '4px' }}>[WHISPER]</span>}</p>
+                                  <div style={{ background: msg.is_internal ? 'rgba(245,158,11,0.1)' : '#4f46e5', borderRadius: '12px 4px 12px 12px', padding: '10px 14px', border: msg.is_internal ? '1px solid rgba(245,158,11,0.3)' : 'none' }}>
+                                    <p style={{ fontSize: '13px', color: msg.is_internal ? '#f59e0b' : '#fff', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{msg.content}</p>
                                   </div>
                                 </div>
-                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: msg.is_internal ? '#f59e0b' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                   {msg.is_internal ? (
+                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zM9 7a3 3 0 0 1 6 0v3H9V7z"/></svg>
+                                   ) : (
+                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                   )}
                                 </div>
                               </div>
                             )
                           ))}
                         </div>
                         {/* Input */}
-                        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px' }}>
+                        <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                           <button onClick={() => setIsWhisper(!isWhisper)} 
+                             title={isWhisper ? "Whisper Mode (Internal Note)" : "Customer Reply Mode"}
+                             style={{ 
+                               background: isWhisper ? 'rgba(245,158,11,0.2)' : 'rgba(255,255,255,0.05)', 
+                               border: `1px solid ${isWhisper ? '#f59e0b' : 'rgba(255,255,255,0.1)'}`,
+                               borderRadius: '8px', width: '40px', height: '40px', display: 'flex', 
+                               alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s'
+                             }}>
+                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isWhisper ? "#f59e0b" : "rgba(255,255,255,0.4)"} strokeWidth="2"><path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zM9 7a3 3 0 0 1 6 0v3H9V7z"/></svg>
+                           </button>
                           <input value={chatInput} onChange={e => setChatInput(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAdminMsg(); } }}
-                            placeholder={`Reply as ${adminName}...`}
+                            placeholder={isWhisper ? "Write an internal whisper..." : `Reply as ${adminName}...`}
                             style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fff', fontSize: '13px', padding: '10px 14px', outline: 'none' }} />
                           <button onClick={() => sendAdminMsg()} disabled={chatSending || !chatInput.trim()}
                             style={{ 
-                              padding: '10px 24px', background: chatInput.trim() ? '#fff' : 'rgba(255,255,255,0.1)', 
+                              padding: '10px 24px', background: chatInput.trim() ? (isWhisper ? '#f59e0b' : '#fff') : 'rgba(255,255,255,0.1)', 
                               color: chatInput.trim() ? '#000' : 'rgba(255,255,255,0.3)', border: 'none', 
                               borderRadius: '10px', fontSize: '12px', fontWeight: 800, cursor: chatInput.trim() ? 'pointer' : 'not-allowed', 
                               transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.1em'
                             }}>
-                            Send
+                            {isWhisper ? 'Whisper' : 'Send'}
                           </button>
                         </div>
                       </div>

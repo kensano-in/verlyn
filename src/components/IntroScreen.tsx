@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 
 const PILLARS = [
-  'A new kind of social space.',
-  'Your data.\u00a0 Only yours.',
-  'Every message, encrypted.',
-  'Built for people, not algorithms.',
+  'Architectural Sovereignty.',
+  'Immutable Privacy Chains.',
+  'Zero-Knowledge Synchronicity.',
+  'Digital Haute Couture Protocol.',
 ];
 
 export default function IntroScreen({ onComplete }: { onComplete: () => void }) {
@@ -119,10 +119,24 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
           transformStyle: 'preserve-3d',
           animation: 'vRotate 8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
         }}>
-          <svg viewBox="0 0 64 64" fill="none" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.4))' }}>
-            <path d="M17 14 L32 52" stroke="white" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.5s' }}/>
-            <path d="M47 14 L32 52" stroke="rgba(255,255,255,0.3)" strokeWidth="5" strokeLinecap="round" style={{ strokeDasharray: 100, strokeDashoffset: 100, animation: 'vDrawLine 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}/>
+          <svg viewBox="0 0 64 64" fill="none" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 40px rgba(99,102,241,0.5))' }}>
+            {/* OG Duality V */}
+            <path 
+              d="M17 14 L32 52" 
+              stroke="white" 
+              strokeWidth="5" 
+              strokeLinecap="square"
+              style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s' }}
+            />
+            <path 
+              d="M47 14 L32 52" 
+              stroke="white" 
+              strokeWidth="5" 
+              strokeLinecap="square"
+              style={{ opacity: 0.3, strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}
+            />
           </svg>
+
         </div>
         <div style={{
           position: 'absolute', inset: '20px', borderRadius: '50%',
@@ -219,7 +233,7 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
           background: 'none', border: '1px solid rgba(255,255,255,0.1)',
           color: 'rgba(255,255,255,0.28)', fontSize: '10px',
           letterSpacing: '0.14em', padding: '9px 18px', cursor: 'pointer',
-          borderRadius: '4px', textTransform: 'uppercase',
+          borderRadius: '0px', textTransform: 'uppercase',
           transition: 'all 0.2s ease',
           opacity: show('word') ? 1 : 0,
         }}

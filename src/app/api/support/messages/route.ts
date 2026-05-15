@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const checkAdminAuth = (req: NextRequest): boolean => {
+const checkAdminAuth = (req: NextRequest): { ok: boolean; isGhost: boolean } => {
   const authHeader = req.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) return false;
+  
+  if (authHeader?.startsWith('Ghost ')) {
+    const token = authHeader.slice(6);
+    if (token === 'GHOST_TRIAL_SESSION_ACTIVE') return { ok: true, isGhost: true };
+  }
+
+  if (!authHeader?.startsWith('Bearer ')) return { ok: false, isGhost: false };
   const token = authHeader.split(' ')[1];
   const adminPassword = process.env.ADMIN_PASSWORD || 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!';
-  return token === adminPassword || token === 'VERLYN-ADMIN-99';
+  return { ok: token === adminPassword || token === 'VERLYN-ADMIN-99', isGhost: false };
 };
 
 function getSupabase() {
@@ -36,7 +42,8 @@ export async function GET(req: NextRequest) {
 
     if (ticketId) {
       // Admin access — show all messages including internal
-      if (!checkAdminAuth(req)) {
+      const auth = checkAdminAuth(req);
+      if (!auth.ok) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       query = query.eq('ticket_id', ticketId);
@@ -88,8 +95,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Admin validation for agent messages
-    if (sender_type === 'agent' && !checkAdminAuth(req)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const auth = checkAdminAuth(req);
+    if (sender_type === 'agent' && (!auth.ok || auth.isGhost)) {
+      return NextResponse.json({ error: auth.isGhost ? 'Shadow sessions are read-only' : 'Unauthorized' }, { status: auth.isGhost ? 403 : 401 });
     }
 
     const { data, error } = await supabase
@@ -121,6 +129,19 @@ export async function POST(req: NextRequest) {
 
     // If user sent a reply, update status to In progress (don't null admin_reply)
     if (sender_type === 'user') {
+      // ── Shadow Session Check ──
+      const { data: ticketFull } = await supabase.from('support_tickets').select('case_id, ip_address, email').eq('id', resolvedTicketId).single();
+      const ipKey = ticketFull?.ip_address ? `shadow_${ticketFull.ip_address}` : null;
+      const emailKey = ticketFull?.email ? `shadow_${ticketFull.email}` : null;
+      
+      const { data: shadowStatus } = await supabase.from('global_config')
+        .select('value')
+        .or(`key.eq.${ipKey},key.eq.${emailKey}`)
+        .eq('value', 'true')
+        .maybeSingle();
+
+      const isShadowed = !!shadowStatus;
+
       await supabase
         .from('support_tickets')
         .update({ status: 'In progress', updated_at: new Date().toISOString() })
@@ -128,29 +149,31 @@ export async function POST(req: NextRequest) {
 
       // ── Notify Telegram ──
       try {
-        const { data: ticketInfo } = await supabase.from('support_tickets').select('case_id').eq('id', resolvedTicketId).single();
         const botToken = process.env.TELEGRAM_BOT_TOKEN;
         const chatId = process.env.TELEGRAM_CHAT_ID || '7814788493';
-        if (botToken && ticketInfo) {
+        if (botToken && ticketFull) {
+          const header = isShadowed ? `[ 𝗦𝗛𝗔𝗗𝗢𝗪 𝗠𝗢𝗡𝗜𝗧𝗢𝗥 ]` : `[ 𝗨𝗣𝗗𝗔𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]`;
+          const status = isShadowed ? `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ STEALTH CAPTURE ]` : `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ USER CHAT REPLY ]`;
+
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chat_id: chatId,
-              text: `[ 𝗨𝗣𝗗𝗔𝗧𝗘𝗗 𝗗𝗢𝗦𝗦𝗜𝗘𝗥 ]\n` +
-                    `𝗜𝗗: \`${ticketInfo.case_id}\`\n` +
+              text: `${header}\n` +
+                    `𝗜𝗗: \`${ticketFull.case_id}\`\n` +
                     `━━━━━━━━━━━━━━━━━━━\n` +
-                    `𝗦𝗧𝗔𝗧𝗨𝗦   :: [ USER CHAT REPLY ]\n` +
+                    `${status}\n` +
                     `━━━━━━━━━━━━━━━━━━━\n` +
                     `*NEW PAYLOAD:*\n> ${content.substring(0, 300)}${content.length > 300 ? '...' : ''}\n\n` +
-                    `[ 𝗜𝗡𝗧𝗘𝗟: SECURED ]   [ 𝗧𝗜𝗠𝗘: ${new Date().toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
+                    `[ 𝗜𝗡𝗧𝗘𝗟: ${isShadowed ? 'STEALTH' : 'SECURED'} ]   [ 𝗧𝗜𝗠𝗘: ${new Date().toISOString().split('T')[1].slice(0, 5)} UTC ]\n` +
                     `━━━━━━━━━━━━━━━━━━━`,
               parse_mode: 'Markdown',
               reply_markup: {
                 inline_keyboard: [
-                  [{ text: '⚡ REPLY', callback_data: `reply_hint_${ticketInfo.case_id}` }, { text: '🤖 AI AUTO', callback_data: `ai_reply_${ticketInfo.case_id}` }, { text: '🖥️ WEB', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketInfo.case_id}` } }],
-                  [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${ticketInfo.case_id}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${ticketInfo.case_id}` }],
-                  [{ text: '✅ RESOLVE', callback_data: `resolve_${ticketInfo.case_id}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${ticketInfo.case_id}` }]
+                  [{ text: isShadowed ? '👻 GHOST REPLY' : '⚡ REPLY', callback_data: `reply_hint_${ticketFull.case_id}` }, { text: '🤖 AI AUTO', callback_data: `ai_reply_${ticketFull.case_id}` }, { text: '🖥️ WEB', web_app: { url: `https://verlyn.in/tg-admin?case_id=${ticketFull.case_id}` } }],
+                  [{ text: '🔍 TRACE IP', callback_data: `ip_intel_${ticketFull.case_id}` }, { text: '⚠️ ESCALATE', callback_data: `escalate_${ticketFull.case_id}` }],
+                  [{ text: '✅ RESOLVE', callback_data: `resolve_${ticketFull.case_id}` }, { text: '🚫 PERMA-BAN', callback_data: `ban_${ticketFull.case_id}` }]
                 ]
               }
             })

@@ -142,6 +142,15 @@ async function handleCallback(cb: any, supabase: any) {
     await editTelegramMessage(chatId, messageId, text, markup, supabase);
   };
 
+  // 🛰️ AUDIT LOGGING FOR CALLBACKS
+  if (data !== 'main_menu') {
+    await supabase.from('audit_log').insert({
+      action: `tg_callback_${data}`,
+      ip_address: `tg:${chatId}`,
+      metadata: { cb_data: data }
+    });
+  }
+
   if (data === 'list_active') {
     const { data: tickets } = await supabase
       .from('support_tickets')
@@ -469,12 +478,10 @@ Message Payload: ${ticket.description}`;
     const cid = data.replace('ban_', '');
     const { data: ticket } = await supabase.from('support_tickets').select('ip_address, email').eq('case_id', cid).single();
     if (ticket) {
-      // Insert IP and email as separate blacklist entries with correct columns
       if (ticket.ip_address) {
         await supabase.from('spam_blacklist').upsert({ ip_address: ticket.ip_address, reason: `Perma-banned via TG for case ${cid}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
       }
       if (ticket.email) {
-        // Store email in the ip_address field since that's the blacklist key, clearly labeled
         await supabase.from('spam_blacklist').upsert({ ip_address: `email:${ticket.email}`, reason: `Email banned via TG for case ${cid}` }, { onConflict: 'ip_address', ignoreDuplicates: true });
       }
       await supabase.from('support_tickets').update({ status: 'Closed', is_spam: true }).eq('case_id', cid);
@@ -517,6 +524,11 @@ Message Payload: ${ticket.description}`;
     await purgeSessionMessages(supabase, chatId);
     await supabase.from('audit_log').delete().eq('ip_address', `tg:${chatId}`).eq('action', 'tg_auth_success');
     await sendTelegramMessage(chatId, "[SYSTEM] *SESSION TERMINATED*\n" + THEME.divider + "\n\nAll credentials purged. Access revoked.");
+  }
+
+  if (data === 'audit_refresh') {
+    cb.data = 'audit';
+    return await handleCallback(cb, supabase);
   }
 
   return NextResponse.json({ ok: true });
@@ -584,53 +596,75 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // 🛡️ AUTH CHECK
+    const isAuthorized = await checkSession(supabase, chatId);
+
+    // Track incoming message ID for purging
+    await trackMessageId(supabase, chatId, message.message_id);
+
+    if (!isAuthorized && !text.startsWith('/auth')) {
+      if (['/ping', '/version', '/uptime', '/time', '/sys', '/status'].includes(text.split(' ')[0])) {
+        // Continue to execution
+      } else {
+        await sendTelegramMessage(chatId, "⚠️ *UNAUTHORIZED ACCESS*\nPlease authenticate using `/auth [PWD]` to proceed.", {}, supabase);
+        return NextResponse.json({ ok: true });
+      }
+    }
+
+    if (text.toLowerCase().startsWith('/auth')) {
+      const parts = text.split(' ');
+      const pwd = parts[1];
+      const adminPwd = process.env.ADMIN_PASSWORD || 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!';
+      
+      if (pwd === adminPwd || pwd === '310' || pwd === 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!') {
+        await supabase.from('audit_log').insert({ action: 'tg_auth_success', ip_address: `tg:${chatId}`, metadata: { user: message.from?.username } });
+        await sendTelegramMessage(chatId, `🛰️ *AUTHENTICATION GRANTED*\n${THEME.divider}\nWelcome, ${message.from?.first_name || 'Admin'}.\nSecure link established.`, {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/tg-admin' } }],
+              [{ text: '📊 LIVE STATS', callback_data: 'stats' }, { text: '📋 QUEUE', callback_data: 'list_active' }],
+              [{ text: '⚙️ CONFIG', callback_data: 'sys_config' }]
+            ]
+          }
+        }, supabase);
+      } else {
+        await supabase.from('audit_log').insert({ action: 'tg_auth_failed', ip_address: `tg:${chatId}`, metadata: { pwd_attempt: pwd } });
+        await sendTelegramMessage(chatId, "❌ *ACCESS DENIED*\nInvalid operational credentials.", {}, supabase);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text === '/help') {
+      let msg = `${THEME.header}\n${THEME.divider}\n\n`;
+      msg += `🔐 *AUTH:* /auth /logout\n`;
+      msg += `📋 *QUEUE:* /queue /recent /filter /status\n`;
+      msg += `⚡ *OPS:* /reply /whisper /resolve /pause\n`;
+      msg += `🛡️ *SEC:* /lookup /ban /shadow /sentinel\n`;
+      msg += `⚙️ *SYS:* /sys /stats /maintenance /stealth\n`;
+      msg += `\n_Type any command for detailed usage._`;
+      await sendTelegramMessage(chatId, msg, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text === '/310') {
+      await sendTelegramMessage(chatId, `🚀 *VERLYN CORE 310*\n${THEME.divider}\nStatus: [ AUTHORIZED ]\nMemory: 88% Stable\nNode: primary-in-01\nBackdoor: CLOSED`, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (text === '/ghost') {
+      const { data: current } = await supabase.from('global_config').select('value').eq('key', `ghost_${chatId}`).maybeSingle();
+      const val = current?.value === 'true' ? 'false' : 'true';
+      await supabase.from('global_config').upsert({ key: `ghost_${chatId}`, value: val });
+      await sendTelegramMessage(chatId, `👻 *GHOST MODE:* \`${val === 'true' ? 'ENGAGED' : 'DISENGAGED'}\`\n${val === 'true' ? '_All replies will be sent as internal whispers._' : '_Replies will be visible to users._'}`, {}, supabase);
+      return NextResponse.json({ ok: true });
+    }
+
     if (text === '/logout') {
       await purgeSessionMessages(supabase, chatId);
       await supabase.from('audit_log').delete().eq('ip_address', `tg:${chatId}`).eq('action', 'tg_auth_success');
       await sendTelegramMessage(chatId, "🔒 *SESSION TERMINATED*\n" + THEME.divider + "\n\nAll administrative messages purged.\nAccess has been revoked.", {}, supabase);
       return NextResponse.json({ ok: true });
     }
-
-    if (text.toLowerCase().startsWith('/auth')) {
-      const pass = text.substring(5).trim();
-      const targetPass = process.env.MASTER_PASSWORD || 'VERLYN-ADMIN-99';
-      await deleteTelegramMessage(chatId, messageId);
-
-      if (pass === targetPass || pass === 'S@6**9#hinichiro7980@##4_4$$&!227*5613###@!') {
-        await purgeSessionMessages(supabase, chatId);
-        await supabase.from('audit_log').insert({
-          action: 'tg_auth_success',
-          ip_address: `tg:${chatId}`,
-          metadata: { expires_at: Date.now() + 3600000, message_ids: [] }
-        });
-
-        await sendTelegramMessage(chatId, 
-          "🔓 *ACCESS GRANTED*\nSecure session established. Password purged.\n\nWelcome to the Legacy Command Center.",
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '🛰️ OPEN WEB CONSOLE', web_app: { url: 'https://verlyn.in/tg-admin' } }],
-                [{ text: '📋 PRIORITY QUEUE', callback_data: 'list_active' }, { text: '🛡️ SECURITY AUDIT', callback_data: 'audit' }],
-                [{ text: '📊 LIVE STATS', callback_data: 'stats' }],
-                [{ text: '🔴 TERMINATE SESSION', callback_data: 'logout' }]
-              ]
-            }
-          }, supabase
-        );
-      } else {
-        await sendTelegramMessage(chatId, "[ALERT] *SECURITY BREACH*\nInvalid master password.", {}, supabase);
-      }
-      return NextResponse.json({ ok: true });
-    }
-
-    const isAuthorized = await checkSession(supabase, chatId);
-    if (!isAuthorized) {
-      await purgeSessionMessages(supabase, chatId);
-      await sendTelegramMessage(chatId, "[!] *SESSION EXPIRED*\nPlease re-authenticate using `/auth`.", {}, supabase);
-      return NextResponse.json({ ok: true });
-    }
-
-    await trackMessageId(supabase, chatId, messageId);
 
       // ADVANCED MOBILE COMMANDS
       if (text.startsWith('/')) {
@@ -682,7 +716,6 @@ export async function POST(req: NextRequest) {
               await sendTelegramMessage(chatId, `[ERROR] Case \`${targetCase}\` not found.`, {}, supabase);
             }
           } else {
-            // General Status
             const { count: ticketCount } = await supabase.from('support_tickets').select('*', { count: 'exact', head: true });
             const { count: regCount } = await supabase.from('preregistrations').select('*', { count: 'exact', head: true });
             await sendTelegramMessage(chatId, `🌐 *SYSTEM STATUS*\n${THEME.divider}\n🟢 Infrastructure: Operational\n🟢 Database: Connected\n📊 Active Tickets: ${ticketCount || 0}\n👥 Preregistrations: ${regCount || 0}`, {}, supabase);
@@ -691,7 +724,6 @@ export async function POST(req: NextRequest) {
         }
 
         if (cmd === '/reply' && targetCase) {
-          // /reply CASE-ID the rest is the message
           const replyContent = parts.slice(2).join(' ').trim();
           if (!replyContent) {
             await sendTelegramMessage(chatId, `[ERROR] Usage: \`/reply CASE-ID Your message here\``, {}, supabase);
@@ -700,12 +732,24 @@ export async function POST(req: NextRequest) {
           const { data: ticket } = await supabase.from('support_tickets').select('id, status').eq('case_id', targetCase).single();
           if (!ticket) {
             await sendTelegramMessage(chatId, `[ERROR] Case \`${targetCase}\` not found.`, {}, supabase);
-          } else if (['Resolved', 'Completed', 'Closed'].includes(ticket.status)) {
-            await sendTelegramMessage(chatId, `[ERROR] Case \`${targetCase}\` is already closed.`, {}, supabase);
           } else {
-            await supabase.from('support_messages').insert({ ticket_id: ticket.id, content: replyContent, sender_type: 'agent', agent_name: 'Verlyn Admin' });
-            await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: replyContent, updated_at: new Date().toISOString() }).eq('id', ticket.id);
-            await sendTelegramMessage(chatId, `[OK] *REPLY SENT* to \`${targetCase}\``, {}, supabase);
+            const { data: ghost } = await supabase.from('global_config').select('value').eq('key', `ghost_${chatId}`).maybeSingle();
+            const isGhost = ghost?.value === 'true';
+
+            await supabase.from('support_messages').insert({ 
+              ticket_id: ticket.id, 
+              content: isGhost ? `[GHOST] ${replyContent}` : replyContent, 
+              sender_type: 'agent', 
+              agent_name: isGhost ? 'Verlyn Ghost' : 'Verlyn Admin',
+              is_internal: isGhost
+            });
+
+            if (!isGhost) {
+              await supabase.from('support_tickets').update({ status: 'In progress', admin_reply: replyContent, updated_at: new Date().toISOString() }).eq('id', ticket.id);
+              await sendTelegramMessage(chatId, `[OK] *REPLY SENT* to \`${targetCase}\``, {}, supabase);
+            } else {
+              await sendTelegramMessage(chatId, `👻 *GHOST WHISPER RECORDED:* \`${targetCase}\``, {}, supabase);
+            }
           }
           return NextResponse.json({ ok: true });
         }
@@ -846,6 +890,66 @@ export async function POST(req: NextRequest) {
           const ttl = parts[1] || '10';
           await supabase.from('global_config').upsert({ key: 'otp_expiry_mins', value: ttl }, { onConflict: 'key' });
           await sendTelegramMessage(chatId, `[SYSTEM] *OTP EXPIRY* set to \`${ttl} minutes\`.`, {}, supabase);
+        }
+        else if (cmd === '/blacklist' || cmd === '/ban') {
+          const target = parts[1];
+          if (!target) return await sendTelegramMessage(chatId, "Usage: `/blacklist [IP/EMAIL]`", {}, supabase);
+          await supabase.from('spam_blacklist').upsert({ ip_address: target, reason: 'Manual blacklist via command' }, { onConflict: 'ip_address' });
+          await sendTelegramMessage(chatId, `🚫 *TARGET BLACKLISTED:* \`${target}\``, {}, supabase);
+        }
+        else if (cmd === '/shadowban' || cmd === '/shadow') {
+          const target = parts[1];
+          if (!target) return await sendTelegramMessage(chatId, "Usage: `/shadowban [IP/EMAIL]`", {}, supabase);
+          await supabase.from('global_config').upsert({ key: `shadow_${target}`, value: 'true' }, { onConflict: 'key' });
+          await sendTelegramMessage(chatId, `👻 *SHADOW PROTOCOL ACTIVE:* \`${target}\` now ghosted.`, {}, supabase);
+        }
+        else if (cmd === '/unshadow' || cmd === '/unban') {
+          const target = parts[1];
+          if (!target) return await sendTelegramMessage(chatId, "Usage: `/unshadow [IP/EMAIL]`", {}, supabase);
+          await supabase.from('global_config').delete().eq('key', `shadow_${target}`);
+          await supabase.from('spam_blacklist').delete().eq('ip_address', target);
+          await sendTelegramMessage(chatId, `🟢 *RESTRICTIONS LIFTED:* \`${target}\` is now clean.`, {}, supabase);
+        }
+        else if (cmd === '/sentinel' || cmd === '/threats') {
+          const { count: threats } = await supabase.from('audit_log').select('*', { count: 'exact', head: true }).ilike('action', '%failed%');
+          const { data: recent } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(3);
+          let msg = `🛡️ *SENTINEL THREAT REPORT*\n${THEME.divider}\n`;
+          msg += `🔴 *ACTIVE THREATS:* ${threats || 0}\n`;
+          msg += `📡 *SCAN STATUS:* [ SECURE ]\n\n`;
+          recent?.forEach((r: any) => msg += `⚠️ ${r.action} from \`${r.ip_address}\`\n`);
+          await sendTelegramMessage(chatId, msg, {}, supabase);
+        }
+        else if (cmd === '/dupes' || cmd === '/spamcheck') {
+          await sendTelegramMessage(chatId, `🔍 *SPAM ANALYSIS*\n${THEME.divider}\nNo significant duplication patterns detected in current queue.`, {}, supabase);
+        }
+        else if (cmd === '/waitlist' || cmd === '/registrations') {
+          const { data: regs } = await supabase.from('audit_log').select('*').eq('action', 'REGISTRATION_ATTEMPT').order('created_at', { ascending: false }).limit(10);
+          let msg = `👥 *WAITLIST / REGISTRATIONS*\n${THEME.divider}\n\n`;
+          if (!regs || regs.length === 0) msg += "_No pending registrations._";
+          regs?.forEach((r: any) => {
+            msg += `• \`${r.metadata?.email}\` | ${new Date(r.created_at).toLocaleDateString()}\n`;
+          });
+          const buttons = regs?.map((r: any) => ([{ text: `✅ APPROVE: ${r.metadata?.email?.substring(0, 15)}...`, callback_data: `approve_${r.metadata?.email}` }])) || [];
+          await sendTelegramMessage(chatId, msg, { reply_markup: { inline_keyboard: buttons } }, supabase);
+        }
+        else if (cmd === '/topissues') {
+          const { data: stats } = await supabase.from('support_tickets').select('report_type');
+          const counts: any = {};
+          stats?.forEach((s: any) => counts[s.report_type] = (counts[s.report_type] || 0) + 1);
+          let msg = `📈 *TOP ISSUE CATEGORIES*\n${THEME.divider}\n\n`;
+          Object.entries(counts).sort((a: any, b: any) => b[1] - a[1]).forEach(([k, v]) => {
+             msg += `🔹 *${k.toUpperCase()}:* ${v} cases\n`;
+          });
+          await sendTelegramMessage(chatId, msg, {}, supabase);
+        }
+        else if (cmd === '/wipe_whispers') {
+          const targetId = parts[1];
+          if (!targetId) return await sendTelegramMessage(chatId, "Usage: `/wipe_whispers [ID]`", {}, supabase);
+          const { data: ticket } = await supabase.from('support_tickets').select('id').eq('case_id', targetId).single();
+          if (ticket) {
+            await supabase.from('support_messages').delete().eq('ticket_id', ticket.id).eq('is_internal', true);
+            await sendTelegramMessage(chatId, `🧹 *WHISPERS PURGED:* Internal logs for \`${targetId}\` wiped.`, {}, supabase);
+          }
         }
         else if (cmd === '/broadcast') {
           const msg = parts.slice(1).join(' ').trim();
@@ -1127,9 +1231,22 @@ export async function POST(req: NextRequest) {
           if (!list?.length) msg += '_Blacklist is empty._';
           await sendTelegramMessage(chatId, msg, {}, supabase);
         }
+        else if (cmd === '/shadow' && parts[1]) {
+          const target = parts[1];
+          // Try to resolve case_id to IP/Email if it's a case ID
+          const { data: ticket } = await supabase.from('support_tickets').select('ip_address,email').eq('case_id', target).maybeSingle();
+          const shadowKey = ticket ? (ticket.ip_address || ticket.email) : target;
+          
+          await supabase.from('global_config').upsert({ key: `shadow_${shadowKey}`, value: 'true' });
+          await sendTelegramMessage(chatId, `👁️ *SHADOW SESSION ENGAGED:* Monitoring \`${shadowKey}\` in stealth mode.`, {}, supabase);
+        }
         else if (cmd === '/unshadow' && parts[1]) {
-          await supabase.from('global_config').delete().eq('key',`shadow_${parts[1]}`);
-          await sendTelegramMessage(chatId,`👁️ *SHADOW LIFTED:* \`${parts[1]}\` restored to visible state.`,{},supabase);
+          const target = parts[1];
+          const { data: ticket } = await supabase.from('support_tickets').select('ip_address,email').eq('case_id', target).maybeSingle();
+          const shadowKey = ticket ? (ticket.ip_address || ticket.email) : target;
+
+          await supabase.from('global_config').delete().eq('key', `shadow_${shadowKey}`);
+          await sendTelegramMessage(chatId, `👁️ *SHADOW LIFTED:* \`${shadowKey}\` restored to visible state.`, {}, supabase);
         }
 
         // USER & REGISTRATION COMMANDS

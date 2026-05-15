@@ -15,8 +15,9 @@ function addSysMsg(msgs: any[], text: string) {
 }
 
 // ── GET: unified poll (status + typing + presence + lock + system msgs) ─────
-export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
-  const code = params.code?.toUpperCase();
+export async function GET(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  const { code: rawCode } = await params;
+  const code = rawCode?.toUpperCase();
   const ctx = getShadowContext(req, code);
   if (!ctx) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 
@@ -134,8 +135,9 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
 }
 
 // ── POST: actions ─────────────────────────────────────────────────────────────
-export async function POST(req: NextRequest, { params }: { params: { code: string } }) {
-  const code = params.code?.toUpperCase();
+export async function POST(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  const { code: rawCode } = await params;
+  const code = rawCode?.toUpperCase();
   const ctx = getShadowContext(req, code);
   if (!ctx) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 

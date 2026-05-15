@@ -237,6 +237,26 @@ function TgAdminConsole() {
     } catch (e) { alert('Failed to toggle pause status.'); }
   };
 
+  const toggleShadow = async () => {
+    if (!dossier) return;
+    triggerHaptic('heavy');
+    const newState = !dossier.is_shadowed;
+    try {
+      await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer VERLYN-ADMIN-99'
+        },
+        body: JSON.stringify({ 
+          key: `shadow_${dossier.ip_address || dossier.email}`, 
+          value: newState ? 'true' : 'delete' 
+        })
+      });
+      await fetchCaseData();
+    } catch (e) { alert('Failed to toggle shadow state.'); }
+  };
+
   const filteredTickets = queue.filter(t => 
     t.case_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -524,19 +544,36 @@ function TgAdminConsole() {
                   <Icons.ArrowLeft size={18} />
                 </button>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-mono text-indigo-400 tracking-tighter">#{dossier?.case_id}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-indigo-400 tracking-tighter">#{dossier?.case_id}</span>
+                    {dossier?.is_shadowed && (
+                      <span className="text-[8px] font-bold text-indigo-500 bg-indigo-500/10 px-1 rounded border border-indigo-500/20 uppercase tracking-widest animate-pulse">
+                        Shadow
+                      </span>
+                    )}
+                  </div>
                   <h4 className="text-[12px] font-bold uppercase tracking-widest">{dossier?.full_name}</h4>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <button 
+                  onClick={toggleShadow}
+                  className={`p-2 rounded-xl border transition-all ${dossier?.is_shadowed ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40 animate-pulse' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
+                  title="Toggle Shadow Monitoring"
+                >
+                  <Icons.Ghost size={16} />
+                </button>
+                <button 
                   onClick={togglePause}
                   className={`p-2 rounded-xl border transition-all ${dossier?.status === 'Paused' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-white/[0.03] text-white/40 border-white/[0.05]'}`}
                 >
                   {dossier?.status === 'Paused' ? <Icons.Play size={16} /> : <Icons.Pause size={16} />}
                 </button>
-                <button className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl">
+                <button 
+                  onClick={markResolved}
+                  className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl"
+                >
                   <Icons.Check size={16} />
                 </button>
               </div>

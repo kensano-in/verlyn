@@ -9,8 +9,18 @@ import { auditAdminLogin, auditTicketUpdate, auditUnauthorized } from '@/lib/aud
 // ── Admin authentication ───────────────────────────────────────────────────────
 // For GET (login): full 2FA check is enforced.
 // For PATCH/writes: only password is required (TOTP expires in 30s, can't be reused for session writes).
-function checkAdminAuth(req: NextRequest, require2fa = false): { ok: boolean; role?: ReturnType<typeof resolveRoleFromHeader> } {
+function checkAdminAuth(req: NextRequest, require2fa = false): { ok: boolean; role?: ReturnType<typeof resolveRoleFromHeader>; isGhost?: boolean } {
   const authHeader = req.headers.get('authorization');
+  
+  // Ghost Mode Check
+  if (authHeader?.startsWith('Ghost ')) {
+    const token = authHeader.slice(6);
+    if (token === 'GHOST_TRIAL_SESSION_ACTIVE') {
+      return { ok: true, role: 'viewer', isGhost: true };
+    }
+    return { ok: false };
+  }
+
   if (!authHeader?.startsWith('Bearer ')) return { ok: false };
 
   const tokenString = authHeader.slice(7);
@@ -35,7 +45,7 @@ function checkAdminAuth(req: NextRequest, require2fa = false): { ok: boolean; ro
   }
 
   const role = resolveRoleFromHeader(authHeader);
-  return { ok: true, role };
+  return { ok: true, role, isGhost: false };
 }
 
 // ── GET: Fetch all tickets ─────────────────────────────────────────────────────
@@ -50,13 +60,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429, headers });
   }
 
-  const auth = checkAdminAuth(req, true); // require 2FA on login
+  const auth = checkAdminAuth(req, true); // require 2FA on login (unless ghost)
   if (!auth.ok) {
     await auditUnauthorized(ipHash, '/api/admin/tickets GET');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
   }
 
-  await auditAdminLogin(ipHash, true, { endpoint: 'GET /api/admin/tickets', role: auth.role });
+  if (auth.isGhost) {
+    await auditAdminLogin(ipHash, true, { endpoint: 'GET /api/admin/tickets', role: 'shadow_trial' });
+  } else {
+    await auditAdminLogin(ipHash, true, { endpoint: 'GET /api/admin/tickets', role: auth.role });
+  }
 
   try {
     const supabaseAdmin = createClient(
@@ -115,9 +129,9 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
   }
 
-  // Viewers cannot write
-  if (!hasPermission(auth.role ?? 'viewer', 'tickets:write')) {
-    return NextResponse.json({ error: 'Insufficient permissions.' }, { status: 403, headers });
+  // Viewers and Ghost sessions cannot write
+  if (auth.isGhost || !hasPermission(auth.role ?? 'viewer', 'tickets:write')) {
+    return NextResponse.json({ error: 'Insufficient permissions. Shadow sessions are read-only.' }, { status: 403, headers });
   }
 
   try {

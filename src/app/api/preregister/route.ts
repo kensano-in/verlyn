@@ -305,7 +305,18 @@ export async function POST(req: NextRequest) {
 
   // Timing attack mitigation for successful inserts
   await new Promise(resolve => setTimeout(resolve, Math.random() * 100 + 50));
-  return NextResponse.json({ success: true }, { status: 201 });
+
+  // Issue shadow access token as httpOnly cookie (not readable by JS)
+  const { randomBytes: rb, createHash: ch } = await import('crypto');
+  const rawToken = rb(48).toString('hex');
+  const tHash = ch('sha256').update(rawToken + (process.env.SHADOW_TOKEN_SALT ?? 'vrl-shadow-salt-2025')).digest('hex');
+  const eHash = ch('sha256').update(email).digest('hex');
+  try { await supabaseAdmin.from('shadow_access_tokens').insert({ token_hash: tHash, email_hash: eHash, ip_hash: ipHash, expires_at: new Date(Date.now()+30*24*60*60*1000).toISOString() }); } catch {}
+  const _isProd = process.env.NODE_ENV === 'production';
+  const _cookie = [`vrl_sat=${rawToken}`, 'Path=/', 'HttpOnly', 'SameSite=Strict', _isProd ? 'Secure' : '', `Max-Age=2592000`].filter(Boolean).join('; ');
+  const _resp = NextResponse.json({ success: true }, { status: 201 });
+  _resp.headers.set('Set-Cookie', _cookie);
+  return _resp;
 }
 
 export function GET() {
