@@ -275,31 +275,33 @@ export default function HomePage() {
                   {/* Ghost outline — editorial depth */}
                   <h1 aria-hidden="true" style={{
                     position: 'absolute', top: 0, left: 0,
-                    fontSize: 'clamp(76px, 11.5vw, 176px)',
+                    fontSize: 'clamp(56px, 11.5vw, 176px)',
                     fontFamily: 'var(--font-display)',
                     fontWeight: 400,
                     letterSpacing: '0.18em', lineHeight: 1,
                     WebkitTextStroke: '1.5px rgba(255,255,255,0.1)',
                     color: 'transparent',
                     transform: 'translate(4px, 4px)',
+                    marginRight: '-0.18em',
                     pointerEvents: 'none', userSelect: 'none',
                     whiteSpace: 'nowrap', zIndex: 1,
                   }}>VERLYN</h1>
 
                   {/* Main title */}
                   <h1 style={{
-                    fontSize: 'clamp(76px, 11.5vw, 176px)',
+                    fontSize: 'clamp(56px, 11.5vw, 176px)',
                     fontFamily: 'var(--font-display)',
                     fontWeight: 400,
                     letterSpacing: '0.18em', lineHeight: 1,
                     color: '#ffffff',
                     position: 'relative', zIndex: 2,
                     cursor: 'default', margin: 0,
+                    marginRight: '-0.18em',
                     userSelect: 'none', whiteSpace: 'nowrap',
                     transition: 'letter-spacing 0.7s cubic-bezier(0.22,1,0.36,1)',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.letterSpacing = '0.26em'; }}
-                    onMouseLeave={e => { e.currentTarget.style.letterSpacing = '0.18em'; }}
+                    onMouseEnter={e => { e.currentTarget.style.letterSpacing = '0.26em'; e.currentTarget.style.marginRight = '-0.26em'; }}
+                    onMouseLeave={e => { e.currentTarget.style.letterSpacing = '0.18em'; e.currentTarget.style.marginRight = '-0.18em'; }}
                   >VERLYN</h1>
                 </div>
 
