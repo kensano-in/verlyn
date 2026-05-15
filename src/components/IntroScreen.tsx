@@ -121,26 +121,26 @@ export default function IntroScreen({ onComplete }: { onComplete: () => void }) 
         }}>
           <svg viewBox="0 0 64 64" fill="none" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 40px rgba(99,102,241,0.5))' }}>
             <defs>
-              <linearGradient id="grad-e1" x1="17" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="white" stopOpacity="1"/>
-                <stop offset="100%" stopColor="white" stopOpacity="0.8"/>
+              <linearGradient id="v-grad-left" x1="17" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="100%" stopColor="#818CF8" />
               </linearGradient>
-              <linearGradient id="grad-e2" x1="47" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="white" stopOpacity="0.9"/>
-                <stop offset="100%" stopColor="white" stopOpacity="0.6"/>
+              <linearGradient id="v-grad-right" x1="47" y1="14" x2="32" y2="52" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.4" />
               </linearGradient>
             </defs>
             <path 
               d="M17 14 L32 52" 
-              stroke="white" 
-              strokeWidth="5" 
+              stroke="url(#v-grad-left)" 
+              strokeWidth="5.5" 
               strokeLinecap="round"
               style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s' }}
             />
             <path 
               d="M47 14 L32 52" 
-              stroke="white" 
-              strokeWidth="5" 
+              stroke="url(#v-grad-right)" 
+              strokeWidth="5.5" 
               strokeLinecap="round"
               style={{ strokeDasharray: 60, strokeDashoffset: 60, animation: 'vDrawLine 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.8s' }}
             />
