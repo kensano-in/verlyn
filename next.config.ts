@@ -16,6 +16,21 @@ const nextConfig: NextConfig = {
   // Turbopack — silence config warning
   turbopack: {},
 
+  async redirects() {
+    return [
+      {
+        source: '/shadowsession',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/shadowsession/:path*',
+        destination: '/',
+        permanent: false,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
