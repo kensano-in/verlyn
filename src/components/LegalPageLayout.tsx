@@ -65,7 +65,7 @@ export default function LegalPageLayout({ eyebrow, title, reference, children }:
         </article>
 
         <footer style={{ marginTop: '80px', paddingTop: '32px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>Verlyn Technologies Ltd. · verlyn.in</span>
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>Verlyn · verlyn.in</span>
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
             {[{ label: 'Terms', href: '/terms' }, { label: 'Privacy', href: '/privacy' }, { label: 'Security', href: '/security' }, { label: 'Status', href: '/status' }].map(l => (
               <Link key={l.href} href={l.href} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', textDecoration: 'none', letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500, transition: 'color 0.2s' }}>{l.label}</Link>

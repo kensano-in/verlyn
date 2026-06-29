@@ -46,7 +46,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
   // Dashboard State
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
-  const [activeTab, setActiveTab] = useState<'overwatch' | 'triage' | 'prereg' | 'security'>('overwatch');
+  const [activeTab, setActiveTab] = useState<'overwatch' | 'triage' | 'prereg' | 'security' | 'invitations'>('overwatch');
   const [preRegs, setPreRegs] = useState<any[]>([]);
   // Live chat state
   const [adminName, setAdminName] = useState('');
@@ -553,7 +553,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                 
                 {/* TABS */}
                 <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  {(['overwatch', 'triage', 'prereg', 'security'] as const).map(tab => (
+                  {(['overwatch', 'triage', 'prereg', 'security', 'invitations'] as const).map(tab => (
                     <button key={tab} onClick={() => { setActiveTab(tab); setSelectedTicket(null); }}
                       style={{
                         padding: '8px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer',
@@ -563,7 +563,7 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                         color: activeTab === tab ? '#fff' : 'rgba(255,255,255,0.4)',
                         boxShadow: activeTab === tab ? '0 2px 10px rgba(0,0,0,0.2)' : 'none'
                       }}>
-                      {tab === 'triage' ? `Triage (${tickets.length})` : tab === 'prereg' ? `Registry (${preRegs.length})` : tab}
+                      {tab === 'triage' ? `Triage (${tickets.length})` : tab === 'prereg' ? `Registry (${preRegs.length})` : tab === 'invitations' ? 'Invitations' : tab}
                     </button>
                   ))}
                 </div>
@@ -996,6 +996,8 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
                       ))}
                     </div>
                   </div>
+                ) : activeTab === 'invitations' ? (
+                  <InvitationManager authKey={authKey} isGhostMode={isGhostMode} />
                 ) : (
                   <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
                     <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '1px dashed rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1014,6 +1016,109 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
+    </div>
+  );
+}
+
+// ── Invitation Manager Component ────────────────────────────────────────────────
+
+function InvitationManager({ authKey, isGhostMode }: { authKey: string; isGhostMode: boolean }) {
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [actionLoading, setActionLoading] = useState('');
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
+  const [issueEmail, setIssueEmail]   = useState('');
+  const [issueName, setIssueName]     = useState('');
+  const [issueDays, setIssueDays]     = useState('7');
+  const [issueNotes, setIssueNotes]   = useState('');
+  const [newCode, setNewCode]         = useState('');
+  const [showIssueForm, setShowIssueForm] = useState(false);
+
+  const authHeader = isGhostMode ? `Ghost ${authKey}` : `Bearer ${authKey}`;
+
+  const fetchInvitations = async () => {
+    setLoading(true); setError('');
+    try {
+      const res  = await fetch('/api/admin/invitations', { headers: { Authorization: authHeader } });
+      const data = await res.json();
+      if (res.ok) setInvitations(data.invitations || []);
+      else setError(data.error || 'Failed to load invitations');
+    } catch { setError('Network error'); } finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchInvitations(); }, []);
+
+  const handleIssue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading('issue'); setError(''); setSuccess(''); setNewCode('');
+    try {
+      const res = await fetch('/api/admin/invitations', {
+        method: 'POST',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: issueEmail, name: issueName, expiryDays: Number(issueDays), notes: issueNotes }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewCode(data.code_formatted); setSuccess('Invitation issued.');
+        setIssueEmail(''); setIssueName(''); setIssueNotes('');
+        await fetchInvitations();
+      } else { setError(data.error || 'Failed to issue invitation'); }
+    } catch { setError('Network error'); } finally { setActionLoading(''); }
+  };
+
+  const handleRevoke = async (id: string) => {
+    if (!confirm('Revoke this invitation? This cannot be undone.')) return;
+    setActionLoading(id);
+    try {
+      const res = await fetch(`/api/admin/invitations/${id}/revoke`, { method: 'POST', headers: { Authorization: authHeader } });
+      const data = await res.json();
+      if (res.ok) { setSuccess('Invitation revoked.'); await fetchInvitations(); }
+      else setError(data.error || 'Failed to revoke');
+    } catch { setError('Network error'); } finally { setActionLoading(''); }
+  };
+
+  const SC: Record<string, string> = { active: '#10b981', used: '#6366f1', revoked: '#ef4444', expired: '#f59e0b' };
+
+  return (
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '8px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+        <div>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Invitation Manager</h2>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Issue, view, and revoke Advance Access invitations. All codes are single-use and email-bound.</p>
+        </div>
+        <button onClick={() => setShowIssueForm(v => !v)}
+          style={{ padding: '10px 20px', background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '8px', color: '#c7d2fe', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          {showIssueForm ? 'Cancel' : '+ Issue Invitation'}
+        </button>
+      </div>
+      {error   && <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '8px', color: 'rgba(239,68,68,0.9)', fontSize: '13px', marginBottom: '16px' }}>{error}</div>}
+      {success && <div style={{ padding: '12px 16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '8px', color: 'rgba(16,185,129,0.9)', fontSize: '13px', marginBottom: '16px' }}>{success}</div>}
+      {showIssueForm && (
+        <form onSubmit={handleIssue} style={{ padding: '24px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '12px', marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>Issue New Invitation</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div><label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' }}>Recipient Email *</label><input value={issueEmail} onChange={e => setIssueEmail(e.target.value)} type="email" required placeholder="user@example.com" style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} /></div>
+            <div><label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' }}>Recipient Name</label><input value={issueName} onChange={e => setIssueName(e.target.value)} type="text" placeholder="Optional" style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} /></div>
+            <div><label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' }}>Expiry (days) *</label><input value={issueDays} onChange={e => setIssueDays(e.target.value)} type="number" min="1" max="365" required style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} /></div>
+            <div><label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '6px' }}>Notes</label><input value={issueNotes} onChange={e => setIssueNotes(e.target.value)} type="text" placeholder="Internal note" style={{ width: '100%', padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} /></div>
+          </div>
+          {newCode && <div style={{ padding: '16px', background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px' }}><p style={{ fontSize: '11px', color: 'rgba(16,185,129,0.7)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Generated Code — Share with recipient only</p><p style={{ fontSize: '24px', fontWeight: 800, color: '#fff', fontFamily: 'monospace', letterSpacing: '0.2em' }}>{newCode}</p></div>}
+          <button type="submit" disabled={actionLoading === 'issue'} style={{ padding: '12px 24px', background: actionLoading === 'issue' ? 'rgba(99,102,241,0.3)' : 'rgba(99,102,241,0.9)', border: '1px solid rgba(99,102,241,0.4)', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', alignSelf: 'flex-start' }}>{actionLoading === 'issue' ? 'Generating…' : 'Generate & Issue'}</button>
+        </form>
+      )}
+      {loading ? <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)' }}>Loading…</div>
+        : invitations.length === 0 ? <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.25)', fontSize: '14px' }}>No invitations issued yet.</div>
+        : <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {invitations.map((inv: any) => (
+            <div key={inv.id} style={{ padding: '14px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '9px', fontWeight: 700, padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0, background: `${SC[inv.status] ?? '#888'}15`, color: SC[inv.status] ?? '#888' }}>{inv.status}</span>
+              <span style={{ fontSize: '14px', fontFamily: 'monospace', color: '#fff', fontWeight: 600, letterSpacing: '0.12em', flex: '0 0 auto' }}>{String(inv.code ?? '').replace(/(.{4})(.{4})(.{4})/, '$1-$2-$3')}</span>
+              <div style={{ flex: 1, minWidth: '160px' }}><p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '2px' }}>{inv.email}</p><p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{inv.issued_by} · Exp {new Date(inv.expires_at).toLocaleDateString()}{inv.redeemed_at ? ` · Used ${new Date(inv.redeemed_at).toLocaleDateString()}` : ''}</p></div>
+              {inv.status === 'active' && <button onClick={() => handleRevoke(inv.id)} disabled={actionLoading === inv.id} style={{ padding: '7px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '6px', color: 'rgba(239,68,68,0.8)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>{actionLoading === inv.id ? '…' : 'Revoke'}</button>}
+            </div>
+          ))}
+        </div>}
     </div>
   );
 }

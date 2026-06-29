@@ -14,9 +14,12 @@ export default function WhitepaperPage() {
       reference="VRL-WP-2025-v1.2 · Verlyn Zero-Knowledge Social Infrastructure"
     >
       <LegalNotice>
-        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Abstract</p>
-        <p style={{ fontSize: '13px', lineHeight: 1.7 }}>
-          Verlyn presents a novel approach to social infrastructure: a zero-knowledge communication architecture where the platform operator is architecturally incapable of accessing user content. This paper outlines the cryptographic foundations, routing model, identity system, and governance framework underlying the Verlyn network.
+        <p style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '8px' }}>Active Architectural Design Plan</p>
+        <p style={{ fontSize: '13px', lineHeight: 1.7, marginBottom: '8px' }}>
+          This whitepaper serves as the active architectural design plan for the Verlyn network. During our current pre-registration and queue phase, these systems and cryptographic primitives are being actively implemented, audited, and optimized.
+        </p>
+        <p style={{ fontSize: '13px', lineHeight: 1.7, color: 'rgba(255,255,255,0.5)' }}>
+          Verlyn presents an approach to digital space: a zero-knowledge communication architecture designed so that the platform operator is technically incapable of accessing user content. This paper outlines the cryptographic foundations, routing model, and identity system underlying our platform.
         </p>
       </LegalNotice>
 

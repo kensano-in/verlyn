@@ -121,8 +121,21 @@ export default function DeveloperIdentity({ onClose }: DeveloperIdentityProps) {
                 fontFamily: 'var(--font-display)',
               }}
             >
-              Shinichiro Sano
+              Subhankar
             </motion.h1>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.35 }}
+              style={{
+                fontSize: '13px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginTop: '6px',
+                fontFamily: 'monospace',
+              }}
+            >
+              aka @shinichiro-sano
+            </motion.div>
           </header>
 
           <motion.div
@@ -138,14 +151,14 @@ export default function DeveloperIdentity({ onClose }: DeveloperIdentityProps) {
               marginBottom: '24px',
               fontWeight: 400,
             }}>
-              Crafted by <span style={{ color: '#fff' }}>Subhankar</span>. A developer from Kolkata building digital systems that feel alive, secure, and effortless to use.
+              Subhankar is the designer and core engineer of Verlyn, publishing under his open-source handle <span style={{ color: '#fff' }}>Shinichiro Sano</span>.
             </p>
             <p style={{
               fontSize: '15px',
               color: 'rgba(255, 255, 255, 0.4)',
               lineHeight: 1.7,
             }}>
-              Currently 18 years old, focusing on the intersection of technical performance and aesthetic precision. Verlyn is the manifestation of that pursuit—a commitment to high-integrity digital infrastructure.
+              Based in Kolkata, India, he is an 18-year-old developer focused on building high-performance, low-latency secure digital systems. Verlyn is an independent labor of love, developed transparently out in the open with a commitment to mathematical privacy integrity.
             </p>
           </motion.div>
 
@@ -198,14 +211,14 @@ export default function DeveloperIdentity({ onClose }: DeveloperIdentityProps) {
                 letterSpacing: '0.2em',
                 marginBottom: '8px',
               }}>
-                Vibe
+                Focus
               </span>
               <span style={{
                 fontSize: '14px',
                 color: '#fff',
                 fontWeight: 500,
               }}>
-                Builder & Coder
+                Systems & Interfaces
               </span>
             </div>
           </motion.div>

@@ -280,7 +280,7 @@ export async function POST(req: NextRequest) {
                   </tr>
                 </table>
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width:500px;width:100%;margin-top:30px;">
-                  <tr><td align="center"><p style="margin:0;font-size:11px;color:#222;text-transform:uppercase;letter-spacing:0.05em;">Verlyn Technologies Ltd. &copy; 2025</p></td></tr>
+                  <tr><td align="center"><p style="margin:0;font-size:11px;color:#222;text-transform:uppercase;letter-spacing:0.05em;">Verlyn &copy; 2026</p></td></tr>
                 </table>
               </td></tr>
             </table>

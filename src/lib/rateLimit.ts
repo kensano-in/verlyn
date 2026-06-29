@@ -47,6 +47,15 @@ export interface RateLimitResult {
  * @param cfg   Rate limit configuration
  */
 export function rateLimit(key: string, cfg: RateLimitConfig): RateLimitResult {
+  // Bypass rate limits completely during local development to prevent restriction
+  if (process.env.NODE_ENV !== 'production') {
+    return {
+      allowed:    true,
+      remaining:  cfg.limit,
+      resetAt:    Date.now() + cfg.windowMs,
+    };
+  }
+
   const now = Date.now();
   const { limit, windowMs, blockMs = 0 } = cfg;
   const windowStart = now - windowMs;

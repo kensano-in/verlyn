@@ -122,14 +122,6 @@ export default function SecurityPage() {
 
       <div style={{maxWidth:'1100px',margin:'0 auto',padding:'56px clamp(16px,5vw,80px) 96px'}}>
 
-        {/* Trust badge row */}
-        <div style={{display:'flex',flexWrap:'wrap',gap:'10px',marginBottom:'56px'}}>
-          {['TLS 1.3','AES-256-GCM','SHA-256 IP Hashing','RLS Enforced','RBAC','2FA Admin Auth','Audit Trails','Anti-Spam','Magic Byte Verification'].map(b => (
-            <span key={b} style={{fontSize:'11px',fontWeight:600,color:'rgba(255,255,255,0.55)',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',padding:'4px 12px',borderRadius:'20px',letterSpacing:'0.02em'}}>
-              {b}
-            </span>
-          ))}
-        </div>
 
         {/* Security pillars grid */}
         <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>

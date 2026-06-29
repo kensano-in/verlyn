@@ -112,10 +112,10 @@ export default function AccessModelPage() {
 
         {/* Why invitation-only */}
         <section style={{marginBottom:'64px'}}>
-          <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>Why Restricted Access Exists</h2>
+          <h2 style={{fontSize:'13px',fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.35)',marginBottom:'20px'}}>Gradual Onboarding Operations</h2>
           <div style={{padding:'28px',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:'12px'}}>
             <p style={{fontSize:'15px',color:'rgba(255,255,255,0.55)',lineHeight:1.75}}>
-              Open networks fail — not because of technical deficiencies, but because of participant quality degradation. Every major communication platform that began with high trust has been systematically diluted by unrestricted access, creating noise, abuse vectors, and structural vulnerabilities that privacy-critical infrastructure cannot tolerate. Verlyn is built for operators who require absolute confidence in their communication layer. That confidence is only achievable when every participant has been deliberately introduced.
+              Verlyn utilizes a phased pre-registration model to preserve server stability and security integrity during active development. High-velocity open networks often experience early infrastructure degradation, bot spam, and connection overflows that compromise security. By onboarding users in gradual waves, we can carefully verify our resource distribution, monitor edge node performance under load, and fix structural bugs without impacting our core cohort. Access restrictions are strictly operational constraints to ensure a reliable and secure experience.
             </p>
           </div>
         </section>
@@ -188,8 +188,8 @@ export default function AccessModelPage() {
           <div style={{display:'flex',flexDirection:'column',gap:'1px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:'12px',overflow:'hidden'}}>
             {[
               {tier:'Tier 0 — Core',access:'Founding participants, infrastructure contributors',status:'Closed',c:'#a78bfa'},
-              {tier:'Tier 1 — Alpha',access:'Protocol Alpha pre-registration cohort',status:'Open Registration',c:'#10b981'},
-              {tier:'Tier 2 — Beta',access:'Verified referral network from Tier 1',status:'Not Yet Open',c:'rgba(255,255,255,0.3)'},
+              {tier:'Tier 1 — Early Access',access:'Early pre-registration network cohort',status:'Open Registration',c:'#10b981'},
+              {tier:'Tier 2 — General Queue',access:'Verified referral queue from Tier 1',status:'Not Yet Open',c:'rgba(255,255,255,0.3)'},
               {tier:'Tier 3 — Public',access:'General access (if and when announced)',status:'Not Announced',c:'rgba(255,255,255,0.2)'},
             ].map((row, i, arr) => (
               <div key={i} style={{display:'grid',gridTemplateColumns:'1fr auto',alignItems:'center',gap:'16px',padding:'20px 24px',background:'#0a0a0a',borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none'}}>
@@ -205,9 +205,9 @@ export default function AccessModelPage() {
 
         <InteractiveEncryption />
 
-        <div style={{padding:'24px',background:'rgba(99,102,241,0.05)',border:'1px solid rgba(99,102,241,0.15)',borderRadius:'10px',marginBottom:'48px'}}>
-          <p style={{fontSize:'14px',color:'#a78bfa',fontWeight:500,marginBottom:'4px'}}>Registration does not guarantee access.</p>
-          <p style={{fontSize:'13px',color:'rgba(255,255,255,0.4)',lineHeight:1.6}}>Every admitted participant has been evaluated. Quality over quantity. This is not a promise — it is a constraint we enforce without exception.</p>
+        <div style={{padding:'24px',background:'rgba(255,255,255,0.02)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:'10px',marginBottom:'48px'}}>
+          <p style={{fontSize:'14px',color:'#fff',fontWeight:600,marginBottom:'6px'}}>Admissions are metered by server resources.</p>
+          <p style={{fontSize:'13px',color:'rgba(255,255,255,0.4)',lineHeight:1.6}}>To maintain protocol speed, cryptographic performance, and system stability under load, user onboarding is strictly metered based on infrastructure capacity and physical server scaling timelines. We appreciate your patience as we scale resources.</p>
         </div>
 
         <div style={{paddingTop:'20px',borderTop:'1px solid rgba(255,255,255,0.04)',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'12px'}}>

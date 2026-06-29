@@ -30,7 +30,7 @@ export default function PreRegisterForm() {
   const [stage,         setStage]         = useState<Stage>('form');
   const [fullName,      setFullName]      = useState('');
   const [email,         setEmail]         = useState('');
-  const [gender,        setGender]        = useState<Gender>(null);
+  const [gender,        setGender]        = useState<Gender>('Prefer not to say');
   const [otpCode,       setOtpCode]       = useState('');
   const [formError,     setFormError]     = useState('');
   const [otpError,      setOtpError]      = useState('');
@@ -144,8 +144,8 @@ export default function PreRegisterForm() {
     const name = fullName.trim();
     const mail = email.trim();
 
-    if (!name || !gender || !mail) {
-      setFormError('Kindly fill in all the details (Name, Identity, and Email) to proceed with your registration. We appreciate your cooperation.');
+    if (!name || !mail) {
+      setFormError('Kindly fill in both your Name and Email to proceed with your registration.');
       return;
     }
 
@@ -757,26 +757,6 @@ export default function PreRegisterForm() {
                   placeholder="Your name" required style={inp} />
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={lbl}>Identity</label>
-                <div style={{ display:'flex', gap:'8px' }}>
-                  {(['Male','Female','Prefer not to say'] as const).map(opt => (
-                    <button key={opt} type="button"
-                      onClick={() => { setGender(opt); setFormError(''); }}
-                      style={{
-                        flex:1, padding:'13px 8px', borderRadius:'12px',
-                        background: gender === opt ? 'rgba(99,102,241,0.1)' : 'rgba(0,0,0,0.35)',
-                        border: `1px solid ${gender === opt ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.06)'}`,
-                        color: gender === opt ? '#fff' : 'rgba(255,255,255,0.45)',
-                        fontSize:'13px', fontWeight:600, cursor:'pointer',
-                        transition:'all 0.25s ease',
-                        boxShadow: gender === opt ? '0 0 16px rgba(99,102,241,0.15)' : 'none',
-                      }}>
-                      {opt === 'Prefer not to say' ? 'Other' : opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={lbl}>Email Address</label>

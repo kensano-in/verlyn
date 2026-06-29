@@ -211,15 +211,10 @@ export default function SupportPage() {
   const [widgetView, setWidgetView] = useState<'menu'|'form'|'tracking'|'faq'|'chat'|'identity'>('menu');
   const [initialReportType, setInitialReportType] = useState<string | null>(null);
   const [utc, setUtc] = useState('');
-  const [heroIdx, setHeroIdx] = useState(0);
   const [mounted, setMounted] = useState(false);
-
-  const HERO_PHRASES = ['for you.', 'right now.', 'always.', 'to help.', '24 / 7.'];
 
   useEffect(() => {
     setMounted(true);
-    const iv = setInterval(() => setHeroIdx(i => (i + 1) % 5), 2800);
-    return () => clearInterval(iv);
   }, []);
 
   useEffect(() => {
@@ -280,30 +275,14 @@ export default function SupportPage() {
             Verlyn &nbsp;·&nbsp; Support
           </p>
 
-          {/* Cycling headline */}
-          <h1 suppressHydrationWarning style={{ margin: '0 0 36px', letterSpacing: '-0.045em', fontWeight: 800 }}>
+          {/* Stable headline */}
+          <h1 style={{ margin: '0 0 36px', letterSpacing: '-0.045em', fontWeight: 800 }}>
             {/* Static ghost line */}
             <span style={{ display: 'block', fontSize: 'clamp(48px,7vw,88px)', color: 'rgba(255,255,255,0.15)', fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1.05 }}>
               We&apos;re here
             </span>
-            {/* Animated cycling line — only after hydration */}
-            <span style={{ display: 'block', fontSize: 'clamp(58px,9vw,108px)', fontWeight: 900, lineHeight: 0.95, minHeight: 'clamp(68px,10vw,120px)', overflow: 'hidden', position: 'relative' }}>
-              {mounted ? (
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={heroIdx}
-                    initial={{ y: '100%', opacity: 0 }}
-                    animate={{ y: '0%',   opacity: 1 }}
-                    exit={{    y: '-60%', opacity: 0 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ display: 'block', color: '#ffffff', willChange: 'transform, opacity' }}
-                  >
-                    {HERO_PHRASES[heroIdx]}
-                  </motion.span>
-                </AnimatePresence>
-              ) : (
-                <span style={{ display: 'block', color: '#ffffff' }}>{HERO_PHRASES[0]}</span>
-              )}
+            <span style={{ display: 'block', fontSize: 'clamp(58px,9vw,108px)', fontWeight: 900, lineHeight: 0.95, color: '#ffffff' }}>
+              to help.
             </span>
           </h1>
 
@@ -462,7 +441,7 @@ export default function SupportPage() {
       {/* ── FOOTER ── */}
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '28px clamp(20px,5vw,60px)', textAlign: 'center' }}>
         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)' }}>
-          © {new Date().getFullYear()} Verlyn Technologies ·{' '}
+          © {new Date().getFullYear()} Verlyn ·{' '}
           <a href="/privacy" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Privacy</a> ·{' '}
           <a href="/terms"   style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}>Terms</a>
         </p>

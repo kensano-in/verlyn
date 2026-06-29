@@ -2,14 +2,11 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import Countdown from '@/components/Countdown';
 import PreRegisterForm from '@/components/PreRegisterForm';
 import Logo from '@/components/Logo';
 import IntroScreen from '@/components/IntroScreen';
 import SupportCenter from '@/components/SupportCenter';
 import AdminGateway from '@/components/AdminGateway';
-import GovernancePortal from '@/components/GovernancePortal';
-import DeveloperIdentity from '@/components/DeveloperIdentity';
 import { IconBan, IconGlobe, IconZap, IconShield, IconLock, IconUsers } from '@/components/Icons';
 // Lazy-load heavy 3D scene
 const NetworkGraph = dynamic(() => import('@/components/NetworkGraph'), {
@@ -59,7 +56,12 @@ function FeatureCard({ num, title, desc, index }: { num: string; title: string; 
       {/* Subtle top border accent on hover */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '1px',
-        background: hovered ? 'rgba(99,102,241,0.25)' : 'transparent',
+        background: hovered ? 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)' : 'transparent',
+        transition: 'background 0.35s ease',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: hovered ? 'radial-gradient(circle at 50% 0%, rgba(99,102,241,0.03) 0%, transparent 70%)' : 'transparent',
         transition: 'background 0.35s ease',
       }} />
       <span style={{
@@ -106,17 +108,174 @@ function StepRow({ step, i, total }: { step: { title: string; desc: string }; i:
   );
 }
 
+/* ── Advance Access Section ──────────────────────────────────────────────── */
+function AdvanceAccessSection() {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <section
+      id="advance-access"
+      style={{
+        position: 'relative', zIndex: 1,
+        padding: 'clamp(48px, 7vw, 80px) var(--gutter)',
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ duration: 0.7 }}
+        style={{ maxWidth: '860px', margin: '0 auto' }}
+      >
+        <div
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            position: 'relative',
+            padding: 'clamp(36px, 5vw, 56px) clamp(32px, 5vw, 60px)',
+            background: hovered
+              ? 'rgba(99,102,241,0.04)'
+              : 'rgba(8,8,8,0.6)',
+            border: `1px solid ${hovered ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.06)'}`,
+            borderRadius: '20px',
+            transition: 'all 0.4s ease',
+            overflow: 'hidden',
+            cursor: 'default',
+          }}
+        >
+          {/* Accent bar — top edge */}
+          <div style={{
+            position: 'absolute', top: 0, left: '10%', right: '10%', height: '1px',
+            background: hovered
+              ? 'linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent)'
+              : 'transparent',
+            transition: 'background 0.4s ease',
+          }} />
+
+          {/* Ambient glow */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: hovered
+              ? 'radial-gradient(ellipse 60% 80% at 50% 0%, rgba(99,102,241,0.05) 0%, transparent 70%)'
+              : 'transparent',
+            transition: 'background 0.4s ease',
+          }} />
+
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '32px',
+          }}>
+            {/* Left: Text */}
+            <div style={{ flex: '1 1 320px', maxWidth: '520px' }}>
+              {/* Label */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px',
+              }}>
+                {/* Lock icon */}
+                <div style={{
+                  width: '28px', height: '28px',
+                  background: 'rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                  borderRadius: '7px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(129,140,248,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <span style={{
+                  fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                  color: 'rgba(129,140,248,0.7)', fontWeight: 700,
+                }}>
+                  Advance Access
+                </span>
+              </div>
+
+              <h2 style={{
+                fontSize: 'clamp(20px, 2.8vw, 28px)',
+                fontWeight: 700, color: '#fff',
+                letterSpacing: '-0.025em', lineHeight: 1.2,
+                marginBottom: '12px',
+              }}>
+                Already have an invitation?
+              </h2>
+              <p style={{
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.38)',
+                lineHeight: 1.72,
+              }}>
+                Already have an invitation code? Continue to the private testing program.
+                Access is granted exclusively to invited individuals by the Verlyn Engineering Team.
+              </p>
+            </div>
+
+            {/* Right: CTA */}
+            <div style={{ flexShrink: 0 }}>
+              <motion.a
+                href="/verify"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '14px 28px',
+                  background: 'rgba(99,102,241,0.12)',
+                  border: '1px solid rgba(99,102,241,0.3)',
+                  borderRadius: '12px',
+                  color: '#c7d2fe',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textDecoration: 'none',
+                  textTransform: 'uppercase',
+                  transition: 'background 0.2s, border-color 0.2s, color 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = 'rgba(99,102,241,0.2)';
+                  el.style.borderColor = 'rgba(99,102,241,0.5)';
+                  el.style.color = '#e0e7ff';
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.background = 'rgba(99,102,241,0.12)';
+                  el.style.borderColor = 'rgba(99,102,241,0.3)';
+                  el.style.color = '#c7d2fe';
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Enter Invitation Code
+              </motion.a>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [introComplete, setIntroComplete] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
   const [isMaint, setIsMaint] = React.useState(false);
   const [showSupport, setShowSupport] = React.useState(false);
   const [supportView, setSupportView] = React.useState<any>('menu');
-  const [showGov, setShowGov]         = React.useState(false);
-  const [govView, setGovView]         = React.useState<any>('terms');
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
-  const [showIdentity, setShowIdentity]         = React.useState(false);
   const [transparencyMode, setTransparencyMode] = React.useState(false);
   const adminClickTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -166,12 +325,13 @@ export default function HomePage() {
   ];
 
   const steps = [
-    { title: 'You request access',       desc: 'Enter your email to reserve a verified spot on the waitlist. No spam. No marketing.' },
-    { title: 'We verify your identity',  desc: 'Our system validates entries, filters bots, and ensures genuine human requests.' },
-    { title: 'Invitations are released', desc: 'Access is granted in deliberate phases to maintain platform integrity and privacy.' },
+    { title: 'You enter your email',       desc: 'We save your address securely so we can contact you when your turn arrives.' },
+    { title: 'Gradual onboarding',         desc: 'We admit new members in waves to make sure our servers and security hold up under load.' },
+    { title: 'Your invite code arrives',   desc: 'You\'ll receive a secure code to set up your device-level key pair and enter the network.' },
   ];
 
   const footerLinks = [
+    { label: 'Trust Center', href: '/trust-center' },
     { label: 'Terms',        href: '/terms' },
     { label: 'Privacy',      href: '/privacy' },
     { label: 'Security',     href: '/security' },
@@ -179,13 +339,11 @@ export default function HomePage() {
     { label: 'Transparency', href: '/transparency' },
     { label: 'Status',       href: '/status' },
     { label: 'Whitepaper',   href: '/whitepaper' },
-
-    { label: 'Developer',    onClick: 'showIdentity' }
   ];
 
   return (
     <main style={{
-      background: '#000',
+      background: '#080808',
       minHeight: '100dvh',
       fontFamily: 'var(--font-sans)',
     }}>
@@ -245,6 +403,7 @@ export default function HomePage() {
           </motion.div>
         </div>
 
+
         {/* ════════════════════════════════════════════════════════════
             HERO — Full Screen
         ════════════════════════════════════════════════════════════ */}
@@ -276,7 +435,7 @@ export default function HomePage() {
                   <h1 aria-hidden="true" style={{
                     position: 'absolute', top: 0, left: 0,
                     fontSize: 'clamp(56px, 11.5vw, 176px)',
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-bebas)',
                     fontWeight: 400,
                     letterSpacing: '0.18em', lineHeight: 1,
                     WebkitTextStroke: '1.5px rgba(255,255,255,0.1)',
@@ -290,7 +449,7 @@ export default function HomePage() {
                   {/* Main title */}
                   <h1 style={{
                     fontSize: 'clamp(56px, 11.5vw, 176px)',
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-bebas)',
                     fontWeight: 400,
                     letterSpacing: '0.18em', lineHeight: 1,
                     color: '#ffffff',
@@ -298,10 +457,19 @@ export default function HomePage() {
                     cursor: 'default', margin: 0,
                     marginRight: '-0.18em',
                     userSelect: 'none', whiteSpace: 'nowrap',
-                    transition: 'letter-spacing 0.7s cubic-bezier(0.22,1,0.36,1)',
+                    transition: 'all 0.7s cubic-bezier(0.22,1,0.36,1)',
+                    textShadow: '0 0 40px rgba(255,255,255,0.1)',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.letterSpacing = '0.26em'; e.currentTarget.style.marginRight = '-0.26em'; }}
-                    onMouseLeave={e => { e.currentTarget.style.letterSpacing = '0.18em'; e.currentTarget.style.marginRight = '-0.18em'; }}
+                    onMouseEnter={e => { 
+                      e.currentTarget.style.letterSpacing = '0.26em'; 
+                      e.currentTarget.style.marginRight = '-0.26em';
+                      e.currentTarget.style.filter = 'drop-shadow(0 0 20px rgba(99,102,241,0.4))';
+                    }}
+                    onMouseLeave={e => { 
+                      e.currentTarget.style.letterSpacing = '0.18em'; 
+                      e.currentTarget.style.marginRight = '-0.18em';
+                      e.currentTarget.style.filter = 'none';
+                    }}
                   >VERLYN</h1>
                 </div>
 
@@ -323,36 +491,38 @@ export default function HomePage() {
                   marginBottom: '14px', letterSpacing: '-0.015em',
                   textShadow: '0 4px 20px rgba(0,0,0,0.7)',
                 }}>
-                  The private messaging &amp; social platform.
+                  A private, simple place to message and connect.
                 </p>
                 <p style={{
                   fontSize: '14px', color: 'rgba(255,255,255,0.5)',
                   fontWeight: 400, lineHeight: 1.7,
                   textShadow: '0 2px 12px rgba(0,0,0,0.6)',
                 }}>
-                  Pre-register now for early access. Zero-knowledge architecture,
-                  end-to-end encryption, and a feed that belongs to you.
+                  Verlyn encrypts messages on your device to keep them strictly between you and your circle. No algorithmic feeds, no tracking, and no corporate surveillance.
                 </p>
               </motion.div>
-
-              {/* Countdown */}
-              <motion.div variants={rise} style={{ marginBottom: '44px' }}>
-                <Countdown />
-              </motion.div>
-
               {/* Registration form — glass container */}
               <motion.div variants={rise} style={{
                 width: '100%', maxWidth: '460px',
-                background: 'rgba(8,8,8,0.72)',
-                backdropFilter: 'saturate(180%) blur(24px)',
-                WebkitBackdropFilter: 'saturate(180%) blur(24px)',
+                background: 'rgba(10,10,10,0.65)',
+                backdropFilter: 'saturate(180%) blur(40px)',
+                WebkitBackdropFilter: 'saturate(180%) blur(40px)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '18px', padding: '28px',
-                boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.07)',
+                borderRadius: '24px', padding: '32px',
+                boxShadow: '0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.01)',
+                position: 'relative',
+                overflow: 'hidden',
+                marginTop: '24px'
               }}>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 40%, rgba(255,255,255,0.02) 100%)',
+                  pointerEvents: 'none'
+                }} />
+                
                 <PreRegisterForm />
 
-                {/* Transparency Toggle */}
+                {/* Softened Transparency Toggle */}
                 <div style={{
                   marginTop: '22px', paddingTop: '16px',
                   borderTop: '1px solid rgba(255,255,255,0.05)',
@@ -366,7 +536,7 @@ export default function HomePage() {
                     aria-label="Toggle transparency mode"
                     style={{
                       width: '34px', height: '20px', borderRadius: '10px',
-                      background: transparencyMode ? '#6366f1' : 'rgba(255,255,255,0.08)',
+                      background: transparencyMode ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
                       position: 'relative', cursor: 'pointer', border: 'none',
                       transition: 'background 0.28s ease', flexShrink: 0,
                     }}
@@ -398,7 +568,6 @@ export default function HomePage() {
                         border: '1px solid rgba(255,255,255,0.05)',
                         borderRadius: '10px', textAlign: 'left',
                       }}>
-
                         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
                           <strong>Data Handling:</strong> Emails are encrypted client-side before transmission. No raw data is stored.{' '}
                           <strong>System Behavior:</strong> Access simulation uses deterministic delays to prevent timing attacks.{' '}
@@ -414,12 +583,16 @@ export default function HomePage() {
         </section>
 
         {/* ════════════════════════════════════════════════════════════
+            ADVANCE ACCESS — Invitation Portal
+        ════════════════════════════════════════════════════════════ */}
+        <AdvanceAccessSection />
+
+        {/* ════════════════════════════════════════════════════════════
             WHY VERLYN
         ════════════════════════════════════════════════════════════ */}
         <section style={{
           position: 'relative', zIndex: 1,
           padding: 'clamp(80px, 10vw, 140px) var(--gutter)',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
         }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -446,10 +619,7 @@ export default function HomePage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-            gap: '1px',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.04)',
-            borderRadius: '14px',
+            gap: '0px',
             overflow: 'hidden',
           }}>
             {features.map((f, i) => (
@@ -490,6 +660,8 @@ export default function HomePage() {
             </div>
           </motion.div>
         </section>
+
+
 
         {/* ════════════════════════════════════════════════════════════
             WHAT IS VERLYN — Plain Language Explainer
@@ -558,7 +730,7 @@ export default function HomePage() {
                 style={{
                   padding: '32px 28px',
                   background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '16px',
                   transition: 'border-color 0.25s',
                 }}
@@ -588,9 +760,7 @@ export default function HomePage() {
               overflow: 'hidden'
             }}
           >
-            {/* Background Glows */}
-            <div style={{ position: 'absolute', top: '-100px', right: '-100px', width: '300px', height: '300px', background: 'rgba(99,102,241,0.15)', filter: 'blur(100px)', borderRadius: '50%', pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', bottom: '-100px', left: '-100px', width: '300px', height: '300px', background: 'rgba(16,185,129,0.1)', filter: 'blur(100px)', borderRadius: '50%', pointerEvents: 'none' }} />
+            {/* Background Glows Removed */}
             
             <p style={{ fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ width: '24px', height: '1px', background: 'rgba(255,255,255,0.2)' }} />
@@ -628,15 +798,15 @@ export default function HomePage() {
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <span style={{ color: '#8b5cf6', fontWeight: 800 }}>01.</span>
-                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Radical Privacy:</b> No ads, no trackers, no algorithmic feeds. Your data is not the product.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Data Minimization:</b> No ads, no third-party trackers, and no algorithmic feed manipulation. Your data is not the product.</span>
                   </li>
                   <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <span style={{ color: '#8b5cf6', fontWeight: 800 }}>02.</span>
-                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Absolute Ownership:</b> What you create on Verlyn remains yours. You have the right to permanently delete your history at any time.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Sovereign Connections:</b> What you write remains yours. You have the mechanical ability to delete your data history permanently.</span>
                   </li>
                   <li style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <span style={{ color: '#8b5cf6', fontWeight: 800 }}>03.</span>
-                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Enterprise Performance:</b> Built on edge networking, meaning messages are routed instantly around the globe without lag.</span>
+                    <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}><b>Optimized Performance:</b> Built on a highly responsive network of edge nodes to transfer payloads quickly around the globe without server bottlenecks.</span>
                   </li>
                 </ul>
               </div>
@@ -717,9 +887,8 @@ export default function HomePage() {
           </motion.div>
         </section>
 
-        {/* ════════════════════════════════════════════════════════════
-            FOOTER
-        ════════════════════════════════════════════════════════════ */}
+
+
         <footer style={{ position: 'relative', zIndex: 10, padding: '120px 24px 80px', borderTop: '1px solid rgba(255,255,255,0.02)' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '60px', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             
@@ -740,9 +909,7 @@ export default function HomePage() {
                   <button 
                     key={l.label} 
                     onClick={() => {
-                      if (l.onClick === 'showIdentity') {
-                        setShowIdentity(true);
-                      } else if (l.href) {
+                      if (l.href) {
                         window.location.href = l.href;
                       }
                     }} 
@@ -791,21 +958,7 @@ export default function HomePage() {
         {showAdminGateway && <AdminGateway onClose={() => setShowAdminGateway(false)} />}
       </AnimatePresence>
 
-      {/* Governance Portal */}
-      <AnimatePresence mode="wait">
-        {showGov && (
-          <GovernancePortal 
-            key={govView}
-            onClose={() => setShowGov(false)} 
-            initialView={govView}
-          />
-        )}
-      </AnimatePresence>
- 
-      {/* Developer Identity Overlay */}
-      <AnimatePresence>
-        {showIdentity && <DeveloperIdentity onClose={() => setShowIdentity(false)} />}
-      </AnimatePresence>
+
     </main>
   );
 }
