@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PreRegisterForm from '@/components/PreRegisterForm';
 import Logo from '@/components/Logo';
 import IntroScreen from '@/components/IntroScreen';
-import SupportCenter from '@/components/SupportCenter';
 import AdminGateway from '@/components/AdminGateway';
 import { IconBan, IconGlobe, IconZap, IconShield, IconLock, IconUsers } from '@/components/Icons';
 // Lazy-load heavy 3D scene
@@ -272,8 +271,6 @@ export default function HomePage() {
   const [introComplete, setIntroComplete] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
   const [isMaint, setIsMaint] = React.useState(false);
-  const [showSupport, setShowSupport] = React.useState(false);
-  const [supportView, setSupportView] = React.useState<any>('menu');
   const [adminClicks, setAdminClicks]           = React.useState(0);
   const [showAdminGateway, setShowAdminGateway] = React.useState(false);
   const [transparencyMode, setTransparencyMode] = React.useState(false);
@@ -867,7 +864,7 @@ export default function HomePage() {
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>Our concierge team is here to help — any time.</p>
             </div>
             <button
-              onClick={() => { setSupportView('menu'); setShowSupport(true); }}
+              onClick={() => { window.location.href = '/report'; }}
               style={{
                 padding: '14px 28px',
                 background: '#fff', color: '#000',
@@ -941,17 +938,6 @@ export default function HomePage() {
         </footer>
 
       </motion.div>{/* end intro-gated content */}
-
-      {/* Support Panel */}
-      <AnimatePresence mode="wait">
-        {showSupport && (
-          <SupportCenter 
-            key={supportView}
-            onClose={() => setShowSupport(false)} 
-            initialView={supportView}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Admin Gateway */}
       <AnimatePresence>
