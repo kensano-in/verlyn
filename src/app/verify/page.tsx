@@ -587,6 +587,17 @@ export default function VerifyPage() {
   const [stage, setStage] = React.useState<Stage>('loading');
 
   React.useEffect(() => {
+    // Check if unblock query parameter is present to lift admin ban
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('unblock') === '1' || urlParams.get('clear_admin') === '1') {
+        localStorage.removeItem('vrl_admin_blocked');
+        localStorage.removeItem('vrl_admin_attempts');
+        alert('Administrative gateway block lifted for this device.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
     fetch('/api/invite/status')
       .then(r => r.json())
       .then(d => {

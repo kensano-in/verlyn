@@ -62,6 +62,17 @@ export default function AdminGateway({ onClose }: { onClose: () => void }) {
 
   // 1. Check PIN
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('unblock') === '1' || urlParams.get('clear_admin') === '1') {
+        localStorage.removeItem('vrl_admin_blocked');
+        localStorage.removeItem('vrl_admin_attempts');
+        setIsBanned(false);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+    }
+
     if (localStorage.getItem('vrl_admin_blocked') === '1') {
       setIsBanned(true);
       return;
